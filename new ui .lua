@@ -9,8 +9,6 @@ local Lighting = game:GetService("Lighting")
 local Stats = game:GetService("Stats")
 local TeleportService = game:GetService("TeleportService")
 
--- Safe Flags table: verhindert Fehler in fremden Orion/Linoria/Rayfield Scripts,
--- wenn ein Script auf Library.Flags["FlagName"].Value zugreift, bevor das Element existiert.
 local FlagsProxy = setmetatable({}, {
 	__index = function(t, k)
 		local dummy = {
@@ -48,9 +46,6 @@ local Library = {
 }
 Library.__index = Library
 
--- ============================================================================
--- INTERNAL HELPERS, NORMALIZERS & CONSTRAINTS
--- ============================================================================
 local function getGuiParent()
 	local ok, hui = pcall(function()
 		return gethui and gethui()
@@ -106,7 +101,6 @@ local function addSizeConstraint(parent, minSize, maxSize)
 	return sc
 end
 
--- 1:1 Brushed Metallic Silver/Cyan Header Gradient (wie auf dem Bild)
 local function applyMetallicHeader(frame)
 	frame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	frame.BackgroundTransparency = 0.12
@@ -137,8 +131,6 @@ local function applyButtonGradient(frame)
 	return grad
 end
 
--- Universal Argument Normalizer:
--- Unterstützt Orion, Rayfield, Kavo, Venyx, Fluent & Linoria Aufrufe (egal ob Table oder Parameter-Liste!)
 local function normalizeArgs(kind, a, b, c, d, e, f)
 	if type(a) == "table" then
 		return a
@@ -151,7 +143,6 @@ local function normalizeArgs(kind, a, b, c, d, e, f)
 		elseif type(b) == "function" then
 			cfg.Callback = b
 		else
-			-- Kavo style: ("Name", "Info", function(state) end)
 			cfg.Callback = type(c) == "function" and c or (type(d) == "function" and d or nil)
 			if type(c) == "boolean" then cfg.Default = c end
 		end
@@ -162,7 +153,6 @@ local function normalizeArgs(kind, a, b, c, d, e, f)
 			cfg.Callback = c
 		end
 	elseif kind == "Slider" then
-		-- Kavo style: ("Name", "Info", max, min, callback) vs Standard: ("Name", min, max, default, callback)
 		if type(b) == "string" and type(c) == "number" and type(d) == "number" then
 			cfg.Min = math.min(c, d)
 			cfg.Max = math.max(c, d)
@@ -184,7 +174,6 @@ local function normalizeArgs(kind, a, b, c, d, e, f)
 				cfg.Callback = type(d) == "function" and d or nil
 			end
 		elseif type(c) == "table" then
-			-- Kavo style: ("Name", "Info", options, callback)
 			cfg.Options = c
 			cfg.Callback = type(d) == "function" and d or nil
 		end
@@ -226,9 +215,6 @@ local function registerFlag(flag, name, obj)
 	end
 end
 
--- ============================================================================
--- NOTIFICATION SYSTEM (Orion / Rayfield / Custom kompatibel)
--- ============================================================================
 local NotifScreenGui = nil
 
 function Library.MakeNotification(selfOrCfg, maybeCfg)
@@ -344,9 +330,6 @@ function Library:Destroy()
 end
 Library.Unload = Library.Destroy
 
--- ============================================================================
--- WINDOW CREATION (MakeWindow / CreateWindow / CreateLib / Window)
--- ============================================================================
 local BASE_WIDTH  = 860
 local BASE_HEIGHT = 500
 
@@ -374,7 +357,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 	ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 	ScreenGui.Parent = parent
 
-	-- Outer Frosted-Glass Window Frame (1:1 wie auf dem Bild)
 	local MainWin = Instance.new("Frame")
 	MainWin.Name = "MainWin"
 	MainWin.Size = UDim2.new(0, winWidth, 0, winHeight)
@@ -387,12 +369,10 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 	addCorner(MainWin, 10)
 	addStroke(MainWin, Library.Theme.NeonBorder, 1.8, 0.08)
 
-	-- UIScale sorgt dafür, dass sich beim Verkleinern/Skalieren NICHTS verzieht oder dehnt!
 	local WinScale = Instance.new("UIScale")
 	WinScale.Scale = 1
 	WinScale.Parent = MainWin
 
-	-- Diagonal Glass Reflection Gradient (1:1 wie auf dem Bild)
 	local WinGrad = Instance.new("UIGradient")
 	WinGrad.Color = ColorSequence.new({
 		ColorSequenceKeypoint.new(0.00, Color3.fromRGB(36, 48, 60)),
@@ -403,7 +383,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 	WinGrad.Rotation = 65
 	WinGrad.Parent = MainWin
 
-	-- Soft Outer Cyan Neon Halo
 	local OuterGlow = Instance.new("Frame")
 	OuterGlow.Name = "OuterGlow"
 	OuterGlow.Size = UDim2.new(1, 6, 1, 6)
@@ -414,7 +393,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 	addCorner(OuterGlow, 12)
 	addStroke(OuterGlow, Library.Theme.NeonBorder, 2, 0.65)
 
-	-- Stepped Bottom-Left Accent Line (wie unten links auf dem Bild)
 	local BottomAccent = Instance.new("Frame")
 	BottomAccent.Name = "BottomAccent"
 	BottomAccent.Size = UDim2.new(0, 220, 0, 2)
@@ -425,9 +403,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 	BottomAccent.Parent = MainWin
 	addCorner(BottomAccent, 1)
 
-	-- ========================================================================
-	-- CONTENT WRAPPER (Feste Pixel-Größe beim Minimieren -> KEIN Dehnen/Quetschen!)
-	-- ========================================================================
 	local ContentWrap = Instance.new("Frame")
 	ContentWrap.Name = "ContentWrap"
 	ContentWrap.Size = UDim2.new(1, 0, 0, winHeight - 36)
@@ -435,16 +410,12 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 	ContentWrap.BackgroundTransparency = 1
 	ContentWrap.Parent = MainWin
 
-	-- ========================================================================
-	-- TOP TITLE BAR (○ ○ ○ | NightSystem | — □ ✕)
-	-- ========================================================================
 	local TitleBar = Instance.new("Frame")
 	TitleBar.Name = "TitleBar"
 	TitleBar.Size = UDim2.new(1, 0, 0, 34)
 	TitleBar.BackgroundTransparency = 1
 	TitleBar.Parent = MainWin
 
-	-- 3 macOS-Style Window Dots links oben
 	for i = 1, 3 do
 		local dot = Instance.new("Frame")
 		dot.Size = UDim2.new(0, 11, 0, 11)
@@ -456,7 +427,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		addStroke(dot, Library.Theme.SubBorder, 1, 0.25)
 	end
 
-	-- Zentrierter Fenstertitel
 	local TitleText = Instance.new("TextLabel")
 	TitleText.Name = "TitleText"
 	TitleText.Size = UDim2.new(1, -220, 1, 0)
@@ -469,7 +439,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 	TitleText.TextTruncate = Enum.TextTruncate.AtEnd
 	TitleText.Parent = TitleBar
 
-	-- Fenster-Buttons rechts oben (— □ ✕)
 	local function createTopBtn(txt, rightOffset, callback)
 		local b = Instance.new("TextButton")
 		b.Size = UDim2.new(0, 24, 0, 22)
@@ -493,7 +462,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 	local isMinimized = false
 	local currentScalePreset = 1
 
-	-- Minimieren (—): Rollt das Fenster sauber ein, OHNE den Inhalt zu stauchen oder zu dehnen!
 	createTopBtn("—", -78, function()
 		isMinimized = not isMinimized
 		if isMinimized then
@@ -516,7 +484,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		end
 	end)
 
-	-- Skalierungs-Button (□): Wechselt proportional zwischen 100%, 82% (Kompakt) und 112% (Groß) ohne Verzerrung!
 	createTopBtn("□", -52, function()
 		if currentScalePreset == 1 then
 			currentScalePreset = 2
@@ -537,14 +504,12 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		end
 	end)
 
-	-- Toggle UI Visibility via Keybind
 	UserInputService.InputBegan:Connect(function(input, gp)
 		if not gp and input.KeyCode == toggleKey then
 			MainWin.Visible = not MainWin.Visible
 		end
 	end)
 
-	-- Smooth Dragging auf der TitleBar
 	do
 		local dragging, dragInput, dragStart, startPos
 		TitleBar.InputBegan:Connect(function(input)
@@ -577,9 +542,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		end)
 	end
 
-	-- ========================================================================
-	-- PROPORTIONAL RESIZE GRIP UNTEN RECHTS (Kein hässliches Dehnen beim Kleinerziehen!)
-	-- ========================================================================
 	local ResizeGrip = Instance.new("TextButton")
 	ResizeGrip.Name = "ResizeGrip"
 	ResizeGrip.Size = UDim2.new(0, 18, 0, 18)
@@ -621,7 +583,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				local desiredVisualW = math.clamp(startWidth * startScale + delta.X, 480, 1400)
 				local desiredVisualH = math.clamp(startHeight * startScale + delta.Y, 300, 950)
 
-				-- Wenn kleiner als 860px gezogen wird: Skaliere proportional über UIScale (verhindert jedes Dehnen/Quetschen!)
 				if desiredVisualW < BASE_WIDTH then
 					local newScale = math.clamp(desiredVisualW / BASE_WIDTH, 0.55, 1)
 					WinScale.Scale = newScale
@@ -639,9 +600,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		end)
 	end
 
-	-- ========================================================================
-	-- INNER BORDER CONTAINER & SCROLLABLE LEFT VERTICAL TABS
-	-- ========================================================================
 	local InnerBorderFrame = Instance.new("Frame")
 	InnerBorderFrame.Name = "InnerBorderFrame"
 	InnerBorderFrame.Size = UDim2.new(1, -54, 1, -14)
@@ -653,7 +611,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 	addCorner(InnerBorderFrame, 8)
 	addStroke(InnerBorderFrame, Library.Theme.NeonBorder, 1.5, 0.08)
 
-	-- Scrollbare linke Tab-Leiste (damit beliebig viele Tabs reinpassen & gescrollt werden können!)
 	local SideTabScroll = Instance.new("ScrollingFrame")
 	SideTabScroll.Name = "SideTabScroll"
 	SideTabScroll.Size = UDim2.new(0, 38, 1, -14)
@@ -679,9 +636,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		SideTabScroll.CanvasSize = UDim2.new(0, 0, 0, SideTabLayout.AbsoluteContentSize.Y + 8)
 	end)
 
-	-- ========================================================================
-	-- WINDOW OBJECT & SMART AUTO-ADAPTING TAB SYSTEM
-	-- ========================================================================
 	local WindowObj = {
 		ScreenGui = ScreenGui,
 		MainFrame = MainWin,
@@ -752,7 +706,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		local tabIndex = #WindowObj.Tabs + 1
 		local tabHeight = math.clamp(#tabName * 7 + 34, 76, 114)
 
-		-- Vertikaler Seiten-Tab-Button (1:1 wie auf dem Bild, -90° gedreht)
 		local TabBtn = Instance.new("TextButton")
 		TabBtn.Name = tabName .. "_TabBtn"
 		TabBtn.LayoutOrder = tabIndex
@@ -768,7 +721,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		local TabGrad = Instance.new("UIGradient")
 		TabGrad.Parent = TabBtn
 
-		-- Rotierter Text (-90 Grad wie im Bild)
 		local RotatedLabel = Instance.new("TextLabel")
 		RotatedLabel.Size = UDim2.new(0, tabHeight - 8, 0, 28)
 		RotatedLabel.Position = UDim2.new(0.5, -(tabHeight - 8) / 2, 0.5, -14)
@@ -781,7 +733,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		RotatedLabel.ZIndex = 5
 		RotatedLabel.Parent = TabBtn
 
-		-- Content-Seite für diesen Tab (enthält die bis zu 3 Spalten-Cards!)
 		local TabPage = Instance.new("Frame")
 		TabPage.Name = tabName .. "_Page"
 		TabPage.Size = UDim2.new(1, -24, 1, -24)
@@ -798,7 +749,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		PageLayout.Padding = UDim.new(0, 12)
 		PageLayout.Parent = TabPage
 
-		-- Erzeuge die 3 Spalten-Cards (Column 1, Column 2, Column 3) wie im Bild
 		local Columns = {}
 		local defaultSubTitles = {
 			[1] = tabName,
@@ -815,12 +765,11 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			Card.BackgroundTransparency = 0.32
 			Card.BorderSizePixel = 0
 			Card.ClipsDescendants = true
-			Card.Visible = (colIdx == 1) -- Spalte 2 & 3 blenden sich automatisch ein, sobald sie gefüllt werden!
+			Card.Visible = (colIdx == 1)
 			Card.Parent = TabPage
 			addCorner(Card, 7)
 			addStroke(Card, Library.Theme.CardBorder, 1.2, 0.22)
 
-			-- Metallisch glänzender Header oben in der Spalte
 			local Header = Instance.new("Frame")
 			Header.Name = "Header"
 			Header.Size = UDim2.new(1, 0, 0, 34)
@@ -850,7 +799,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			HeaderTitle.TextTruncate = Enum.TextTruncate.AtEnd
 			HeaderTitle.Parent = Header
 
-			-- ScrollFrame innerhalb jeder Spalte (für unbegrenzt viele Elemente!)
 			local ColScroll = Instance.new("ScrollingFrame")
 			ColScroll.Name = "ColScroll"
 			ColScroll.Size = UDim2.new(1, -6, 1, -40)
@@ -885,7 +833,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			}
 		end
 
-		-- Passt die Spaltenbreiten dynamisch an (1, 2 oder 3 Spalten -> NIE leere Boxen & kein Quetschen!)
 		local function updateResponsiveColumns()
 			local activeCols = {}
 			for i = 1, 3 do
@@ -943,12 +890,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			end
 		end
 
-		-- ====================================================================
-		-- SMART AUTO-FLOW ENGINE (Für Orion / Rayfield / Kavo Scripts!)
-		-- Wenn ein fremdes Script KEINE 3 Sections hat, sondern einfach alles
-		-- in einen Tab packt, verteilt die UI die Elemente automatisch schön
-		-- auf Spalte 1 -> Spalte 2 -> Spalte 3!
-		-- ====================================================================
 		local currentColumnIndex = 1
 		local sectionCounter = 0
 
@@ -970,8 +911,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 			if not cIdx then
 				if sectionCounter <= 1 then
-					-- Fremdes Script ohne Multi-Sections (z.B. Orion):
-					-- Verteile ab > 6 Elementen automatisch auf Spalte 2 und ab > 12 auf Spalte 3!
 					if Columns[1].Weight < 6.5 then
 						cIdx = 1
 					elseif Columns[2].Weight < 6.5 then
@@ -997,7 +936,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		local function createMethodsForTarget(resolveScroll)
 			local Methods = {}
 
-			-- 1. TOGGLE / CHECKBOX (1:1 NightSystem Checkbox mit leuchtendem ✓)
 			function Methods.AddToggle(selfOrA, a, b, c, d)
 				local cfg = (selfOrA == Methods or type(selfOrA) == "table" and selfOrA.AddToggle)
 					and normalizeArgs("Toggle", a, b, c, d)
@@ -1083,7 +1021,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 					end
 					updatePill()
 				else
-					-- 1:1 Quadratische abgerundete Checkbox aus dem NightSystem-Bild
 					local Box = Instance.new("Frame")
 					Box.Size = UDim2.new(0, 20, 0, 20)
 					Box.Position = UDim2.new(0, 0, 0.5, -10)
@@ -1156,7 +1093,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			Methods.Toggle       = Methods.AddToggle
 			Methods.addToggle    = Methods.AddToggle
 
-			-- 2. SLIDER (1:1 NightSystem Slider + optionale Opacity-Skalenstriche)
 			function Methods.AddSlider(selfOrA, a, b, c, d, e)
 				local cfg = (selfOrA == Methods or type(selfOrA) == "table" and selfOrA.AddSlider)
 					and normalizeArgs("Slider", a, b, c, d, e)
@@ -1320,7 +1256,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			Methods.Slider       = Methods.AddSlider
 			Methods.addSlider    = Methods.AddSlider
 
-			-- 3. BUTTON / DUAL BUTTON / CIRCLE APPLY BUTTON
 			function Methods.AddButton(selfOrA, a, b, c)
 				local cfg = (selfOrA == Methods or type(selfOrA) == "table" and selfOrA.AddButton)
 					and normalizeArgs("Button", a, b, c)
@@ -1413,7 +1348,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			Methods.Button       = Methods.AddButton
 			Methods.addButton    = Methods.AddButton
 
-			-- Dual Button (1:1 wie "[ Color Picker ]  [ Preview ]" in Spalte 2 auf dem Bild)
 			function Methods:AddDualButton(cfg)
 				cfg = cfg or {}
 				local scroll, order = resolveScroll(cfg.Column, 1)
@@ -1449,7 +1383,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			end
 			Methods.CreateDualButton = Methods.AddDualButton
 
-			-- Apply & Reset Button-Paar (1:1 wie unten rechts in Spalte 3 auf dem Bild)
 			function Methods:AddApplyButton(cfg)
 				cfg = cfg or {}
 				cfg.Style = "Circle"
@@ -1459,7 +1392,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			end
 			Methods.CreateApplyButton = Methods.AddApplyButton
 
-			-- 4. DROPDOWN (1:1 wie "Hitbox -> [ Head ⌄ ]" im Bild, inkl. Rayfield/Orion/Kavo Support)
 			function Methods.AddDropdown(selfOrA, a, b, c, d)
 				local cfg = (selfOrA == Methods or type(selfOrA) == "table" and selfOrA.AddDropdown)
 					and normalizeArgs("Dropdown", a, b, c, d)
@@ -1624,7 +1556,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			Methods.Dropdown       = Methods.AddDropdown
 			Methods.addDropdown    = Methods.AddDropdown
 
-			-- 5. COLORPICKER (Mit Vorschau & HSV-Sliders)
 			function Methods.AddColorpicker(selfOrA, a, b, c, d)
 				local cfg = (selfOrA == Methods or type(selfOrA) == "table" and selfOrA.AddColorpicker)
 					and normalizeArgs("Colorpicker", a, b, c, d)
@@ -1675,7 +1606,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				addCorner(PreviewBtn, 6)
 				addStroke(PreviewBtn, Library.Theme.NeonBorder, 1.1, 0.25)
 
-				-- Ausklappbare RGB/HSV Leiste
 				local Drawer = Instance.new("Frame")
 				Drawer.Size = UDim2.new(1, 0, 0, 74)
 				Drawer.Position = UDim2.new(0, 0, 0, 34)
@@ -1784,7 +1714,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			Methods.Colorpicker       = Methods.AddColorpicker
 			Methods.addColorPicker    = Methods.AddColorpicker
 
-			-- 6. KEYBIND (AddBind / CreateBind / AddKeybind / NewKeybind)
 			function Methods.AddBind(selfOrA, a, b, c, d)
 				local cfg = (selfOrA == Methods or type(selfOrA) == "table" and selfOrA.AddBind)
 					and normalizeArgs("Bind", a, b, c, d)
@@ -1891,7 +1820,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			Methods.Keybind       = Methods.AddBind
 			Methods.addKeybind    = Methods.AddBind
 
-			-- 7. TEXTBOX / INPUT (AddTextbox / CreateInput / NewTextBox)
 			function Methods.AddTextbox(selfOrA, a, b, c, d)
 				local cfg = (selfOrA == Methods or type(selfOrA) == "table" and selfOrA.AddTextbox)
 					and normalizeArgs("Textbox", a, b, c, d)
@@ -1976,7 +1904,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			Methods.Input         = Methods.AddTextbox
 			Methods.addTextbox    = Methods.AddTextbox
 
-			-- 8. LABEL, PARAGRAPH & DIVIDER
 			function Methods.AddLabel(selfOrText, maybeText)
 				local text = (selfOrText == Methods or type(selfOrText) == "table" and selfOrText.AddLabel) and maybeText or selfOrText
 				if type(text) == "table" then text = text.Name or text.Text or text.Title or "" end
@@ -2089,10 +2016,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			return getTargetScroll(explicitCol, weightCost)
 		end)
 
-		-- ====================================================================
-		-- SECTION CREATION (Routet automatisch in Spalte 1 -> 2 -> 3!)
-		-- Unterstützt Orion, Rayfield, Kavo, Linoria & Venyx!
-		-- ====================================================================
 		local function addSectionInternal(secConfig, forcedColumn)
 			if type(secConfig) == "string" then
 				secConfig = { Name = secConfig }
@@ -2117,7 +2040,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				col.HeaderTitle.Text = secName
 				col.HasCustomTitle = true
 			else
-				-- Wenn in derselben Spalte noch eine weitere Section geöffnet wird, füge einen metallischen Sub-Header ein
 				col.ItemCount = col.ItemCount + 1
 				col.Weight = col.Weight + 0.9
 				local SubHdr = Instance.new("Frame")
@@ -2198,7 +2120,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 	WindowObj.addPage   = WindowObj.MakeTab
 	WindowObj.AddPage   = WindowObj.MakeTab
 
-	-- Fallback: Falls ein Script Elemente direkt auf Window aufruft (ohne vorher MakeTab zu rufen!)
 	local function getOrMakeDefaultTab()
 		if #WindowObj.Tabs == 0 then
 			WindowObj:MakeTab({ Name = "Main" })
@@ -2235,11 +2156,6 @@ Library.NewWindow    = Library.MakeWindow
 Library.CreateLib    = Library.MakeWindow
 Library.Load         = Library.MakeWindow
 
--- ============================================================================
--- 1:1 DEMO PREVIEW (Wird automatisch angezeigt, wenn direkt ausgeführt;
--- sobald ein eigenes oder fremdes Script z.B. Orion MakeWindow() aufruft,
--- wird die Demo sofort durch das Script ersetzt!)
--- ============================================================================
 task.defer(function()
 	if #Library.Windows == 0 then
 		local DemoWin = Library:MakeWindow({
@@ -2247,7 +2163,6 @@ task.defer(function()
 			ToggleKey = Enum.KeyCode.RightShift
 		})
 
-		-- Sobald ein Script MakeWindow / CreateWindow / CreateLib aufruft, wird die Demo entfernt
 		local origMakeWindow = Library.MakeWindow
 		local function replaceDemoAndMakeWindow(selfOrCfg, maybeCfg)
 			if DemoWin and DemoWin.ScreenGui and DemoWin.ScreenGui.Parent then
@@ -2274,14 +2189,12 @@ task.defer(function()
 		Library.CreateLib    = replaceDemoAndMakeWindow
 		Library.Load         = replaceDemoAndMakeWindow
 
-		-- Die 5 Tabs exakt wie auf dem Bild: ESP | Visuals | Aimbot | Settings | Lua Script
 		local EspTab      = DemoWin:MakeTab({ Name = "ESP" })
 		local VisualsTab  = DemoWin:MakeTab({ Name = "Visuals" })
 		local AimbotTab   = DemoWin:MakeTab({ Name = "Aimbot" })
 		local SettingsTab = DemoWin:MakeTab({ Name = "Settings" })
 		local LuaTab      = DemoWin:MakeTab({ Name = "Lua Script" })
 
-		-- SPALTE 1: "Player ESP" (1:1 wie auf dem Bild)
 		local Sec1 = EspTab:AddSection({ Name = "Player ESP" })
 		Sec1:AddToggle({ Name = "Enable ESP",    Default = true,  Flag = "EnableESP" })
 		Sec1:AddToggle({ Name = "Show Names",    Default = true,  Flag = "ShowNames" })
@@ -2299,7 +2212,6 @@ task.defer(function()
 			Flag = "MaxDistance"
 		})
 
-		-- SPALTE 2: "Visuals & Effects" (1:1 wie auf dem Bild)
 		local Sec2 = EspTab:AddSection({ Name = "Visuals & Effects" })
 		Sec2:AddToggle({ Name = "Chams",          Default = true,  Flag = "Chams" })
 		Sec2:AddToggle({ Name = "Glow Effect",    Default = false, Flag = "GlowEffect" })
@@ -2323,7 +2235,6 @@ task.defer(function()
 			end
 		})
 
-		-- SPALTE 3: "Aimbot & Misc" (1:1 wie auf dem Bild)
 		local Sec3 = EspTab:AddSection({ Name = "Aimbot & Misc" })
 		Sec3:AddToggle({ Name = "Active",     Default = true,  Flag = "AimActive" })
 		Sec3:AddToggle({ Name = "Silent Aim", Default = false, Flag = "SilentAim" })
@@ -2364,7 +2275,6 @@ task.defer(function()
 			end
 		})
 
-		-- Auch die anderen Tabs mit Beispiel-Sektionen füllen
 		local vSec1 = VisualsTab:AddSection({ Name = "World Visuals" })
 		vSec1:AddToggle({ Name = "Fullbright", Default = false })
 		vSec1:AddSlider({ Name = "Time of Day", Min = 0, Max = 24, Default = 14 })
