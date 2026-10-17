@@ -9,8 +9,26 @@ local Lighting = game:GetService("Lighting")
 local Stats = game:GetService("Stats")
 local TeleportService = game:GetService("TeleportService")
 
+-- Safe Flags table: verhindert Fehler in fremden Orion/Linoria/Rayfield Scripts,
+-- wenn ein Script auf Library.Flags["FlagName"].Value zugreift, bevor das Element existiert.
+local FlagsProxy = setmetatable({}, {
+	__index = function(t, k)
+		local dummy = {
+			Value = false,
+			Type = "Dummy",
+			Set = function(self, val) self.Value = val end,
+			SetValue = function(self, val) self.Value = val end,
+			OnChanged = function() end,
+		}
+		rawset(t, k, dummy)
+		return dummy
+	end
+})
+
 local Library = {
-	Flags = {},
+	Flags = FlagsProxy,
+	Options = FlagsProxy,
+	Toggles = FlagsProxy,
 	Windows = {},
 	Notifications = {},
 	ToggleKey = Enum.KeyCode.RightShift,
@@ -31,7 +49,7 @@ local Library = {
 Library.__index = Library
 
 -- ============================================================================
--- INTERNAL HELPERS & CONSTRAINTS
+-- INTERNAL HELPERS, NORMALIZERS & CONSTRAINTS
 -- ============================================================================
 local function getGuiParent()
 	local ok, hui = pcall(function()
@@ -119,13 +137,103 @@ local function applyButtonGradient(frame)
 	return grad
 end
 
+-- Universal Argument Normalizer:
+-- Unterstützt Orion, Rayfield, Kavo, Venyx, Fluent & Linoria Aufrufe (egal ob Table oder Parameter-Liste!)
+local function normalizeArgs(kind, a, b, c, d, e, f)
+	if type(a) == "table" then
+		return a
+	end
+	local cfg = { Name = tostring(a or kind) }
+	if kind == "Toggle" then
+		if type(b) == "boolean" then
+			cfg.Default = b
+			cfg.Callback = type(c) == "function" and c or nil
+		elseif type(b) == "function" then
+			cfg.Callback = b
+		else
+			-- Kavo style: ("Name", "Info", function(state) end)
+			cfg.Callback = type(c) == "function" and c or (type(d) == "function" and d or nil)
+			if type(c) == "boolean" then cfg.Default = c end
+		end
+	elseif kind == "Button" then
+		if type(b) == "function" then
+			cfg.Callback = b
+		elseif type(c) == "function" then
+			cfg.Callback = c
+		end
+	elseif kind == "Slider" then
+		-- Kavo style: ("Name", "Info", max, min, callback) vs Standard: ("Name", min, max, default, callback)
+		if type(b) == "string" and type(c) == "number" and type(d) == "number" then
+			cfg.Min = math.min(c, d)
+			cfg.Max = math.max(c, d)
+			cfg.Default = cfg.Min
+			cfg.Callback = type(e) == "function" and e or nil
+		elseif type(b) == "number" and type(c) == "number" then
+			cfg.Min = math.min(b, c)
+			cfg.Max = math.max(b, c)
+			cfg.Default = type(d) == "number" and d or cfg.Min
+			cfg.Callback = type(e) == "function" and e or (type(d) == "function" and d or nil)
+		end
+	elseif kind == "Dropdown" then
+		if type(b) == "table" then
+			cfg.Options = b
+			if type(c) == "function" then
+				cfg.Callback = c
+			else
+				cfg.Default = c
+				cfg.Callback = type(d) == "function" and d or nil
+			end
+		elseif type(c) == "table" then
+			-- Kavo style: ("Name", "Info", options, callback)
+			cfg.Options = c
+			cfg.Callback = type(d) == "function" and d or nil
+		end
+	elseif kind == "Colorpicker" then
+		if typeof(b) == "Color3" then
+			cfg.Default = b
+			cfg.Callback = type(c) == "function" and c or nil
+		elseif typeof(c) == "Color3" then
+			cfg.Default = c
+			cfg.Callback = type(d) == "function" and d or nil
+		end
+	elseif kind == "Bind" then
+		if typeof(b) == "EnumItem" or type(b) == "string" and type(c) == "function" then
+			cfg.Default = b
+			cfg.Callback = c
+		elseif typeof(c) == "EnumItem" then
+			cfg.Default = c
+			cfg.Callback = type(d) == "function" and d or nil
+		end
+	elseif kind == "Textbox" then
+		if type(b) == "function" then
+			cfg.Callback = b
+		elseif type(c) == "function" then
+			cfg.Default = tostring(b or "")
+			cfg.Callback = c
+		elseif type(d) == "function" then
+			cfg.Callback = d
+		end
+	end
+	return cfg
+end
+
+local function registerFlag(flag, name, obj)
+	if flag and flag ~= "" then
+		rawset(Library.Flags, flag, obj)
+	end
+	if name and name ~= "" and rawget(Library.Flags, name) == nil then
+		rawset(Library.Flags, name, obj)
+	end
+end
+
 -- ============================================================================
--- NOTIFICATION SYSTEM
+-- NOTIFICATION SYSTEM (Orion / Rayfield / Custom kompatibel)
 -- ============================================================================
 local NotifScreenGui = nil
 
-function Library:MakeNotification(config)
-	config = type(config) == "table" and config or { Name = "Notification", Content = tostring(config) }
+function Library.MakeNotification(selfOrCfg, maybeCfg)
+	local config = (selfOrCfg == Library) and maybeCfg or selfOrCfg
+	config = type(config) == "table" and config or { Name = "Notification", Content = tostring(config or "") }
 	local titleText = config.Name or config.Title or "NightSystem"
 	local bodyText  = config.Content or config.Text or config.Description or ""
 	local duration  = config.Time or config.Duration or 4
@@ -174,7 +282,7 @@ function Library:MakeNotification(config)
 	tLbl.Size = UDim2.new(1, -16, 1, 0)
 	tLbl.Position = UDim2.new(0, 10, 0, 0)
 	tLbl.BackgroundTransparency = 1
-	tLbl.Text = titleText
+	tLbl.Text = tostring(titleText)
 	tLbl.TextColor3 = Library.Theme.TextWhite
 	tLbl.Font = Enum.Font.GothamMedium
 	tLbl.TextSize = 13
@@ -185,7 +293,7 @@ function Library:MakeNotification(config)
 	cLbl.Size = UDim2.new(1, -20, 1, -30)
 	cLbl.Position = UDim2.new(0, 10, 0, 26)
 	cLbl.BackgroundTransparency = 1
-	cLbl.Text = bodyText
+	cLbl.Text = tostring(bodyText)
 	cLbl.TextColor3 = Library.Theme.TextMuted
 	cLbl.Font = Enum.Font.Gotham
 	cLbl.TextSize = 12
@@ -210,9 +318,17 @@ function Library:MakeNotification(config)
 		end
 	end)
 end
-Library.Notify = Library.MakeNotification
+Library.Notify           = Library.MakeNotification
+Library.Notification     = Library.MakeNotification
+Library.SendNotification = Library.MakeNotification
 
 function Library:Init()
+	return self
+end
+function Library:LoadConfiguration()
+	return self
+end
+function Library:SaveConfiguration()
 	return self
 end
 
@@ -226,23 +342,28 @@ function Library:Destroy()
 		NotifScreenGui:Destroy()
 	end
 end
+Library.Unload = Library.Destroy
 
 -- ============================================================================
--- WINDOW CREATION (MakeWindow / CreateWindow / Window)
+-- WINDOW CREATION (MakeWindow / CreateWindow / CreateLib / Window)
 -- ============================================================================
-function Library:MakeWindow(config)
+local BASE_WIDTH  = 860
+local BASE_HEIGHT = 500
+
+function Library.MakeWindow(selfOrConfig, maybeConfig)
+	local config = (selfOrConfig == Library) and maybeConfig or selfOrConfig
 	if type(config) == "string" then
 		config = { Name = config }
 	end
 	config = config or {}
 
-	local windowTitle = config.Name or config.Title or "NightSystem"
+	local windowTitle = config.Name or config.Title or config.LoadingTitle or "NightSystem"
 	local toggleKey   = config.ToggleKey or config.Bind or Library.ToggleKey
-	local winWidth    = config.Width or 860
-	local winHeight   = config.Height or 500
+	local winWidth    = config.Width or BASE_WIDTH
+	local winHeight   = config.Height or BASE_HEIGHT
 
 	local parent = getGuiParent()
-	local guiName = "NightSystemUI_" .. windowTitle:gsub("%W", "")
+	local guiName = "NightSystemUI_" .. tostring(windowTitle):gsub("%W", "")
 	if parent:FindFirstChild(guiName) then
 		parent[guiName]:Destroy()
 	end
@@ -265,7 +386,11 @@ function Library:MakeWindow(config)
 	MainWin.Parent = ScreenGui
 	addCorner(MainWin, 10)
 	addStroke(MainWin, Library.Theme.NeonBorder, 1.8, 0.08)
-	addSizeConstraint(MainWin, Vector2.new(540, 36), Vector2.new(1600, 1000))
+
+	-- UIScale sorgt dafür, dass sich beim Verkleinern/Skalieren NICHTS verzieht oder dehnt!
+	local WinScale = Instance.new("UIScale")
+	WinScale.Scale = 1
+	WinScale.Parent = MainWin
 
 	-- Diagonal Glass Reflection Gradient (1:1 wie auf dem Bild)
 	local WinGrad = Instance.new("UIGradient")
@@ -301,6 +426,16 @@ function Library:MakeWindow(config)
 	addCorner(BottomAccent, 1)
 
 	-- ========================================================================
+	-- CONTENT WRAPPER (Feste Pixel-Größe beim Minimieren -> KEIN Dehnen/Quetschen!)
+	-- ========================================================================
+	local ContentWrap = Instance.new("Frame")
+	ContentWrap.Name = "ContentWrap"
+	ContentWrap.Size = UDim2.new(1, 0, 0, winHeight - 36)
+	ContentWrap.Position = UDim2.new(0, 0, 0, 36)
+	ContentWrap.BackgroundTransparency = 1
+	ContentWrap.Parent = MainWin
+
+	-- ========================================================================
 	-- TOP TITLE BAR (○ ○ ○ | NightSystem | — □ ✕)
 	-- ========================================================================
 	local TitleBar = Instance.new("Frame")
@@ -324,13 +459,14 @@ function Library:MakeWindow(config)
 	-- Zentrierter Fenstertitel
 	local TitleText = Instance.new("TextLabel")
 	TitleText.Name = "TitleText"
-	TitleText.Size = UDim2.new(0, 260, 1, 0)
-	TitleText.Position = UDim2.new(0.5, -130, 0, 0)
+	TitleText.Size = UDim2.new(1, -220, 1, 0)
+	TitleText.Position = UDim2.new(0, 110, 0, 0)
 	TitleText.BackgroundTransparency = 1
-	TitleText.Text = windowTitle
+	TitleText.Text = tostring(windowTitle)
 	TitleText.TextColor3 = Color3.fromRGB(198, 212, 225)
 	TitleText.Font = Enum.Font.GothamMedium
 	TitleText.TextSize = 14
+	TitleText.TextTruncate = Enum.TextTruncate.AtEnd
 	TitleText.Parent = TitleBar
 
 	-- Fenster-Buttons rechts oben (— □ ✕)
@@ -355,22 +491,50 @@ function Library:MakeWindow(config)
 	end
 
 	local isMinimized = false
+	local currentScalePreset = 1
+
+	-- Minimieren (—): Rollt das Fenster sauber ein, OHNE den Inhalt zu stauchen oder zu dehnen!
 	createTopBtn("—", -78, function()
 		isMinimized = not isMinimized
-		MainWin.ClipsDescendants = isMinimized
-		tween(MainWin, TweenInfo.new(0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-			Size = isMinimized and UDim2.new(0, winWidth, 0, 36) or UDim2.new(0, winWidth, 0, winHeight)
-		})
+		if isMinimized then
+			ContentWrap.Size = UDim2.new(1, 0, 0, winHeight - 36)
+			MainWin.ClipsDescendants = true
+			BottomAccent.Visible = false
+			tween(MainWin, TweenInfo.new(0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+				Size = UDim2.new(0, winWidth, 0, 36)
+			})
+		else
+			local t = tween(MainWin, TweenInfo.new(0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+				Size = UDim2.new(0, winWidth, 0, winHeight)
+			})
+			t.Completed:Connect(function()
+				if not isMinimized then
+					MainWin.ClipsDescendants = false
+					BottomAccent.Visible = true
+				end
+			end)
+		end
 	end)
 
+	-- Skalierungs-Button (□): Wechselt proportional zwischen 100%, 82% (Kompakt) und 112% (Groß) ohne Verzerrung!
 	createTopBtn("□", -52, function()
-		tween(MainWin, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-			Position = UDim2.new(0.5, -math.floor(winWidth / 2), 0.5, -math.floor(winHeight / 2))
-		})
+		if currentScalePreset == 1 then
+			currentScalePreset = 2
+			tween(WinScale, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = 0.82 })
+		elseif currentScalePreset == 2 then
+			currentScalePreset = 3
+			tween(WinScale, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = 1.12 })
+		else
+			currentScalePreset = 1
+			tween(WinScale, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = 1.0 })
+		end
 	end)
 
 	createTopBtn("✕", -26, function()
 		MainWin.Visible = false
+		if type(config.CloseCallback) == "function" then
+			task.spawn(config.CloseCallback)
+		end
 	end)
 
 	-- Toggle UI Visibility via Keybind
@@ -414,24 +578,86 @@ function Library:MakeWindow(config)
 	end
 
 	-- ========================================================================
+	-- PROPORTIONAL RESIZE GRIP UNTEN RECHTS (Kein hässliches Dehnen beim Kleinerziehen!)
+	-- ========================================================================
+	local ResizeGrip = Instance.new("TextButton")
+	ResizeGrip.Name = "ResizeGrip"
+	ResizeGrip.Size = UDim2.new(0, 18, 0, 18)
+	ResizeGrip.Position = UDim2.new(1, -18, 1, -18)
+	ResizeGrip.BackgroundTransparency = 1
+	ResizeGrip.Text = "◢"
+	ResizeGrip.TextColor3 = Library.Theme.SubBorder
+	ResizeGrip.TextTransparency = 0.35
+	ResizeGrip.Font = Enum.Font.GothamBold
+	ResizeGrip.TextSize = 12
+	ResizeGrip.ZIndex = 10
+	ResizeGrip.Parent = ContentWrap
+
+	do
+		local resizing = false
+		local resizeStartPos = nil
+		local startScale = 1
+		local startWidth = winWidth
+		local startHeight = winHeight
+
+		ResizeGrip.InputBegan:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+				resizing = true
+				resizeStartPos = input.Position
+				startScale = WinScale.Scale
+				startWidth = winWidth
+				startHeight = winHeight
+				input.Changed:Connect(function()
+					if input.UserInputState == Enum.UserInputState.End then
+						resizing = false
+					end
+				end)
+			end
+		end)
+
+		UserInputService.InputChanged:Connect(function(input)
+			if resizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+				local delta = input.Position - resizeStartPos
+				local desiredVisualW = math.clamp(startWidth * startScale + delta.X, 480, 1400)
+				local desiredVisualH = math.clamp(startHeight * startScale + delta.Y, 300, 950)
+
+				-- Wenn kleiner als 860px gezogen wird: Skaliere proportional über UIScale (verhindert jedes Dehnen/Quetschen!)
+				if desiredVisualW < BASE_WIDTH then
+					local newScale = math.clamp(desiredVisualW / BASE_WIDTH, 0.55, 1)
+					WinScale.Scale = newScale
+					winWidth = BASE_WIDTH
+					winHeight = math.clamp(math.floor(desiredVisualH / newScale), 420, 850)
+				else
+					WinScale.Scale = 1
+					winWidth = math.clamp(math.floor(desiredVisualW), BASE_WIDTH, 1300)
+					winHeight = math.clamp(math.floor(desiredVisualH), 420, 850)
+				end
+
+				MainWin.Size = UDim2.new(0, winWidth, 0, winHeight)
+				ContentWrap.Size = UDim2.new(1, 0, 0, winHeight - 36)
+			end
+		end)
+	end
+
+	-- ========================================================================
 	-- INNER BORDER CONTAINER & SCROLLABLE LEFT VERTICAL TABS
 	-- ========================================================================
 	local InnerBorderFrame = Instance.new("Frame")
 	InnerBorderFrame.Name = "InnerBorderFrame"
-	InnerBorderFrame.Size = UDim2.new(1, -54, 1, -50)
-	InnerBorderFrame.Position = UDim2.new(0, 42, 0, 36)
+	InnerBorderFrame.Size = UDim2.new(1, -54, 1, -14)
+	InnerBorderFrame.Position = UDim2.new(0, 42, 0, 0)
 	InnerBorderFrame.BackgroundColor3 = Library.Theme.GlassBg
 	InnerBorderFrame.BackgroundTransparency = 0.35
 	InnerBorderFrame.BorderSizePixel = 0
-	InnerBorderFrame.Parent = MainWin
+	InnerBorderFrame.Parent = ContentWrap
 	addCorner(InnerBorderFrame, 8)
 	addStroke(InnerBorderFrame, Library.Theme.NeonBorder, 1.5, 0.08)
 
 	-- Scrollbare linke Tab-Leiste (damit beliebig viele Tabs reinpassen & gescrollt werden können!)
 	local SideTabScroll = Instance.new("ScrollingFrame")
 	SideTabScroll.Name = "SideTabScroll"
-	SideTabScroll.Size = UDim2.new(0, 38, 1, -50)
-	SideTabScroll.Position = UDim2.new(0, 8, 0, 36)
+	SideTabScroll.Size = UDim2.new(0, 38, 1, -14)
+	SideTabScroll.Position = UDim2.new(0, 8, 0, 0)
 	SideTabScroll.BackgroundTransparency = 1
 	SideTabScroll.BorderSizePixel = 0
 	SideTabScroll.ScrollBarThickness = 2
@@ -439,7 +665,7 @@ function Library:MakeWindow(config)
 	SideTabScroll.ScrollBarImageTransparency = 0.35
 	SideTabScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
 	SideTabScroll.ZIndex = 3
-	SideTabScroll.Parent = MainWin
+	SideTabScroll.Parent = ContentWrap
 
 	local SideTabLayout = Instance.new("UIListLayout")
 	SideTabLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -454,11 +680,12 @@ function Library:MakeWindow(config)
 	end)
 
 	-- ========================================================================
-	-- WINDOW OBJECT & TAB SYSTEM
+	-- WINDOW OBJECT & SMART AUTO-ADAPTING TAB SYSTEM
 	-- ========================================================================
 	local WindowObj = {
 		ScreenGui = ScreenGui,
 		MainFrame = MainWin,
+		UIScale = WinScale,
 		Tabs = {},
 		ActiveTab = nil,
 	}
@@ -468,19 +695,62 @@ function Library:MakeWindow(config)
 		MainWin.BackgroundTransparency = math.clamp(1 - pct * 0.85, 0.08, 0.78)
 	end
 
+	function WindowObj:SetScale(scale)
+		WinScale.Scale = math.clamp(tonumber(scale) or 1, 0.5, 1.5)
+	end
+
 	function WindowObj:SetTitle(newTitle)
 		TitleText.Text = tostring(newTitle)
 	end
 
-	function WindowObj:MakeTab(tabConfig, optionalIcon)
+	function WindowObj:AddConstraints(minSize, maxSize, aspectRatio)
+		local sc = addSizeConstraint(MainWin, minSize or Vector2.new(480, 36), maxSize or Vector2.new(1600, 1000))
+		local arc = nil
+		if aspectRatio then
+			arc = Instance.new("UIAspectRatioConstraint")
+			arc.AspectRatio = aspectRatio
+			arc.Parent = MainWin
+		end
+		return sc, arc
+	end
+
+	function WindowObj:SelectTab(idxOrTab)
+		local target = type(idxOrTab) == "number" and self.Tabs[idxOrTab] or idxOrTab
+		if target then
+			for _, t in ipairs(self.Tabs) do
+				t._setVisual(t == target)
+			end
+			self.ActiveTab = target
+		end
+	end
+	WindowObj.SwitchTab = WindowObj.SelectTab
+
+	function WindowObj:Dialog(cfg)
+		cfg = type(cfg) == "table" and cfg or { Title = "Dialog", Content = tostring(cfg or "") }
+		Library:MakeNotification({
+			Name = cfg.Title or cfg.Name or windowTitle,
+			Content = cfg.Content or cfg.Text or "",
+			Time = 5
+		})
+	end
+
+	function WindowObj:Destroy()
+		if ScreenGui and ScreenGui.Parent then
+			ScreenGui:Destroy()
+		end
+	end
+	WindowObj.Delete = WindowObj.Destroy
+
+	function WindowObj.MakeTab(selfOrTabCfg, maybeTabCfg, optionalIcon)
+		local tabConfig = (selfOrTabCfg == WindowObj) and maybeTabCfg or selfOrTabCfg
 		if type(tabConfig) == "string" then
 			tabConfig = { Name = tabConfig, Icon = optionalIcon }
 		end
 		tabConfig = tabConfig or {}
-		local tabName = tabConfig.Name or tabConfig.Title or ("Tab " .. tostring(#self.Tabs + 1))
+		local tabName = tabConfig.Name or tabConfig.Title or ("Tab " .. tostring(#WindowObj.Tabs + 1))
 
-		local tabIndex = #self.Tabs + 1
-		local tabHeight = math.clamp(#tabName * 7 + 34, 76, 110)
+		local tabIndex = #WindowObj.Tabs + 1
+		local tabHeight = math.clamp(#tabName * 7 + 34, 76, 114)
 
 		-- Vertikaler Seiten-Tab-Button (1:1 wie auf dem Bild, -90° gedreht)
 		local TabBtn = Instance.new("TextButton")
@@ -507,10 +777,11 @@ function Library:MakeWindow(config)
 		RotatedLabel.Font = Enum.Font.GothamMedium
 		RotatedLabel.TextSize = 13
 		RotatedLabel.Rotation = -90
+		RotatedLabel.TextTruncate = Enum.TextTruncate.AtEnd
 		RotatedLabel.ZIndex = 5
 		RotatedLabel.Parent = TabBtn
 
-		-- Content-Seite für diesen Tab (enthält die 3 Spalten-Cards!)
+		-- Content-Seite für diesen Tab (enthält die bis zu 3 Spalten-Cards!)
 		local TabPage = Instance.new("Frame")
 		TabPage.Name = tabName .. "_Page"
 		TabPage.Size = UDim2.new(1, -24, 1, -24)
@@ -529,15 +800,22 @@ function Library:MakeWindow(config)
 
 		-- Erzeuge die 3 Spalten-Cards (Column 1, Column 2, Column 3) wie im Bild
 		local Columns = {}
+		local defaultSubTitles = {
+			[1] = tabName,
+			[2] = tabName .. " — Options",
+			[3] = tabName .. " — Extra",
+		}
+
 		for colIdx = 1, 3 do
 			local Card = Instance.new("Frame")
 			Card.Name = "Column_" .. colIdx
 			Card.LayoutOrder = colIdx
-			Card.Size = UDim2.new(0.333, -8, 1, 0)
+			Card.Size = UDim2.new(0.3333, -8, 1, 0)
 			Card.BackgroundColor3 = Library.Theme.CardBg
 			Card.BackgroundTransparency = 0.32
 			Card.BorderSizePixel = 0
 			Card.ClipsDescendants = true
+			Card.Visible = (colIdx == 1) -- Spalte 2 & 3 blenden sich automatisch ein, sobald sie gefüllt werden!
 			Card.Parent = TabPage
 			addCorner(Card, 7)
 			addStroke(Card, Library.Theme.CardBorder, 1.2, 0.22)
@@ -564,7 +842,7 @@ function Library:MakeWindow(config)
 			HeaderTitle.Size = UDim2.new(1, -24, 1, 0)
 			HeaderTitle.Position = UDim2.new(0, 14, 0, 0)
 			HeaderTitle.BackgroundTransparency = 1
-			HeaderTitle.Text = (colIdx == 1 and tabName) or ("Section " .. colIdx)
+			HeaderTitle.Text = defaultSubTitles[colIdx]
 			HeaderTitle.TextColor3 = Library.Theme.TextWhite
 			HeaderTitle.Font = Enum.Font.GothamMedium
 			HeaderTitle.TextSize = 15
@@ -603,7 +881,37 @@ function Library:MakeWindow(config)
 				Layout = ColLayout,
 				HasCustomTitle = false,
 				ItemCount = 0,
+				Weight = 0,
 			}
+		end
+
+		-- Passt die Spaltenbreiten dynamisch an (1, 2 oder 3 Spalten -> NIE leere Boxen & kein Quetschen!)
+		local function updateResponsiveColumns()
+			local activeCols = {}
+			for i = 1, 3 do
+				if Columns[i].ItemCount > 0 or Columns[i].HasCustomTitle then
+					Columns[i].Card.Visible = true
+					table.insert(activeCols, Columns[i].Card)
+				else
+					Columns[i].Card.Visible = false
+				end
+			end
+
+			if #activeCols == 0 then
+				Columns[1].Card.Visible = true
+				activeCols = { Columns[1].Card }
+			end
+
+			local count = #activeCols
+			for _, card in ipairs(activeCols) do
+				if count == 1 then
+					card.Size = UDim2.new(1, 0, 1, 0)
+				elseif count == 2 then
+					card.Size = UDim2.new(0.5, -6, 1, 0)
+				else
+					card.Size = UDim2.new(0.3333, -8, 1, 0)
+				end
+			end
 		end
 
 		local function setTabVisual(isActive)
@@ -636,16 +944,53 @@ function Library:MakeWindow(config)
 		end
 
 		-- ====================================================================
-		-- ELEMENT BUILDERS (Können auf Tab ODER Section aufgerufen werden!)
+		-- SMART AUTO-FLOW ENGINE (Für Orion / Rayfield / Kavo Scripts!)
+		-- Wenn ein fremdes Script KEINE 3 Sections hat, sondern einfach alles
+		-- in einen Tab packt, verteilt die UI die Elemente automatisch schön
+		-- auf Spalte 1 -> Spalte 2 -> Spalte 3!
 		-- ====================================================================
 		local currentColumnIndex = 1
 		local sectionCounter = 0
 
-		local function getTargetScroll(explicitCol)
-			local cIdx = explicitCol or currentColumnIndex
+		local function getShortestColumnIndex()
+			local bestIdx = 1
+			local bestWeight = Columns[1].Weight
+			for i = 2, 3 do
+				if Columns[i].Weight < bestWeight then
+					bestWeight = Columns[i].Weight
+					bestIdx = i
+				end
+			end
+			return bestIdx
+		end
+
+		local function getTargetScroll(explicitCol, weightCost)
+			weightCost = weightCost or 1
+			local cIdx = explicitCol
+
+			if not cIdx then
+				if sectionCounter <= 1 then
+					-- Fremdes Script ohne Multi-Sections (z.B. Orion):
+					-- Verteile ab > 6 Elementen automatisch auf Spalte 2 und ab > 12 auf Spalte 3!
+					if Columns[1].Weight < 6.5 then
+						cIdx = 1
+					elseif Columns[2].Weight < 6.5 then
+						cIdx = 2
+					elseif Columns[3].Weight < 6.5 then
+						cIdx = 3
+					else
+						cIdx = getShortestColumnIndex()
+					end
+				else
+					cIdx = currentColumnIndex
+				end
+			end
+
 			cIdx = math.clamp(tonumber(cIdx) or 1, 1, 3)
 			local col = Columns[cIdx]
 			col.ItemCount = col.ItemCount + 1
+			col.Weight = col.Weight + weightCost
+			updateResponsiveColumns()
 			return col.Scroll, col.ItemCount
 		end
 
@@ -653,15 +998,18 @@ function Library:MakeWindow(config)
 			local Methods = {}
 
 			-- 1. TOGGLE / CHECKBOX (1:1 NightSystem Checkbox mit leuchtendem ✓)
-			function Methods:AddToggle(cfg)
-				cfg = type(cfg) == "table" and cfg or { Name = tostring(cfg) }
+			function Methods.AddToggle(selfOrA, a, b, c, d)
+				local cfg = (selfOrA == Methods or type(selfOrA) == "table" and selfOrA.AddToggle)
+					and normalizeArgs("Toggle", a, b, c, d)
+					or normalizeArgs("Toggle", selfOrA, a, b, c)
+
 				local name     = cfg.Name or cfg.Title or "Toggle"
 				local default  = cfg.Default or cfg.CurrentValue or false
 				local callback = cfg.Callback or function() end
 				local flag     = cfg.Flag
 				local usePill  = (cfg.Style == "Switch" or cfg.Pill == true)
 
-				local scroll, order = resolveScroll(cfg.Column)
+				local scroll, order = resolveScroll(cfg.Column, 1)
 
 				local RowBtn = Instance.new("TextButton")
 				RowBtn.Name = name .. "_Toggle"
@@ -673,7 +1021,21 @@ function Library:MakeWindow(config)
 				RowBtn.Parent = scroll
 
 				local state = default
+				local changedListeners = {}
 				local ToggleObj = { Value = state, Type = "Toggle" }
+
+				function ToggleObj:OnChanged(fn)
+					if type(fn) == "function" then
+						table.insert(changedListeners, fn)
+					end
+				end
+
+				local function fireCallbacks(val)
+					task.spawn(callback, val)
+					for _, fn in ipairs(changedListeners) do
+						task.spawn(fn, val)
+					end
+				end
 
 				if usePill then
 					local Lbl = Instance.new("TextLabel")
@@ -717,7 +1079,7 @@ function Library:MakeWindow(config)
 						state = not not val
 						ToggleObj.Value = state
 						updatePill()
-						task.spawn(callback, state)
+						fireCallbacks(state)
 					end
 					updatePill()
 				else
@@ -769,31 +1131,37 @@ function Library:MakeWindow(config)
 						state = not not val
 						ToggleObj.Value = state
 						updateBox()
-						task.spawn(callback, state)
+						fireCallbacks(state)
 					end
 					updateBox()
 				end
+
+				ToggleObj.SetValue     = ToggleObj.Set
+				ToggleObj.UpdateToggle = ToggleObj.Set
 
 				RowBtn.MouseButton1Click:Connect(function()
 					ToggleObj:Set(not state)
 				end)
 
-				if flag then
-					Library.Flags[flag] = ToggleObj
-				end
+				registerFlag(flag, name, ToggleObj)
 				if default then
-					task.spawn(callback, default)
+					fireCallbacks(default)
 				end
 				return ToggleObj
 			end
 			Methods.CreateToggle = Methods.AddToggle
 			Methods.MakeToggle   = Methods.AddToggle
+			Methods.NewToggle    = Methods.AddToggle
 			Methods.AddCheckbox  = Methods.AddToggle
 			Methods.Toggle       = Methods.AddToggle
+			Methods.addToggle    = Methods.AddToggle
 
 			-- 2. SLIDER (1:1 NightSystem Slider + optionale Opacity-Skalenstriche)
-			function Methods:AddSlider(cfg)
-				cfg = type(cfg) == "table" and cfg or { Name = tostring(cfg) }
+			function Methods.AddSlider(selfOrA, a, b, c, d, e)
+				local cfg = (selfOrA == Methods or type(selfOrA) == "table" and selfOrA.AddSlider)
+					and normalizeArgs("Slider", a, b, c, d, e)
+					or normalizeArgs("Slider", selfOrA, a, b, c, d)
+
 				local name      = cfg.Name or cfg.Title or "Slider"
 				local minVal    = cfg.Min or (cfg.Range and cfg.Range[1]) or 0
 				local maxVal    = cfg.Max or (cfg.Range and cfg.Range[2]) or 100
@@ -802,9 +1170,9 @@ function Library:MakeWindow(config)
 				local suffix    = cfg.ValueName or cfg.Suffix or ""
 				local callback  = cfg.Callback or function() end
 				local flag      = cfg.Flag
-				local showTicks = (cfg.Ticks == true) or (name:lower():find("opacity") ~= nil)
+				local showTicks = (cfg.Ticks == true) or (tostring(name):lower():find("opacity") ~= nil)
 
-				local scroll, order = resolveScroll(cfg.Column)
+				local scroll, order = resolveScroll(cfg.Column, 1.35)
 
 				local Container = Instance.new("Frame")
 				Container.Name = name .. "_Slider"
@@ -882,12 +1250,18 @@ function Library:MakeWindow(config)
 					end
 				end
 
+				local changedListeners = {}
 				local SliderObj = { Value = default, Type = "Slider" }
+
+				function SliderObj:OnChanged(fn)
+					if type(fn) == "function" then
+						table.insert(changedListeners, fn)
+					end
+				end
 
 				local function roundToIncrement(val)
 					local clamped = math.clamp(val, minVal, maxVal)
 					local snapped = minVal + math.floor(((clamped - minVal) / increment) + 0.5) * increment
-					-- Format floating point precision cleanly
 					local decimals = tostring(increment):match("%.(%d+)")
 					if decimals then
 						snapped = tonumber(string.format("%." .. #decimals .. "f", snapped)) or snapped
@@ -905,7 +1279,12 @@ function Library:MakeWindow(config)
 					Knob.Position = UDim2.new(pct, -4, 0.5, -9)
 					ValueLbl.Text = tostring(finalVal) .. (suffix ~= "" and (" " .. suffix) or "")
 					task.spawn(callback, finalVal)
+					for _, fn in ipairs(changedListeners) do
+						task.spawn(fn, finalVal)
+					end
 				end
+				SliderObj.SetValue     = SliderObj.Set
+				SliderObj.UpdateSlider = SliderObj.Set
 
 				local sliding = false
 				local function updateFromInput(input)
@@ -932,23 +1311,26 @@ function Library:MakeWindow(config)
 				end)
 
 				SliderObj:Set(default)
-				if flag then
-					Library.Flags[flag] = SliderObj
-				end
+				registerFlag(flag, name, SliderObj)
 				return SliderObj
 			end
 			Methods.CreateSlider = Methods.AddSlider
 			Methods.MakeSlider   = Methods.AddSlider
+			Methods.NewSlider    = Methods.AddSlider
 			Methods.Slider       = Methods.AddSlider
+			Methods.addSlider    = Methods.AddSlider
 
 			-- 3. BUTTON / DUAL BUTTON / CIRCLE APPLY BUTTON
-			function Methods:AddButton(cfg)
-				cfg = type(cfg) == "table" and cfg or { Name = tostring(cfg) }
+			function Methods.AddButton(selfOrA, a, b, c)
+				local cfg = (selfOrA == Methods or type(selfOrA) == "table" and selfOrA.AddButton)
+					and normalizeArgs("Button", a, b, c)
+					or normalizeArgs("Button", selfOrA, a, b)
+
 				local name     = cfg.Name or cfg.Title or "Button"
 				local callback = cfg.Callback or function() end
 				local isCircle = (cfg.Style == "Circle" or cfg.Circle == true)
 
-				local scroll, order = resolveScroll(cfg.Column)
+				local scroll, order = resolveScroll(cfg.Column, isCircle and 2.2 or 1)
 
 				if isCircle then
 					local Holder = Instance.new("Frame")
@@ -1002,6 +1384,7 @@ function Library:MakeWindow(config)
 				Btn.TextColor3 = Library.Theme.TextWhite
 				Btn.Font = Enum.Font.Gotham
 				Btn.TextSize = 13
+				Btn.TextTruncate = Enum.TextTruncate.AtEnd
 				Btn.Parent = scroll
 				addCorner(Btn, 6)
 				local btnStroke = addStroke(Btn, Library.Theme.NeonBorder, 1.1, 0.25)
@@ -1021,16 +1404,19 @@ function Library:MakeWindow(config)
 				function BtnObj:Set(newText)
 					Btn.Text = tostring(newText)
 				end
+				BtnObj.UpdateButton = BtnObj.Set
 				return BtnObj
 			end
 			Methods.CreateButton = Methods.AddButton
 			Methods.MakeButton   = Methods.AddButton
+			Methods.NewButton    = Methods.AddButton
 			Methods.Button       = Methods.AddButton
+			Methods.addButton    = Methods.AddButton
 
 			-- Dual Button (1:1 wie "[ Color Picker ]  [ Preview ]" in Spalte 2 auf dem Bild)
 			function Methods:AddDualButton(cfg)
 				cfg = cfg or {}
-				local scroll, order = resolveScroll(cfg.Column)
+				local scroll, order = resolveScroll(cfg.Column, 1)
 
 				local Row = Instance.new("Frame")
 				Row.LayoutOrder = order
@@ -1046,6 +1432,7 @@ function Library:MakeWindow(config)
 					b.TextColor3 = Library.Theme.TextWhite
 					b.Font = Enum.Font.Gotham
 					b.TextSize = 13
+					b.TextTruncate = Enum.TextTruncate.AtEnd
 					b.Parent = Row
 					addCorner(b, 6)
 					addStroke(b, Library.Theme.NeonBorder, 1.1, 0.25)
@@ -1072,16 +1459,20 @@ function Library:MakeWindow(config)
 			end
 			Methods.CreateApplyButton = Methods.AddApplyButton
 
-			-- 4. DROPDOWN (1:1 wie "Hitbox -> [ Head ⌄ ]" im Bild)
-			function Methods:AddDropdown(cfg)
-				cfg = type(cfg) == "table" and cfg or { Name = tostring(cfg) }
+			-- 4. DROPDOWN (1:1 wie "Hitbox -> [ Head ⌄ ]" im Bild, inkl. Rayfield/Orion/Kavo Support)
+			function Methods.AddDropdown(selfOrA, a, b, c, d)
+				local cfg = (selfOrA == Methods or type(selfOrA) == "table" and selfOrA.AddDropdown)
+					and normalizeArgs("Dropdown", a, b, c, d)
+					or normalizeArgs("Dropdown", selfOrA, a, b, c)
+
 				local name     = cfg.Name or cfg.Title or "Dropdown"
-				local options  = cfg.Options or cfg.List or { "Head", "Torso", "HumanoidRootPart" }
-				local default  = cfg.Default or cfg.CurrentOption or options[1] or ""
+				local options  = cfg.Options or cfg.List or cfg.Values or { "Option 1", "Option 2" }
+				local rawDef   = cfg.Default or cfg.CurrentOption or options[1] or ""
+				local default  = type(rawDef) == "table" and (rawDef[1] or "") or rawDef
 				local callback = cfg.Callback or function() end
 				local flag     = cfg.Flag
 
-				local scroll, order = resolveScroll(cfg.Column)
+				local scroll, order = resolveScroll(cfg.Column, 1.5)
 
 				local Container = Instance.new("Frame")
 				Container.Name = name .. "_Dropdown"
@@ -1099,6 +1490,7 @@ function Library:MakeWindow(config)
 				TitleLbl.Font = Enum.Font.Gotham
 				TitleLbl.TextSize = 14
 				TitleLbl.TextXAlignment = Enum.TextXAlignment.Left
+				TitleLbl.TextTruncate = Enum.TextTruncate.AtEnd
 				TitleLbl.Parent = Container
 
 				local MainBox = Instance.new("TextButton")
@@ -1153,7 +1545,14 @@ function Library:MakeWindow(config)
 				addPadding(OptionHolder, 4, 4, 4, 4)
 
 				local isOpen = false
+				local changedListeners = {}
 				local DropdownObj = { Value = default, Options = options, Type = "Dropdown" }
+
+				function DropdownObj:OnChanged(fn)
+					if type(fn) == "function" then
+						table.insert(changedListeners, fn)
+					end
+				end
 
 				local function toggleOpen(state)
 					isOpen = state
@@ -1167,10 +1566,15 @@ function Library:MakeWindow(config)
 				end
 
 				function DropdownObj:Set(val)
+					if type(val) == "table" then val = val[1] end
 					DropdownObj.Value = val
-					SelectedLbl.Text = tostring(val)
+					SelectedLbl.Text = tostring(val or "")
 					task.spawn(callback, val)
+					for _, fn in ipairs(changedListeners) do
+						task.spawn(fn, val)
+					end
 				end
+				DropdownObj.SetValue = DropdownObj.Set
 
 				function DropdownObj:Refresh(newOptions, clearCurrent)
 					DropdownObj.Options = newOptions or {}
@@ -1187,6 +1591,7 @@ function Library:MakeWindow(config)
 						OptBtn.TextColor3 = Library.Theme.TextWhite
 						OptBtn.Font = Enum.Font.Gotham
 						OptBtn.TextSize = 12
+						OptBtn.TextTruncate = Enum.TextTruncate.AtEnd
 						OptBtn.Parent = OptionHolder
 						addCorner(OptBtn, 4)
 
@@ -1200,31 +1605,37 @@ function Library:MakeWindow(config)
 						DropdownObj.Value = nil
 					end
 				end
+				DropdownObj.SetValues = DropdownObj.Refresh
 
 				MainBox.MouseButton1Click:Connect(function()
 					toggleOpen(not isOpen)
 				end)
 
 				DropdownObj:Refresh(options, false)
-				DropdownObj:Set(default)
-				if flag then
-					Library.Flags[flag] = DropdownObj
+				if default ~= "" then
+					DropdownObj:Set(default)
 				end
+				registerFlag(flag, name, DropdownObj)
 				return DropdownObj
 			end
 			Methods.CreateDropdown = Methods.AddDropdown
 			Methods.MakeDropdown   = Methods.AddDropdown
+			Methods.NewDropdown    = Methods.AddDropdown
 			Methods.Dropdown       = Methods.AddDropdown
+			Methods.addDropdown    = Methods.AddDropdown
 
 			-- 5. COLORPICKER (Mit Vorschau & HSV-Sliders)
-			function Methods:AddColorpicker(cfg)
-				cfg = type(cfg) == "table" and cfg or { Name = tostring(cfg) }
+			function Methods.AddColorpicker(selfOrA, a, b, c, d)
+				local cfg = (selfOrA == Methods or type(selfOrA) == "table" and selfOrA.AddColorpicker)
+					and normalizeArgs("Colorpicker", a, b, c, d)
+					or normalizeArgs("Colorpicker", selfOrA, a, b, c)
+
 				local name     = cfg.Name or cfg.Title or "Color Picker"
 				local default  = cfg.Default or cfg.Color or Color3.fromRGB(130, 215, 250)
 				local callback = cfg.Callback or function() end
 				local flag     = cfg.Flag
 
-				local scroll, order = resolveScroll(cfg.Column)
+				local scroll, order = resolveScroll(cfg.Column, 1.2)
 
 				local Container = Instance.new("Frame")
 				Container.Name = name .. "_Colorpicker"
@@ -1245,6 +1656,7 @@ function Library:MakeWindow(config)
 				PickerBtn.TextColor3 = Library.Theme.TextWhite
 				PickerBtn.Font = Enum.Font.Gotham
 				PickerBtn.TextSize = 13
+				PickerBtn.TextTruncate = Enum.TextTruncate.AtEnd
 				PickerBtn.Parent = TopRow
 				addCorner(PickerBtn, 6)
 				addStroke(PickerBtn, Library.Theme.NeonBorder, 1.1, 0.25)
@@ -1274,15 +1686,26 @@ function Library:MakeWindow(config)
 				addStroke(Drawer, Library.Theme.SubBorder, 1, 0.35)
 
 				local h, s, v = Color3.toHSV(default)
+				local changedListeners = {}
 				local ColorObj = { Value = default, Type = "Colorpicker" }
+
+				function ColorObj:OnChanged(fn)
+					if type(fn) == "function" then
+						table.insert(changedListeners, fn)
+					end
+				end
 
 				function ColorObj:Set(col)
 					if typeof(col) == "Color3" then
 						ColorObj.Value = col
 						PreviewBtn.BackgroundColor3 = col
 						task.spawn(callback, col)
+						for _, fn in ipairs(changedListeners) do
+							task.spawn(fn, col)
+						end
 					end
 				end
+				ColorObj.SetValue = ColorObj.Set
 
 				local function makeChannelBar(label, yOffset, initPct, onChange)
 					local lbl = Instance.new("TextLabel")
@@ -1351,29 +1774,35 @@ function Library:MakeWindow(config)
 				PickerBtn.MouseButton1Click:Connect(toggleDrawer)
 				PreviewBtn.MouseButton1Click:Connect(toggleDrawer)
 
-				if flag then
-					Library.Flags[flag] = ColorObj
-				end
+				registerFlag(flag, name, ColorObj)
 				return ColorObj
 			end
 			Methods.AddColorPicker    = Methods.AddColorpicker
+			Methods.CreateColorpicker = Methods.AddColorpicker
 			Methods.CreateColorPicker = Methods.AddColorpicker
+			Methods.NewColorPicker    = Methods.AddColorpicker
 			Methods.Colorpicker       = Methods.AddColorpicker
+			Methods.addColorPicker    = Methods.AddColorpicker
 
-			-- 6. KEYBIND (AddBind / CreateBind / AddKeybind)
-			function Methods:AddBind(cfg)
-				cfg = type(cfg) == "table" and cfg or { Name = tostring(cfg) }
+			-- 6. KEYBIND (AddBind / CreateBind / AddKeybind / NewKeybind)
+			function Methods.AddBind(selfOrA, a, b, c, d)
+				local cfg = (selfOrA == Methods or type(selfOrA) == "table" and selfOrA.AddBind)
+					and normalizeArgs("Bind", a, b, c, d)
+					or normalizeArgs("Bind", selfOrA, a, b, c)
+
 				local name     = cfg.Name or cfg.Title or "Keybind"
 				local default  = cfg.Default or cfg.CurrentKeybind or Enum.KeyCode.X
-				local hold     = cfg.Hold or false
+				local hold     = cfg.Hold or cfg.HoldToInteract or false
 				local callback = cfg.Callback or function() end
 				local flag     = cfg.Flag
 
 				if type(default) == "string" and Enum.KeyCode[default] then
 					default = Enum.KeyCode[default]
+				elseif typeof(default) ~= "EnumItem" then
+					default = Enum.KeyCode.X
 				end
 
-				local scroll, order = resolveScroll(cfg.Column)
+				local scroll, order = resolveScroll(cfg.Column, 1)
 
 				local Row = Instance.new("Frame")
 				Row.Name = name .. "_Bind"
@@ -1417,6 +1846,7 @@ function Library:MakeWindow(config)
 					BindObj.Value = currentKey
 					BindBtn.Text = currentKey and currentKey.Name or "None"
 				end
+				BindObj.SetValue = BindObj.Set
 
 				BindBtn.MouseButton1Click:Connect(function()
 					binding = true
@@ -1450,27 +1880,31 @@ function Library:MakeWindow(config)
 					end
 				end)
 
-				if flag then
-					Library.Flags[flag] = BindObj
-				end
+				registerFlag(flag, name, BindObj)
 				return BindObj
 			end
 			Methods.CreateBind    = Methods.AddBind
 			Methods.AddKeybind    = Methods.AddBind
 			Methods.CreateKeybind = Methods.AddBind
+			Methods.NewKeybind    = Methods.AddBind
 			Methods.Bind          = Methods.AddBind
+			Methods.Keybind       = Methods.AddBind
+			Methods.addKeybind    = Methods.AddBind
 
-			-- 7. TEXTBOX / INPUT (AddTextbox / CreateInput)
-			function Methods:AddTextbox(cfg)
-				cfg = type(cfg) == "table" and cfg or { Name = tostring(cfg) }
+			-- 7. TEXTBOX / INPUT (AddTextbox / CreateInput / NewTextBox)
+			function Methods.AddTextbox(selfOrA, a, b, c, d)
+				local cfg = (selfOrA == Methods or type(selfOrA) == "table" and selfOrA.AddTextbox)
+					and normalizeArgs("Textbox", a, b, c, d)
+					or normalizeArgs("Textbox", selfOrA, a, b, c)
+
 				local name        = cfg.Name or cfg.Title or "Input"
 				local default     = cfg.Default or ""
 				local placeholder = cfg.Placeholder or cfg.PlaceholderText or "Text eingeben..."
-				local disappear   = cfg.TextDisappear or false
+				local disappear   = cfg.TextDisappear or cfg.RemoveTextAfterFocusLost or false
 				local callback    = cfg.Callback or function() end
 				local flag        = cfg.Flag
 
-				local scroll, order = resolveScroll(cfg.Column)
+				local scroll, order = resolveScroll(cfg.Column, 1.4)
 
 				local Container = Instance.new("Frame")
 				Container.Name = name .. "_Textbox"
@@ -1487,6 +1921,7 @@ function Library:MakeWindow(config)
 				Lbl.Font = Enum.Font.Gotham
 				Lbl.TextSize = 13
 				Lbl.TextXAlignment = Enum.TextXAlignment.Left
+				Lbl.TextTruncate = Enum.TextTruncate.AtEnd
 				Lbl.Parent = Container
 
 				local Box = Instance.new("TextBox")
@@ -1514,6 +1949,7 @@ function Library:MakeWindow(config)
 					TextboxObj.Value = Box.Text
 					task.spawn(callback, Box.Text)
 				end
+				TextboxObj.SetValue = TextboxObj.Set
 
 				Box.Focused:Connect(function()
 					boxStroke.Color = Library.Theme.NeonBorder
@@ -1529,25 +1965,28 @@ function Library:MakeWindow(config)
 					end
 				end)
 
-				if flag then
-					Library.Flags[flag] = TextboxObj
-				end
+				registerFlag(flag, name, TextboxObj)
 				return TextboxObj
 			end
 			Methods.CreateTextbox = Methods.AddTextbox
 			Methods.CreateInput   = Methods.AddTextbox
 			Methods.AddInput      = Methods.AddTextbox
+			Methods.NewTextBox    = Methods.AddTextbox
+			Methods.Textbox       = Methods.AddTextbox
+			Methods.Input         = Methods.AddTextbox
+			Methods.addTextbox    = Methods.AddTextbox
 
-			-- 8. LABEL & PARAGRAPH
-			function Methods:AddLabel(text)
-				if type(text) == "table" then text = text.Name or text.Text or "" end
-				local scroll, order = resolveScroll()
+			-- 8. LABEL, PARAGRAPH & DIVIDER
+			function Methods.AddLabel(selfOrText, maybeText)
+				local text = (selfOrText == Methods or type(selfOrText) == "table" and selfOrText.AddLabel) and maybeText or selfOrText
+				if type(text) == "table" then text = text.Name or text.Text or text.Title or "" end
+				local scroll, order = resolveScroll(nil, 0.7)
 
 				local Lbl = Instance.new("TextLabel")
 				Lbl.LayoutOrder = order
 				Lbl.Size = UDim2.new(1, 0, 0, 20)
 				Lbl.BackgroundTransparency = 1
-				Lbl.Text = tostring(text)
+				Lbl.Text = tostring(text or "")
 				Lbl.TextColor3 = Library.Theme.TextWhite
 				Lbl.Font = Enum.Font.Gotham
 				Lbl.TextSize = 13
@@ -1559,16 +1998,27 @@ function Library:MakeWindow(config)
 				function LabelObj:Set(newText)
 					Lbl.Text = tostring(newText)
 				end
+				LabelObj.UpdateLabel = LabelObj.Set
+				LabelObj.SetText     = LabelObj.Set
 				return LabelObj
 			end
 			Methods.CreateLabel = Methods.AddLabel
+			Methods.NewLabel    = Methods.AddLabel
+			Methods.Label       = Methods.AddLabel
+			Methods.addLabel    = Methods.AddLabel
 
-			function Methods:AddParagraph(title, content)
+			function Methods.AddParagraph(selfOrTitle, a, b)
+				local title, content
+				if selfOrTitle == Methods or (type(selfOrTitle) == "table" and selfOrTitle.AddParagraph) then
+					title, content = a, b
+				else
+					title, content = selfOrTitle, a
+				end
 				if type(title) == "table" then
 					content = title.Content or title.Text or ""
 					title = title.Title or title.Name or "Info"
 				end
-				local scroll, order = resolveScroll()
+				local scroll, order = resolveScroll(nil, 1.5)
 
 				local Box = Instance.new("Frame")
 				Box.LayoutOrder = order
@@ -1583,18 +2033,19 @@ function Library:MakeWindow(config)
 				T.Size = UDim2.new(1, -16, 0, 18)
 				T.Position = UDim2.new(0, 8, 0, 4)
 				T.BackgroundTransparency = 1
-				T.Text = tostring(title)
+				T.Text = tostring(title or "Info")
 				T.TextColor3 = Library.Theme.TextWhite
 				T.Font = Enum.Font.GothamMedium
 				T.TextSize = 13
 				T.TextXAlignment = Enum.TextXAlignment.Left
+				T.TextTruncate = Enum.TextTruncate.AtEnd
 				T.Parent = Box
 
 				local C = Instance.new("TextLabel")
 				C.Size = UDim2.new(1, -16, 1, -24)
 				C.Position = UDim2.new(0, 8, 0, 22)
 				C.BackgroundTransparency = 1
-				C.Text = tostring(content)
+				C.Text = tostring(content or "")
 				C.TextColor3 = Library.Theme.TextMuted
 				C.Font = Enum.Font.Gotham
 				C.TextSize = 11
@@ -1615,36 +2066,60 @@ function Library:MakeWindow(config)
 				return ParaObj
 			end
 			Methods.CreateParagraph = Methods.AddParagraph
+			Methods.Paragraph       = Methods.AddParagraph
+
+			function Methods:AddDivider()
+				local scroll, order = resolveScroll(nil, 0.3)
+				local Div = Instance.new("Frame")
+				Div.LayoutOrder = order
+				Div.Size = UDim2.new(1, 0, 0, 1)
+				Div.BackgroundColor3 = Library.Theme.SubBorder
+				Div.BackgroundTransparency = 0.5
+				Div.BorderSizePixel = 0
+				Div.Parent = scroll
+				return Div
+			end
+			Methods.CreateDivider = Methods.AddDivider
+			Methods.AddSeparator  = Methods.AddDivider
 
 			return Methods
 		end
 
-		local TabObj = createMethodsForTarget(function(explicitCol)
-			return getTargetScroll(explicitCol)
+		local TabObj = createMethodsForTarget(function(explicitCol, weightCost)
+			return getTargetScroll(explicitCol, weightCost)
 		end)
 
 		-- ====================================================================
 		-- SECTION CREATION (Routet automatisch in Spalte 1 -> 2 -> 3!)
+		-- Unterstützt Orion, Rayfield, Kavo, Linoria & Venyx!
 		-- ====================================================================
-		function TabObj:AddSection(secConfig)
+		local function addSectionInternal(secConfig, forcedColumn)
 			if type(secConfig) == "string" then
 				secConfig = { Name = secConfig }
 			end
 			secConfig = secConfig or {}
-			local secName = secConfig.Name or secConfig.Title or "Section"
+			local secName = secConfig.Name or secConfig.Title or ("Section " .. tostring(sectionCounter + 1))
 
 			sectionCounter = sectionCounter + 1
-			local targetColIdx = secConfig.Column or ((sectionCounter - 1) % 3 + 1)
+			local targetColIdx = forcedColumn or secConfig.Column
+			if not targetColIdx then
+				if sectionCounter <= 3 then
+					targetColIdx = sectionCounter
+				else
+					targetColIdx = getShortestColumnIndex()
+				end
+			end
 			targetColIdx = math.clamp(targetColIdx, 1, 3)
 			currentColumnIndex = targetColIdx
 
 			local col = Columns[targetColIdx]
-			if not col.HasCustomTitle then
+			if not col.HasCustomTitle and col.ItemCount == 0 then
 				col.HeaderTitle.Text = secName
 				col.HasCustomTitle = true
 			else
 				-- Wenn in derselben Spalte noch eine weitere Section geöffnet wird, füge einen metallischen Sub-Header ein
 				col.ItemCount = col.ItemCount + 1
+				col.Weight = col.Weight + 0.9
 				local SubHdr = Instance.new("Frame")
 				SubHdr.LayoutOrder = col.ItemCount
 				SubHdr.Size = UDim2.new(1, 0, 0, 26)
@@ -1663,17 +2138,38 @@ function Library:MakeWindow(config)
 				SubTxt.Font = Enum.Font.GothamMedium
 				SubTxt.TextSize = 13
 				SubTxt.TextXAlignment = Enum.TextXAlignment.Left
+				SubTxt.TextTruncate = Enum.TextTruncate.AtEnd
 				SubTxt.Parent = SubHdr
 			end
 
-			local SectionObj = createMethodsForTarget(function(explicitCol)
-				return getTargetScroll(explicitCol or targetColIdx)
+			updateResponsiveColumns()
+
+			local SectionObj = createMethodsForTarget(function(explicitCol, weightCost)
+				return getTargetScroll(explicitCol or targetColIdx, weightCost)
 			end)
 			return SectionObj
 		end
+
+		function TabObj.AddSection(selfOrSec, maybeSec)
+			local cfg = (selfOrSec == TabObj) and maybeSec or selfOrSec
+			return addSectionInternal(cfg, nil)
+		end
 		TabObj.CreateSection = TabObj.AddSection
 		TabObj.MakeSection   = TabObj.AddSection
+		TabObj.NewSection    = TabObj.AddSection
 		TabObj.Section       = TabObj.AddSection
+		TabObj.addSection    = TabObj.AddSection
+		TabObj.AddGroupbox   = TabObj.AddSection
+
+		function TabObj.AddLeftGroupbox(selfOrSec, maybeSec)
+			local cfg = (selfOrSec == TabObj) and maybeSec or selfOrSec
+			return addSectionInternal(cfg, 1)
+		end
+		function TabObj.AddRightGroupbox(selfOrSec, maybeSec)
+			local cfg = (selfOrSec == TabObj) and maybeSec or selfOrSec
+			local colIdx = (Columns[2].ItemCount <= Columns[3].ItemCount) and 2 or 3
+			return addSectionInternal(cfg, colIdx)
+		end
 
 		TabObj._setVisual = setTabVisual
 
@@ -1684,10 +2180,10 @@ function Library:MakeWindow(config)
 			WindowObj.ActiveTab = TabObj
 		end)
 
-		table.insert(self.Tabs, TabObj)
-		if #self.Tabs == 1 then
+		table.insert(WindowObj.Tabs, TabObj)
+		if #WindowObj.Tabs == 1 then
 			setTabVisual(true)
-			self.ActiveTab = TabObj
+			WindowObj.ActiveTab = TabObj
 		else
 			setTabVisual(false)
 		end
@@ -1697,19 +2193,52 @@ function Library:MakeWindow(config)
 
 	WindowObj.CreateTab = WindowObj.MakeTab
 	WindowObj.AddTab    = WindowObj.MakeTab
+	WindowObj.NewTab    = WindowObj.MakeTab
 	WindowObj.Tab       = WindowObj.MakeTab
+	WindowObj.addPage   = WindowObj.MakeTab
+	WindowObj.AddPage   = WindowObj.MakeTab
 
-	table.insert(self.Windows, WindowObj)
+	-- Fallback: Falls ein Script Elemente direkt auf Window aufruft (ohne vorher MakeTab zu rufen!)
+	local function getOrMakeDefaultTab()
+		if #WindowObj.Tabs == 0 then
+			WindowObj:MakeTab({ Name = "Main" })
+		end
+		return WindowObj.Tabs[1]
+	end
+	for _, methodName in ipairs({
+		"AddSection", "CreateSection", "NewSection",
+		"AddToggle", "CreateToggle", "NewToggle",
+		"AddSlider", "CreateSlider", "NewSlider",
+		"AddButton", "CreateButton", "NewButton",
+		"AddDropdown", "CreateDropdown", "NewDropdown",
+		"AddColorpicker", "CreateColorPicker", "NewColorPicker",
+		"AddBind", "CreateBind", "NewKeybind",
+		"AddTextbox", "CreateInput", "NewTextBox",
+		"AddLabel", "CreateLabel", "NewLabel",
+		"AddParagraph", "CreateParagraph"
+	}) do
+		if not WindowObj[methodName] then
+			WindowObj[methodName] = function(self, ...)
+				local tab = getOrMakeDefaultTab()
+				return tab[methodName](tab, ...)
+			end
+		end
+	end
+
+	table.insert(Library.Windows, WindowObj)
 	return WindowObj
 end
 
 Library.CreateWindow = Library.MakeWindow
 Library.Window       = Library.MakeWindow
 Library.NewWindow    = Library.MakeWindow
+Library.CreateLib    = Library.MakeWindow
+Library.Load         = Library.MakeWindow
 
 -- ============================================================================
 -- 1:1 DEMO PREVIEW (Wird automatisch angezeigt, wenn direkt ausgeführt;
--- sobald ein eigenes Skript Library:MakeWindow() aufruft, wird die Demo ersetzt!)
+-- sobald ein eigenes oder fremdes Script z.B. Orion MakeWindow() aufruft,
+-- wird die Demo sofort durch das Script ersetzt!)
 -- ============================================================================
 task.defer(function()
 	if #Library.Windows == 0 then
@@ -1718,21 +2247,32 @@ task.defer(function()
 			ToggleKey = Enum.KeyCode.RightShift
 		})
 
-		-- Sobald der Nutzer selbst MakeWindow aufruft, wird das Demo-Fenster automatisch entfernt
+		-- Sobald ein Script MakeWindow / CreateWindow / CreateLib aufruft, wird die Demo entfernt
 		local origMakeWindow = Library.MakeWindow
-		Library.MakeWindow = function(self, cfg)
+		local function replaceDemoAndMakeWindow(selfOrCfg, maybeCfg)
 			if DemoWin and DemoWin.ScreenGui and DemoWin.ScreenGui.Parent then
 				DemoWin.ScreenGui:Destroy()
 			end
-			Library.MakeWindow    = origMakeWindow
-			Library.CreateWindow  = origMakeWindow
-			Library.Window        = origMakeWindow
-			Library.NewWindow     = origMakeWindow
-			return origMakeWindow(self, cfg)
+			for i = #Library.Windows, 1, -1 do
+				if Library.Windows[i] == DemoWin then
+					table.remove(Library.Windows, i)
+				end
+			end
+			Library.MakeWindow   = origMakeWindow
+			Library.CreateWindow = origMakeWindow
+			Library.Window       = origMakeWindow
+			Library.NewWindow    = origMakeWindow
+			Library.CreateLib    = origMakeWindow
+			Library.Load         = origMakeWindow
+			return origMakeWindow(selfOrCfg, maybeCfg)
 		end
-		Library.CreateWindow = Library.MakeWindow
-		Library.Window       = Library.MakeWindow
-		Library.NewWindow    = Library.MakeWindow
+
+		Library.MakeWindow   = replaceDemoAndMakeWindow
+		Library.CreateWindow = replaceDemoAndMakeWindow
+		Library.Window       = replaceDemoAndMakeWindow
+		Library.NewWindow    = replaceDemoAndMakeWindow
+		Library.CreateLib    = replaceDemoAndMakeWindow
+		Library.Load         = replaceDemoAndMakeWindow
 
 		-- Die 5 Tabs exakt wie auf dem Bild: ESP | Visuals | Aimbot | Settings | Lua Script
 		local EspTab      = DemoWin:MakeTab({ Name = "ESP" })
@@ -1815,6 +2355,7 @@ task.defer(function()
 			end,
 			ResetCallback = function()
 				DemoWin:SetOpacity(0.68)
+				DemoWin:SetScale(1.0)
 				Library:MakeNotification({
 					Name = "NightSystem",
 					Content = "Settings reset to default.",
@@ -1833,6 +2374,16 @@ task.defer(function()
 		aSec1:AddBind({ Name = "Aimbot Keybind", Default = Enum.KeyCode.E })
 
 		local sSec1 = SettingsTab:AddSection({ Name = "UI Settings" })
+		sSec1:AddSlider({
+			Name = "UI Scale (Size)",
+			Min = 60,
+			Max = 130,
+			Default = 100,
+			ValueName = "%",
+			Callback = function(val)
+				DemoWin:SetScale(val / 100)
+			end
+		})
 		sSec1:AddBind({
 			Name = "Toggle UI Keybind",
 			Default = Enum.KeyCode.RightShift,
