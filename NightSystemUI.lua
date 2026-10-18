@@ -3506,12 +3506,17 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 		local isSettingsOpen = false
 		local isAnimatingSettings = false
+		local currentSetTab = "General"
+		local switchSetTab = nil
 
 		local function openSettingsAnimated()
 			if isAnimatingSettings or isSettingsOpen then return end
 			isAnimatingSettings = true
 			isSettingsOpen = true
 			SettingsWin.Visible = true
+			if switchSetTab then
+				switchSetTab(currentSetTab or "General")
+			end
 			SettingsScale.Scale = 0.02
 			SettingsWin.BackgroundTransparency = 0.8
 			tween(SettingsWin, TweenInfo.new(0.20), { BackgroundTransparency = 0.04 })
@@ -3721,13 +3726,14 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		SetTabBar.Parent = SettingsWin
 
 		local SetTabDivider = Instance.new("Frame")
+		SetTabDivider.Name = "SetTabDivider"
 		SetTabDivider.Size = UDim2.new(1, 0, 0, 1)
-		SetTabDivider.Position = UDim2.new(0, 0, 1, -1)
+		SetTabDivider.Position = UDim2.new(0, 0, 0, 76)
 		SetTabDivider.BackgroundColor3 = Color3.fromRGB(38, 42, 55)
 		SetTabDivider.BackgroundTransparency = 0.4
 		SetTabDivider.BorderSizePixel = 0
 		SetTabDivider.ZIndex = 62
-		SetTabDivider.Parent = SetTabBar
+		SetTabDivider.Parent = SettingsWin
 
 		local SetTabLayout = Instance.new("UIListLayout")
 		SetTabLayout.FillDirection = Enum.FillDirection.Horizontal
@@ -3745,7 +3751,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		SetContent.ZIndex = 62
 		SetContent.Parent = SettingsWin
 
-		local currentSetTab = "General"
+		currentSetTab = "General"
 		local setTabs = {}
 		local setScrolls = {}
 
@@ -3758,7 +3764,8 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			scroll.BorderSizePixel = 0
 			scroll.ScrollBarThickness = 4
 			scroll.ScrollBarImageColor3 = Library.Theme.Accent
-			scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+			scroll.AutomaticCanvasSize = Enum.AutomaticCanvasSize.Y
+			scroll.CanvasSize = UDim2.new(0, 0, 0, 420)
 			scroll.ZIndex = 62
 			scroll.Visible = false
 			scroll.Parent = SetContent
@@ -3771,7 +3778,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			addPadding(scroll, 4, 4, 4, 4)
 
 			layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-				scroll.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 16)
+				scroll.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 20)
 			end)
 
 			setScrolls[name] = scroll
@@ -3783,7 +3790,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		local aimFovScroll = createSetTabScroll("Aim FOV")
 		local aimbotScroll = createSetTabScroll("Aimbot")
 
-		local function switchSetTab(tabName)
+		switchSetTab = function(tabName)
 			currentSetTab = tabName
 			for name, btn in pairs(setTabs) do
 				local isActive = (name == tabName)
@@ -3816,7 +3823,14 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				end
 			end
 			for name, scroll in pairs(setScrolls) do
-				scroll.Visible = (name == tabName)
+				local isVis = (name == tabName)
+				scroll.Visible = isVis
+				if isVis then
+					local l = scroll:FindFirstChildOfClass("UIListLayout")
+					if l then
+						scroll.CanvasSize = UDim2.new(0, 0, 0, math.max(l.AbsoluteContentSize.Y + 24, 420))
+					end
+				end
 			end
 		end
 
@@ -3859,14 +3873,17 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			btn.MouseButton1Click:Connect(function()
 				switchSetTab(name)
 			end)
+			btn.Activated:Connect(function()
+				switchSetTab(name)
+			end)
 
 			setTabs[name] = btn
 			return btn
 		end
 
 		createSetTabBtn("General", "⚙", "General")
-		createSetTabBtn("Crosshair", "🎯", "Crosshair")
-		createSetTabBtn("Aim FOV", "⭕", "Aim FOV")
+		createSetTabBtn("Crosshair", "⌖", "Crosshair")
+		createSetTabBtn("Aim FOV", "◎", "Aim FOV")
 		createSetTabBtn("Aimbot", "⚡", "Aimbot")
 
 		switchSetTab("General")
