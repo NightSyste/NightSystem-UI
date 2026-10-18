@@ -1424,32 +1424,24 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		end
 	end)
 
+	local preMinimizePos = UDim2.new(0.5, 0, 0.5, 0)
 	createGlassControlBtn("−", -102, false, function()
 		if isAnimatingWindow then return end
 		isMinimized = not isMinimized
-		local halfDelta = math.floor((winHeight - 36) / 2 * userScale)
 		if isMinimized then
+			preMinimizePos = MainWin.Position
 			ContentWrap.Size = UDim2.new(1, 0, 0, winHeight - 36)
 			MainWin.ClipsDescendants = true
 			BottomAccent.Visible = false
-			tween(MainWin, TweenInfo.new(0.24, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+			tween(MainWin, TweenInfo.new(0.28, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
 				Size = UDim2.new(0, winWidth, 0, 36),
-				Position = UDim2.new(
-					MainWin.Position.X.Scale,
-					MainWin.Position.X.Offset,
-					MainWin.Position.Y.Scale,
-					MainWin.Position.Y.Offset - halfDelta
-				)
+				Position = UDim2.new(0.5, 0, 0, 24)
 			})
 		else
-			local t = tween(MainWin, TweenInfo.new(0.24, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+			local restorePos = preMinimizePos or UDim2.new(0.5, 0, 0.5, 0)
+			local t = tween(MainWin, TweenInfo.new(0.28, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
 				Size = UDim2.new(0, winWidth, 0, winHeight),
-				Position = UDim2.new(
-					MainWin.Position.X.Scale,
-					MainWin.Position.X.Offset,
-					MainWin.Position.Y.Scale,
-					MainWin.Position.Y.Offset + halfDelta
-				)
+				Position = restorePos
 			})
 			t.Completed:Connect(function()
 				if not isMinimized then
@@ -4472,6 +4464,107 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			updateCrosshair()
 		end)
 
+		local savedAimFovEnabled = Library.ConfigStore["_NS_AimFovEnabled"]
+		local aimFovEnabled = (savedAimFovEnabled ~= nil) and (not not savedAimFovEnabled) or false
+
+		local savedAimFovRadius = tonumber(Library.ConfigStore["_NS_AimFovRadius"])
+		local aimFovRadius = savedAimFovRadius or 120
+
+		local savedAimFovPos = Library.ConfigStore["_NS_AimFovPosMode"]
+		local aimFovPosMode = savedAimFovPos and tostring(savedAimFovPos) or "Mouse Cursor"
+
+		local savedAimFovThickness = tonumber(Library.ConfigStore["_NS_AimFovThickness"])
+		local aimFovThickness = savedAimFovThickness or 2
+
+		local savedAimFovFilled = Library.ConfigStore["_NS_AimFovFilled"]
+		local aimFovFilled = (savedAimFovFilled ~= nil) and (not not savedAimFovFilled) or false
+
+		local savedAimFovCol = Library.ConfigStore["_NS_AimFovColor"]
+		local aimFovColor = (savedAimFovCol and deserializeValue(savedAimFovCol)) or Color3.fromRGB(85, 115, 250)
+
+		local AimFovGui = Instance.new("ScreenGui")
+		AimFovGui.Name = "NightSystem_AimFovGui"
+		AimFovGui.DisplayOrder = 999998
+		AimFovGui.ResetOnSpawn = false
+		mountScreenGui(AimFovGui, "NightSystem_AimFovGui")
+
+		local FovCircle = Instance.new("Frame")
+		FovCircle.Name = "FovCircle"
+		FovCircle.AnchorPoint = Vector2.new(0.5, 0.5)
+		FovCircle.Position = UDim2.new(0.5, 0, 0.5, 0)
+		FovCircle.Size = UDim2.new(0, aimFovRadius * 2, 0, aimFovRadius * 2)
+		FovCircle.BackgroundColor3 = aimFovColor
+		FovCircle.BackgroundTransparency = aimFovFilled and 0.88 or 1
+		FovCircle.BorderSizePixel = 0
+		FovCircle.Visible = false
+		FovCircle.ZIndex = 50
+		FovCircle.Parent = AimFovGui
+		addCorner(FovCircle, 9999)
+
+		local fovStroke = addStroke(FovCircle, aimFovColor, aimFovThickness, 0.1)
+
+		RunService.RenderStepped:Connect(function()
+			if not FovCircle then return end
+			if not aimFovEnabled then
+				if FovCircle.Visible then FovCircle.Visible = false end
+				return
+			end
+			FovCircle.Visible = true
+			FovCircle.Size = UDim2.new(0, aimFovRadius * 2, 0, aimFovRadius * 2)
+			fovStroke.Thickness = aimFovThickness
+			fovStroke.Color = aimFovColor
+			FovCircle.BackgroundColor3 = aimFovColor
+			FovCircle.BackgroundTransparency = aimFovFilled and 0.88 or 1
+
+			if aimFovPosMode == "Screen Center" then
+				FovCircle.Position = UDim2.new(0.5, 0, 0.5, 0)
+			else
+				local mousePos = UserInputService:GetMouseLocation()
+				FovCircle.Position = UDim2.new(0, mousePos.X, 0, mousePos.Y)
+			end
+		end)
+
+		addSetSection("Aim FOV Settings")
+
+		local setToggleAimFov = addSetToggle("Enable Aim FOV", aimFovEnabled, function(state)
+			aimFovEnabled = state
+			Library.ConfigStore["_NS_AimFovEnabled"] = state
+			scheduleAutoSave()
+			if not state and FovCircle then
+				FovCircle.Visible = false
+			end
+		end)
+
+		local setSliderAimFovRadius = addSetSlider("Aim FOV Radius", 20, 500, aimFovRadius, function(val)
+			aimFovRadius = val
+			Library.ConfigStore["_NS_AimFovRadius"] = aimFovRadius
+			scheduleAutoSave()
+		end)
+
+		local setDropAimFovPos = addSetDropdown("Aim FOV Position", { "Mouse Cursor", "Screen Center" }, aimFovPosMode, function(opt)
+			aimFovPosMode = tostring(opt)
+			Library.ConfigStore["_NS_AimFovPosMode"] = aimFovPosMode
+			scheduleAutoSave()
+		end)
+
+		local setSliderAimFovThickness = addSetSlider("Aim FOV Thickness", 1, 6, aimFovThickness, function(val)
+			aimFovThickness = val
+			Library.ConfigStore["_NS_AimFovThickness"] = aimFovThickness
+			scheduleAutoSave()
+		end)
+
+		local setToggleAimFovFilled = addSetToggle("Aim FOV Filled", aimFovFilled, function(state)
+			aimFovFilled = state
+			Library.ConfigStore["_NS_AimFovFilled"] = state
+			scheduleAutoSave()
+		end)
+
+		local setColorAimFov = addSetColorpicker("Aim FOV Color", aimFovColor, function(col)
+			aimFovColor = col
+			Library.ConfigStore["_NS_AimFovColor"] = serializeValue(aimFovColor)
+			scheduleAutoSave()
+		end)
+
 		local function doResetAllSettings()
 			setToggleAntiAfk:Set(false)
 			setToggleCustomFov:Set(false)
@@ -4482,6 +4575,13 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			setSliderCrosshairX:Set(0)
 			setSliderCrosshairY:Set(0)
 			setColorCrosshair:Set(Color3.fromRGB(255, 255, 255))
+			setToggleAimFov:Set(false)
+			setSliderAimFovRadius:Set(120)
+			setDropAimFovPos:Set("Mouse Cursor")
+			setSliderAimFovThickness:Set(2)
+			setToggleAimFovFilled:Set(false)
+			setColorAimFov:Set(Color3.fromRGB(85, 115, 250))
+			if FovCircle then FovCircle.Visible = false end
 
 			local cam = workspace.CurrentCamera
 			if cam then cam.FieldOfView = 70 end
@@ -4495,6 +4595,12 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			Library.ConfigStore["_NS_CrosshairX"] = nil
 			Library.ConfigStore["_NS_CrosshairY"] = nil
 			Library.ConfigStore["_NS_CrosshairColor"] = nil
+			Library.ConfigStore["_NS_AimFovEnabled"] = nil
+			Library.ConfigStore["_NS_AimFovRadius"] = nil
+			Library.ConfigStore["_NS_AimFovPosMode"] = nil
+			Library.ConfigStore["_NS_AimFovThickness"] = nil
+			Library.ConfigStore["_NS_AimFovFilled"] = nil
+			Library.ConfigStore["_NS_AimFovColor"] = nil
 			Library:SaveConfiguration()
 
 			SetResetBtn.Text = "✓ Done!"
