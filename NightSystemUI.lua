@@ -29,7 +29,7 @@ local Library = {
 	Toggles = FlagsProxy,
 	Windows = {},
 	Notifications = {},
-	ToggleKey = Enum.KeyCode.RightShift,
+	ToggleKey = Enum.KeyCode.LeftControl,
 	Theme = {
 		NeonBorder   = Color3.fromRGB(145, 212, 248),
 		CardBorder   = Color3.fromRGB(130, 192, 228),
@@ -1084,12 +1084,13 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 	local isAnimatingWindow = false
 	local currentScalePreset = 1
 
+	local pillWidth = math.clamp(#tostring(windowTitle) * 8 + 68, 140, 260)
 	local MobileOpenPill = Instance.new("TextButton")
 	MobileOpenPill.Name = "MobileOpenPill"
 	MobileOpenPill.AnchorPoint = Vector2.new(0.5, 0)
-	MobileOpenPill.Size = UDim2.new(0, 134, 0, 30)
+	MobileOpenPill.Size = UDim2.new(0, pillWidth, 0, 30)
 	MobileOpenPill.Position = UDim2.new(0.5, 0, 0, 10)
-	MobileOpenPill.Text = "✦ Open " .. tostring(windowTitle)
+	MobileOpenPill.Text = "≡ " .. tostring(windowTitle)
 	MobileOpenPill.AutoButtonColor = false
 	MobileOpenPill.Visible = false
 	MobileOpenPill.ZIndex = 40
@@ -1100,10 +1101,62 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 	applyButtonGradient(MobileOpenPill, false)
 	attachButtonFX(MobileOpenPill, pillOpenStroke)
 
+	local function updatePillLabel()
+		if isWindowOpen then
+			MobileOpenPill.Text = "✕ Close " .. tostring(windowTitle)
+		else
+			MobileOpenPill.Text = "≡ Open " .. tostring(windowTitle)
+		end
+	end
+
+	local pillDragging = false
+	local pillDragStart = nil
+	local pillStartPos = nil
+	local pillMoved = false
+
+	MobileOpenPill.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			pillDragging = true
+			pillMoved = false
+			pillDragStart = input.Position
+			pillStartPos = MobileOpenPill.Position
+
+			local endedConn
+			endedConn = input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					pillDragging = false
+					if endedConn then endedConn:Disconnect() end
+				end
+			end)
+		end
+	end)
+
+	UserInputService.InputChanged:Connect(function(input)
+		if pillDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+			local delta = input.Position - pillDragStart
+			if math.abs(delta.X) > 4 or math.abs(delta.Y) > 4 then
+				pillMoved = true
+			end
+			MobileOpenPill.Position = UDim2.new(
+				pillStartPos.X.Scale,
+				pillStartPos.X.Offset + delta.X,
+				pillStartPos.Y.Scale,
+				pillStartPos.Y.Offset + delta.Y
+			)
+		end
+	end)
+
+	UserInputService.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			pillDragging = false
+		end
+	end)
+
 	local function closeWindowAnimated()
 		if isAnimatingWindow or not isWindowOpen then return end
 		isAnimatingWindow = true
 		isWindowOpen = false
+		updatePillLabel()
 
 		local expandScale = userScale * 1.085
 		local step1 = tween(WinScale, TweenInfo.new(0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
@@ -1134,7 +1187,8 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		if isAnimatingWindow or isWindowOpen then return end
 		isAnimatingWindow = true
 		isWindowOpen = true
-		MobileOpenPill.Visible = false
+		updatePillLabel()
+		MobileOpenPill.Visible = true
 
 		WinScale.Scale = 0.02
 		MainWin.BackgroundTransparency = 0.85
@@ -1163,10 +1217,19 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 	end
 
 	MobileOpenPill.MouseButton1Click:Connect(function()
-		openWindowAnimated()
+		if pillMoved then
+			pillMoved = false
+			return
+		end
+		if isWindowOpen then
+			closeWindowAnimated()
+		else
+			openWindowAnimated()
+		end
 	end)
 
 	playPrettyLoader(ScreenGui, windowTitle, function()
+		MobileOpenPill.Visible = true
 		openWindowAnimated()
 	end)
 
@@ -1226,7 +1289,9 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 	end)
 
 	UserInputService.InputBegan:Connect(function(input, gp)
-		if not gp and toggleKey and (input.KeyCode == toggleKey or input.UserInputType == toggleKey) then
+		local isCtrl = (input.KeyCode == Enum.KeyCode.LeftControl or input.KeyCode == Enum.KeyCode.RightControl)
+		local isMatch = (toggleKey and (input.KeyCode == toggleKey or input.UserInputType == toggleKey)) or isCtrl
+		if not gp and isMatch then
 			if isWindowOpen then
 				closeWindowAnimated()
 			else
@@ -1451,7 +1516,10 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 	end
 
 	function WindowObj:SetTitle(newTitle)
-		TitleText.Text = tostring(newTitle)
+		windowTitle = tostring(newTitle)
+		TitleText.Text = windowTitle
+		MobileOpenPill.Size = UDim2.new(0, math.clamp(#windowTitle * 8 + 68, 140, 260), 0, 30)
+		updatePillLabel()
 	end
 
 	function WindowObj:AddConstraints(minSize, maxSize, aspectRatio)
