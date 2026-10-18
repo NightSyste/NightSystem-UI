@@ -53,6 +53,7 @@ local Library = {
 	Notifications = {},
 	ConfigStore = {},
 	ConfigFileName = "NightSystem_Config.json",
+	AutoSave = true,
 	ToggleKey = Enum.KeyCode.LeftControl,
 	Theme = {
 		Accent       = Color3.fromRGB(85, 115, 250),
@@ -681,6 +682,7 @@ end
 
 local isAutoSaving = false
 local function scheduleAutoSave()
+	if not Library.AutoSave then return end
 	if isAutoSaving then return end
 	isAutoSaving = true
 	task.delay(0.25, function()
@@ -707,6 +709,9 @@ function Library:LoadConfiguration(fileName)
 			if type(decoded) == "table" then
 				for k, v in pairs(decoded) do
 					self.ConfigStore[k] = deserializeValue(v)
+				end
+				if self.ConfigStore["_NS_AutoSave"] ~= nil then
+					self.AutoSave = not not self.ConfigStore["_NS_AutoSave"]
 				end
 			end
 		end
@@ -3483,7 +3488,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		local SettingsWin = Instance.new("Frame")
 		SettingsWin.Name = "NightSystem_SettingsWindow"
 		SettingsWin.AnchorPoint = Vector2.new(0.5, 0.5)
-		SettingsWin.Size = UDim2.new(0, 500, 0, 420)
+		SettingsWin.Size = UDim2.new(0, 500, 0, 440)
 		SettingsWin.Position = UDim2.new(0.5, 25, 0.5, 15)
 		SettingsWin.BackgroundColor3 = Color3.fromRGB(22, 24, 30)
 		SettingsWin.BackgroundTransparency = 0.04
@@ -3705,28 +3710,166 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			end)
 		end
 
-		local SetScroll = Instance.new("ScrollingFrame")
-		SetScroll.Name = "SetScroll"
-		SetScroll.Size = UDim2.new(1, -16, 1, -48)
-		SetScroll.Position = UDim2.new(0, 8, 0, 44)
-		SetScroll.BackgroundTransparency = 1
-		SetScroll.BorderSizePixel = 0
-		SetScroll.ScrollBarThickness = 4
-		SetScroll.ScrollBarImageColor3 = Library.Theme.Accent
-		SetScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-		SetScroll.ZIndex = 62
-		SetScroll.Parent = SettingsWin
+		local SetTabBar = Instance.new("Frame")
+		SetTabBar.Name = "SetTabBar"
+		SetTabBar.Size = UDim2.new(1, 0, 0, 36)
+		SetTabBar.Position = UDim2.new(0, 0, 0, 40)
+		SetTabBar.BackgroundColor3 = Color3.fromRGB(20, 22, 28)
+		SetTabBar.BackgroundTransparency = 0.4
+		SetTabBar.BorderSizePixel = 0
+		SetTabBar.ZIndex = 62
+		SetTabBar.Parent = SettingsWin
 
-		local SetLayout = Instance.new("UIListLayout")
-		SetLayout.SortOrder = Enum.SortOrder.LayoutOrder
-		SetLayout.Padding = UDim.new(0, 6)
-		SetLayout.Parent = SetScroll
+		local SetTabDivider = Instance.new("Frame")
+		SetTabDivider.Size = UDim2.new(1, 0, 0, 1)
+		SetTabDivider.Position = UDim2.new(0, 0, 1, -1)
+		SetTabDivider.BackgroundColor3 = Color3.fromRGB(38, 42, 55)
+		SetTabDivider.BackgroundTransparency = 0.4
+		SetTabDivider.BorderSizePixel = 0
+		SetTabDivider.ZIndex = 62
+		SetTabDivider.Parent = SetTabBar
 
-		addPadding(SetScroll, 4, 4, 4, 4)
+		local SetTabLayout = Instance.new("UIListLayout")
+		SetTabLayout.FillDirection = Enum.FillDirection.Horizontal
+		SetTabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+		SetTabLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+		SetTabLayout.Padding = UDim.new(0, 6)
+		SetTabLayout.Parent = SetTabBar
 
-		SetLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-			SetScroll.CanvasSize = UDim2.new(0, 0, 0, SetLayout.AbsoluteContentSize.Y + 16)
-		end)
+		local SetContent = Instance.new("Frame")
+		SetContent.Name = "SetContent"
+		SetContent.Size = UDim2.new(1, -16, 1, -84)
+		SetContent.Position = UDim2.new(0, 8, 0, 78)
+		SetContent.BackgroundTransparency = 1
+		SetContent.BorderSizePixel = 0
+		SetContent.ZIndex = 62
+		SetContent.Parent = SettingsWin
+
+		local currentSetTab = "General"
+		local setTabs = {}
+		local setScrolls = {}
+
+		local function createSetTabScroll(name)
+			local scroll = Instance.new("ScrollingFrame")
+			scroll.Name = "SetScroll_" .. name
+			scroll.Size = UDim2.new(1, 0, 1, 0)
+			scroll.Position = UDim2.new(0, 0, 0, 0)
+			scroll.BackgroundTransparency = 1
+			scroll.BorderSizePixel = 0
+			scroll.ScrollBarThickness = 4
+			scroll.ScrollBarImageColor3 = Library.Theme.Accent
+			scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+			scroll.ZIndex = 62
+			scroll.Visible = false
+			scroll.Parent = SetContent
+
+			local layout = Instance.new("UIListLayout")
+			layout.SortOrder = Enum.SortOrder.LayoutOrder
+			layout.Padding = UDim.new(0, 6)
+			layout.Parent = scroll
+
+			addPadding(scroll, 4, 4, 4, 4)
+
+			layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+				scroll.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 16)
+			end)
+
+			setScrolls[name] = scroll
+			return scroll
+		end
+
+		local generalScroll = createSetTabScroll("General")
+		local crosshairScroll = createSetTabScroll("Crosshair")
+		local aimFovScroll = createSetTabScroll("Aim FOV")
+		local aimbotScroll = createSetTabScroll("Aimbot")
+
+		local function switchSetTab(tabName)
+			currentSetTab = tabName
+			for name, btn in pairs(setTabs) do
+				local isActive = (name == tabName)
+				local stroke = btn:FindFirstChildOfClass("UIStroke")
+				local scale = btn:FindFirstChildOfClass("UIScale")
+				if isActive then
+					tween(btn, TweenInfo.new(0.16), {
+						BackgroundColor3 = Color3.fromRGB(52, 42, 78),
+						TextColor3 = Color3.fromRGB(255, 255, 255)
+					})
+					if stroke then
+						stroke.Color = Color3.fromRGB(160, 115, 245)
+						stroke.Transparency = 0.1
+					end
+					if scale then
+						tween(scale, TweenInfo.new(0.14, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1.03 })
+					end
+				else
+					tween(btn, TweenInfo.new(0.16), {
+						BackgroundColor3 = Color3.fromRGB(28, 30, 40),
+						TextColor3 = Color3.fromRGB(165, 175, 200)
+					})
+					if stroke then
+						stroke.Color = Color3.fromRGB(45, 50, 68)
+						stroke.Transparency = 0.35
+					end
+					if scale then
+						tween(scale, TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = 1.0 })
+					end
+				end
+			end
+			for name, scroll in pairs(setScrolls) do
+				scroll.Visible = (name == tabName)
+			end
+		end
+
+		local function createSetTabBtn(name, icon, label)
+			local btn = Instance.new("TextButton")
+			btn.Name = "TabBtn_" .. name
+			btn.Size = UDim2.new(0, 114, 0, 26)
+			btn.BackgroundColor3 = Color3.fromRGB(28, 30, 40)
+			btn.BackgroundTransparency = 0.25
+			btn.BorderSizePixel = 0
+			btn.Text = icon .. " " .. label
+			btn.TextColor3 = Color3.fromRGB(165, 175, 200)
+			btn.Font = Enum.Font.GothamBold
+			btn.TextSize = 11
+			btn.AutoButtonColor = false
+			btn.ZIndex = 63
+			btn.Parent = SetTabBar
+			addCorner(btn, 6)
+			local stroke = addStroke(btn, Color3.fromRGB(45, 50, 68), 1.0, 0.35)
+
+			local scale = Instance.new("UIScale")
+			scale.Scale = 1
+			scale.Parent = btn
+
+			btn.MouseEnter:Connect(function()
+				if currentSetTab ~= name then
+					tween(btn, TweenInfo.new(0.12), { BackgroundColor3 = Color3.fromRGB(36, 40, 56), TextColor3 = Color3.fromRGB(210, 220, 245) })
+					stroke.Color = Color3.fromRGB(65, 75, 105)
+					tween(scale, TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = 1.02 })
+				end
+			end)
+			btn.MouseLeave:Connect(function()
+				if currentSetTab ~= name then
+					tween(btn, TweenInfo.new(0.12), { BackgroundColor3 = Color3.fromRGB(28, 30, 40), TextColor3 = Color3.fromRGB(165, 175, 200) })
+					stroke.Color = Color3.fromRGB(45, 50, 68)
+					tween(scale, TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = 1.0 })
+				end
+			end)
+
+			btn.MouseButton1Click:Connect(function()
+				switchSetTab(name)
+			end)
+
+			setTabs[name] = btn
+			return btn
+		end
+
+		createSetTabBtn("General", "⚙", "General")
+		createSetTabBtn("Crosshair", "🎯", "Crosshair")
+		createSetTabBtn("Aim FOV", "⭕", "Aim FOV")
+		createSetTabBtn("Aimbot", "⚡", "Aimbot")
+
+		switchSetTab("General")
 
 		local setOrder = 0
 		local function nextOrder()
@@ -3734,14 +3877,14 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			return setOrder
 		end
 
-		local function addSetSection(name)
+		local function addSetSection(name, parent)
 			local hdr = Instance.new("Frame")
 			hdr.LayoutOrder = nextOrder()
 			hdr.Size = UDim2.new(1, 0, 0, 24)
 			hdr.BackgroundTransparency = 1
 			hdr.BorderSizePixel = 0
 			hdr.ZIndex = 63
-			hdr.Parent = SetScroll
+			hdr.Parent = parent or generalScroll
 
 			local bar = Instance.new("Frame")
 			bar.Size = UDim2.new(0, 3, 0, 14)
@@ -3766,7 +3909,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			txt.Parent = hdr
 		end
 
-		local function addSetToggle(name, default, callback)
+		local function addSetToggle(name, default, callback, parent)
 			local RowBtn = Instance.new("TextButton")
 			RowBtn.LayoutOrder = nextOrder()
 			RowBtn.Size = UDim2.new(1, 0, 0, 38)
@@ -3775,7 +3918,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			RowBtn.Text = ""
 			RowBtn.AutoButtonColor = false
 			RowBtn.ZIndex = 63
-			RowBtn.Parent = SetScroll
+			RowBtn.Parent = parent or generalScroll
 			addCorner(RowBtn, 7)
 			local rowStroke = addStroke(RowBtn, Color3.fromRGB(46, 52, 70), 1.0, 0.40)
 
@@ -3849,14 +3992,14 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			return ToggleObj
 		end
 
-		local function addSetSlider(name, minVal, maxVal, defaultVal, callback)
+		local function addSetSlider(name, minVal, maxVal, defaultVal, callback, parent)
 			local Container = Instance.new("Frame")
 			Container.LayoutOrder = nextOrder()
 			Container.Size = UDim2.new(1, 0, 0, 52)
 			Container.BackgroundColor3 = Color3.fromRGB(30, 34, 46)
 			Container.BackgroundTransparency = 0.35
 			Container.ZIndex = 63
-			Container.Parent = SetScroll
+			Container.Parent = parent or generalScroll
 			addCorner(Container, 7)
 			local contStroke = addStroke(Container, Color3.fromRGB(46, 52, 70), 1.0, 0.40)
 
@@ -3957,7 +4100,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			return SliderObj
 		end
 
-		local function addSetDropdown(name, options, defaultVal, callback)
+		local function addSetDropdown(name, options, defaultVal, callback, parent)
 			local Container = Instance.new("Frame")
 			Container.LayoutOrder = nextOrder()
 			Container.Size = UDim2.new(1, 0, 0, 38)
@@ -3965,7 +4108,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			Container.BackgroundTransparency = 0.35
 			Container.ClipsDescendants = true
 			Container.ZIndex = 63
-			Container.Parent = SetScroll
+			Container.Parent = parent or generalScroll
 			addCorner(Container, 7)
 			local contStroke = addStroke(Container, Color3.fromRGB(46, 52, 70), 1.0, 0.40)
 
@@ -4096,7 +4239,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			return DropdownObj
 		end
 
-		local function addSetColorpicker(name, defaultCol, callback)
+		local function addSetColorpicker(name, defaultCol, callback, parent)
 			local Container = Instance.new("Frame")
 			Container.LayoutOrder = nextOrder()
 			Container.Size = UDim2.new(1, 0, 0, 38)
@@ -4104,7 +4247,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			Container.BackgroundTransparency = 0.35
 			Container.ClipsDescendants = true
 			Container.ZIndex = 63
-			Container.Parent = SetScroll
+			Container.Parent = parent or generalScroll
 			addCorner(Container, 7)
 			addStroke(Container, Color3.fromRGB(46, 52, 70), 1.0, 0.40)
 
@@ -4274,6 +4417,100 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			return ColorObj
 		end
 
+		local function addSetKeybind(name, defaultKey, callback, parent)
+			local Row = Instance.new("Frame")
+			Row.LayoutOrder = nextOrder()
+			Row.Size = UDim2.new(1, 0, 0, 38)
+			Row.BackgroundColor3 = Color3.fromRGB(30, 34, 46)
+			Row.BackgroundTransparency = 0.35
+			Row.BorderSizePixel = 0
+			Row.ZIndex = 63
+			Row.Parent = parent or generalScroll
+			addCorner(Row, 7)
+			local rowStroke = addStroke(Row, Color3.fromRGB(46, 52, 70), 1.0, 0.40)
+
+			local Lbl = Instance.new("TextLabel")
+			Lbl.Size = UDim2.new(1, -110, 1, 0)
+			Lbl.Position = UDim2.new(0, 12, 0, 0)
+			Lbl.BackgroundTransparency = 1
+			Lbl.Text = name
+			Lbl.TextColor3 = Color3.fromRGB(240, 245, 255)
+			Lbl.Font = Enum.Font.GothamMedium
+			Lbl.TextSize = 13
+			Lbl.TextXAlignment = Enum.TextXAlignment.Left
+			Lbl.TextTruncate = Enum.TextTruncate.AtEnd
+			Lbl.ZIndex = 64
+			Lbl.Parent = Row
+
+			local BindBtn = Instance.new("TextButton")
+			BindBtn.Size = UDim2.new(0, 88, 0, 24)
+			BindBtn.Position = UDim2.new(1, -96, 0.5, -12)
+			BindBtn.BackgroundColor3 = Color3.fromRGB(40, 46, 66)
+			BindBtn.BackgroundTransparency = 0.10
+			BindBtn.Text = "[ " .. formatKeyName(defaultKey) .. " ]"
+			BindBtn.TextColor3 = Color3.fromRGB(240, 245, 255)
+			BindBtn.Font = Enum.Font.GothamBold
+			BindBtn.TextSize = 11
+			BindBtn.AutoButtonColor = false
+			BindBtn.ZIndex = 64
+			BindBtn.Parent = Row
+			addCorner(BindBtn, 6)
+			local btnStroke = addStroke(BindBtn, Color3.fromRGB(75, 95, 160), 1.0, 0.25)
+
+			local currentKey = defaultKey
+			local binding = false
+
+			local BindObj = { Value = currentKey }
+
+			function BindObj:Get()
+				return currentKey
+			end
+
+			function BindObj:Set(newKey)
+				currentKey = resolveKeyItem(newKey) or Enum.KeyCode.P
+				BindObj.Value = currentKey
+				BindBtn.Text = "[ " .. formatKeyName(currentKey) .. " ]"
+				if callback then task.spawn(callback, currentKey) end
+			end
+
+			BindBtn.MouseEnter:Connect(function()
+				if not binding then
+					tween(BindBtn, TweenInfo.new(0.12), { BackgroundColor3 = Color3.fromRGB(54, 64, 92) })
+					btnStroke.Color = Color3.fromRGB(110, 140, 240)
+				end
+			end)
+			BindBtn.MouseLeave:Connect(function()
+				if not binding then
+					tween(BindBtn, TweenInfo.new(0.12), { BackgroundColor3 = Color3.fromRGB(40, 46, 66) })
+					btnStroke.Color = Color3.fromRGB(75, 95, 160)
+				end
+			end)
+
+			BindBtn.MouseButton1Click:Connect(function()
+				binding = true
+				BindBtn.Text = "[ ... ]"
+				BindBtn.BackgroundColor3 = Color3.fromRGB(65, 55, 95)
+				btnStroke.Color = Color3.fromRGB(180, 140, 255)
+			end)
+
+			UserInputService.InputBegan:Connect(function(input, gp)
+				if binding then
+					if input.UserInputType == Enum.UserInputType.Keyboard then
+						binding = false
+						tween(BindBtn, TweenInfo.new(0.15), { BackgroundColor3 = Color3.fromRGB(40, 46, 66) })
+						btnStroke.Color = Color3.fromRGB(75, 95, 160)
+						if input.KeyCode == Enum.KeyCode.Escape or input.KeyCode == Enum.KeyCode.Backspace then
+							BindObj:Set(Enum.KeyCode.P)
+						else
+							BindObj:Set(input.KeyCode)
+						end
+					end
+				end
+			end)
+
+			return BindObj
+		end
+
 		local savedAntiAfk = Library.ConfigStore["_NS_AntiAFK"]
 		local antiAfkEnabled = (savedAntiAfk ~= nil) and (not not savedAntiAfk) or true
 
@@ -4300,6 +4537,9 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 		local savedCrossCol = Library.ConfigStore["_NS_CrosshairColor"]
 		local crosshairColor = (savedCrossCol and deserializeValue(savedCrossCol)) or Color3.fromRGB(255, 255, 255)
+
+		local savedCrossRainbow = Library.ConfigStore["_NS_CrosshairRainbow"]
+		local crosshairRainbow = (savedCrossRainbow ~= nil) and (not not savedCrossRainbow) or false
 
 		local CrosshairGui = Instance.new("ScreenGui")
 		CrosshairGui.Name = "NightSystem_CrosshairGui"
@@ -4341,10 +4581,19 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			CrosshairLabel.Text = symbol
 			CrosshairLabel.TextSize = crosshairSize
 			CrosshairLabel.Position = UDim2.new(0.5, crosshairXOffset, 0.5, crosshairYOffset)
-			CrosshairLabel.TextColor3 = crosshairColor
+			if not crosshairRainbow then
+				CrosshairLabel.TextColor3 = crosshairColor
+			end
 		end
 
 		updateCrosshair()
+
+		RunService.RenderStepped:Connect(function()
+			if crosshairEnabled and crosshairRainbow and CrosshairLabel then
+				local h = (tick() * 0.4) % 1
+				CrosshairLabel.TextColor3 = Color3.fromHSV(h, 0.9, 1)
+			end
+		end)
 
 		local antiAfkConn = nil
 		local function setAntiAfkState(state)
@@ -4404,55 +4653,69 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			end
 		end)
 
-		addSetSection("General Settings")
+		addSetSection("General Settings", generalScroll)
 
-		local setToggleAntiAfk = addSetToggle("Anti-AFK", antiAfkEnabled, setAntiAfkState)
-		local setToggleCustomFov = addSetToggle("Custom FOV", customFovEnabled, setCustomFovState)
-		local setSliderFov = addSetSlider("Field of View", 60, 120, customFovValue, setFovValue)
+		local setToggleAntiAfk = addSetToggle("Anti-AFK", antiAfkEnabled, setAntiAfkState, generalScroll)
+		local setToggleAutoSave = addSetToggle("Auto-Save Config", Library.AutoSave, function(state)
+			Library.AutoSave = state
+			Library.ConfigStore["_NS_AutoSave"] = state
+			if state then
+				Library:SaveConfiguration()
+			end
+		end, generalScroll)
+		local setToggleCustomFov = addSetToggle("Custom FOV", customFovEnabled, setCustomFovState, generalScroll)
+		local setSliderFov = addSetSlider("Field of View", 60, 120, customFovValue, setFovValue, generalScroll)
 
-		addSetSection("Crosshair Settings")
+		addSetSection("Crosshair Settings", crosshairScroll)
 
 		local setToggleCrosshair = addSetToggle("Enable Crosshair", crosshairEnabled, function(state)
 			crosshairEnabled = state
 			Library.ConfigStore["_NS_CrosshairEnabled"] = state
 			scheduleAutoSave()
 			updateCrosshair()
-		end)
+		end, crosshairScroll)
+
+		local setToggleCrosshairRainbow = addSetToggle("Rainbow Crosshair", crosshairRainbow, function(state)
+			crosshairRainbow = state
+			Library.ConfigStore["_NS_CrosshairRainbow"] = state
+			scheduleAutoSave()
+			updateCrosshair()
+		end, crosshairScroll)
 
 		local setDropCrosshairStyle = addSetDropdown("Crosshair Style", { "1: 卐", "2: ×", "3: ☉", "4: ・", "5: ✠", "6: 卐" }, crosshairStyle, function(opt)
 			crosshairStyle = tostring(opt)
 			Library.ConfigStore["_NS_CrosshairStyle"] = crosshairStyle
 			scheduleAutoSave()
 			updateCrosshair()
-		end)
+		end, crosshairScroll)
 
 		local setSliderCrosshairSize = addSetSlider("Crosshair Size", 10, 60, crosshairSize, function(val)
 			crosshairSize = val
 			Library.ConfigStore["_NS_CrosshairSize"] = crosshairSize
 			scheduleAutoSave()
 			updateCrosshair()
-		end)
+		end, crosshairScroll)
 
 		local setSliderCrosshairX = addSetSlider("Crosshair X-Offset", -250, 250, crosshairXOffset, function(val)
 			crosshairXOffset = val
 			Library.ConfigStore["_NS_CrosshairX"] = crosshairXOffset
 			scheduleAutoSave()
 			updateCrosshair()
-		end)
+		end, crosshairScroll)
 
 		local setSliderCrosshairY = addSetSlider("Crosshair Height (Y-Offset)", -250, 250, crosshairYOffset, function(val)
 			crosshairYOffset = val
 			Library.ConfigStore["_NS_CrosshairY"] = crosshairYOffset
 			scheduleAutoSave()
 			updateCrosshair()
-		end)
+		end, crosshairScroll)
 
 		local setColorCrosshair = addSetColorpicker("Crosshair Color", crosshairColor, function(col)
 			crosshairColor = col
 			Library.ConfigStore["_NS_CrosshairColor"] = serializeValue(crosshairColor)
 			scheduleAutoSave()
 			updateCrosshair()
-		end)
+		end, crosshairScroll)
 
 		local savedAimFovEnabled = Library.ConfigStore["_NS_AimFovEnabled"]
 		local aimFovEnabled = (savedAimFovEnabled ~= nil) and (not not savedAimFovEnabled) or false
@@ -4514,7 +4777,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			end
 		end)
 
-		addSetSection("Aim FOV Settings")
+		addSetSection("Aim FOV Settings", aimFovScroll)
 
 		local setToggleAimFov = addSetToggle("Enable Aim FOV", aimFovEnabled, function(state)
 			aimFovEnabled = state
@@ -4523,40 +4786,43 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			if not state and FovCircle then
 				FovCircle.Visible = false
 			end
-		end)
+		end, aimFovScroll)
 
 		local setSliderAimFovRadius = addSetSlider("Aim FOV Radius", 20, 500, aimFovRadius, function(val)
 			aimFovRadius = val
 			Library.ConfigStore["_NS_AimFovRadius"] = aimFovRadius
 			scheduleAutoSave()
-		end)
+		end, aimFovScroll)
 
 		local setDropAimFovPos = addSetDropdown("Aim FOV Position", { "Mouse Cursor", "Screen Center" }, aimFovPosMode, function(opt)
 			aimFovPosMode = tostring(opt)
 			Library.ConfigStore["_NS_AimFovPosMode"] = aimFovPosMode
 			scheduleAutoSave()
-		end)
+		end, aimFovScroll)
 
 		local setSliderAimFovThickness = addSetSlider("Aim FOV Thickness", 1, 6, aimFovThickness, function(val)
 			aimFovThickness = val
 			Library.ConfigStore["_NS_AimFovThickness"] = aimFovThickness
 			scheduleAutoSave()
-		end)
+		end, aimFovScroll)
 
 		local setToggleAimFovFilled = addSetToggle("Aim FOV Filled", aimFovFilled, function(state)
 			aimFovFilled = state
 			Library.ConfigStore["_NS_AimFovFilled"] = state
 			scheduleAutoSave()
-		end)
+		end, aimFovScroll)
 
 		local setColorAimFov = addSetColorpicker("Aim FOV Color", aimFovColor, function(col)
 			aimFovColor = col
 			Library.ConfigStore["_NS_AimFovColor"] = serializeValue(aimFovColor)
 			scheduleAutoSave()
-		end)
+		end, aimFovScroll)
 
 		local savedAimbotEnabled = Library.ConfigStore["_NS_AimbotEnabled"]
 		local aimbotEnabled = (savedAimbotEnabled ~= nil) and (not not savedAimbotEnabled) or false
+
+		local savedAimbotKey = Library.ConfigStore["_NS_AimbotKeybind"]
+		local aimbotKeybind = savedAimbotKey and resolveKeyItem(savedAimbotKey) or Enum.KeyCode.P
 
 		local savedAimbotStrength = tonumber(Library.ConfigStore["_NS_AimbotStrength"])
 		local aimbotStrength = savedAimbotStrength or 70
@@ -4570,41 +4836,47 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		local savedAimbotFov = Library.ConfigStore["_NS_AimbotUseAimFov"]
 		local aimbotUseAimFov = (savedAimbotFov ~= nil) and (not not savedAimbotFov) or true
 
-		addSetSection("Aimbot Settings")
+		addSetSection("Aimbot Settings", aimbotScroll)
 
-		local setToggleAimbot = addSetToggle("Enable Aimbot (Key: P)", aimbotEnabled, function(state)
+		local setToggleAimbot = addSetToggle("Enable Aimbot", aimbotEnabled, function(state)
 			aimbotEnabled = state
 			Library.ConfigStore["_NS_AimbotEnabled"] = state
 			scheduleAutoSave()
-		end)
+		end, aimbotScroll)
+
+		local setKeybindAimbot = addSetKeybind("Aimbot Keybind", aimbotKeybind, function(key)
+			aimbotKeybind = key
+			Library.ConfigStore["_NS_AimbotKeybind"] = key.Name
+			scheduleAutoSave()
+		end, aimbotScroll)
 
 		local setSliderAimbotStrength = addSetSlider("Aimbot Strength", 5, 100, aimbotStrength, function(val)
 			aimbotStrength = val
 			Library.ConfigStore["_NS_AimbotStrength"] = aimbotStrength
 			scheduleAutoSave()
-		end)
+		end, aimbotScroll)
 
 		local setDropAimbotPart = addSetDropdown("Aimbot Target Part", { "Head", "HumanoidRootPart" }, aimbotTargetPart, function(opt)
 			aimbotTargetPart = tostring(opt)
 			Library.ConfigStore["_NS_AimbotTargetPart"] = aimbotTargetPart
 			scheduleAutoSave()
-		end)
+		end, aimbotScroll)
 
 		local setToggleAimbotTeam = addSetToggle("Aimbot Team Check", aimbotTeamCheck, function(state)
 			aimbotTeamCheck = state
 			Library.ConfigStore["_NS_AimbotTeamCheck"] = state
 			scheduleAutoSave()
-		end)
+		end, aimbotScroll)
 
 		local setToggleAimbotFov = addSetToggle("Aimbot Use Aim FOV", aimbotUseAimFov, function(state)
 			aimbotUseAimFov = state
 			Library.ConfigStore["_NS_AimbotUseAimFov"] = state
 			scheduleAutoSave()
-		end)
+		end, aimbotScroll)
 
 		UserInputService.InputBegan:Connect(function(input, gp)
 			if gp then return end
-			if input.KeyCode == Enum.KeyCode.P then
+			if aimbotKeybind and input.KeyCode == aimbotKeybind then
 				aimbotEnabled = not aimbotEnabled
 				Library.ConfigStore["_NS_AimbotEnabled"] = aimbotEnabled
 				scheduleAutoSave()
@@ -4680,9 +4952,11 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 		local function doResetAllSettings()
 			setToggleAntiAfk:Set(false)
+			setToggleAutoSave:Set(true)
 			setToggleCustomFov:Set(false)
 			setSliderFov:Set(70)
 			setToggleCrosshair:Set(false)
+			setToggleCrosshairRainbow:Set(false)
 			setDropCrosshairStyle:Set("1: ⊹")
 			setSliderCrosshairSize:Set(22)
 			setSliderCrosshairX:Set(0)
@@ -4697,6 +4971,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			if FovCircle then FovCircle.Visible = false end
 
 			setToggleAimbot:Set(false)
+			setKeybindAimbot:Set(Enum.KeyCode.P)
 			setSliderAimbotStrength:Set(70)
 			setDropAimbotPart:Set("Head")
 			setToggleAimbotTeam:Set(true)
@@ -4705,10 +4980,13 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			local cam = workspace.CurrentCamera
 			if cam then cam.FieldOfView = 70 end
 
+			Library.AutoSave = true
+			Library.ConfigStore["_NS_AutoSave"] = nil
 			Library.ConfigStore["_NS_AntiAFK"] = nil
 			Library.ConfigStore["_NS_CustomFOV"] = nil
 			Library.ConfigStore["_NS_FOV"] = nil
 			Library.ConfigStore["_NS_CrosshairEnabled"] = nil
+			Library.ConfigStore["_NS_CrosshairRainbow"] = nil
 			Library.ConfigStore["_NS_CrosshairStyle"] = nil
 			Library.ConfigStore["_NS_CrosshairSize"] = nil
 			Library.ConfigStore["_NS_CrosshairX"] = nil
@@ -4721,6 +4999,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			Library.ConfigStore["_NS_AimFovFilled"] = nil
 			Library.ConfigStore["_NS_AimFovColor"] = nil
 			Library.ConfigStore["_NS_AimbotEnabled"] = nil
+			Library.ConfigStore["_NS_AimbotKeybind"] = nil
 			Library.ConfigStore["_NS_AimbotStrength"] = nil
 			Library.ConfigStore["_NS_AimbotTargetPart"] = nil
 			Library.ConfigStore["_NS_AimbotTeamCheck"] = nil
