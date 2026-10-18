@@ -31,20 +31,20 @@ local Library = {
 	Notifications = {},
 	ToggleKey = Enum.KeyCode.LeftControl,
 	Theme = {
-		NeonBorder   = Color3.fromRGB(145, 212, 248),
-		CardBorder   = Color3.fromRGB(130, 192, 228),
-		SubBorder    = Color3.fromRGB(112, 168, 202),
-		GlassBg      = Color3.fromRGB(18, 26, 35),
-		CardBg       = Color3.fromRGB(16, 24, 33),
-		ControlBg    = Color3.fromRGB(38, 54, 70),
-		TextWhite    = Color3.fromRGB(255, 255, 255),
-		TextBright   = Color3.fromRGB(255, 255, 255),
-		TextMuted    = Color3.fromRGB(190, 214, 232),
-		CheckFill    = Color3.fromRGB(126, 192, 232),
-		SliderFill   = Color3.fromRGB(142, 208, 246),
+		NeonBorder   = Color3.fromRGB(140, 185, 225),
+		CardBorder   = Color3.fromRGB(52, 66, 84),
+		SubBorder    = Color3.fromRGB(44, 56, 72),
+		GlassBg      = Color3.fromRGB(15, 18, 24),
+		CardBg       = Color3.fromRGB(14, 18, 24),
+		ControlBg    = Color3.fromRGB(26, 33, 44),
+		TextWhite    = Color3.fromRGB(245, 250, 255),
+		TextBright   = Color3.fromRGB(225, 238, 250),
+		TextMuted    = Color3.fromRGB(155, 172, 192),
+		CheckFill    = Color3.fromRGB(90, 150, 205),
+		SliderFill   = Color3.fromRGB(115, 165, 215),
 		CloseRed     = Color3.fromRGB(235, 70, 92),
 		CloseBorder  = Color3.fromRGB(255, 120, 140),
-		Transparency = 0.36,
+		Transparency = 0.18,
 	}
 }
 Library.__index = Library
@@ -135,69 +135,49 @@ local function addSizeConstraint(parent, minSize, maxSize)
 end
 
 local function styleBrightButtonText(textObj, fontSize)
-	textObj.TextColor3 = Color3.fromRGB(255, 255, 255)
+	textObj.TextColor3 = Color3.fromRGB(245, 250, 255)
 	textObj.Font = Enum.Font.GothamBold
 	textObj.TextSize = fontSize or 13
-	textObj.TextStrokeColor3 = Color3.fromRGB(10, 18, 28)
-	textObj.TextStrokeTransparency = 0.52
+	textObj.TextStrokeColor3 = Color3.fromRGB(10, 14, 20)
+	textObj.TextStrokeTransparency = 0.55
 end
 
 local function applyMetallicHeader(frame)
 	frame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	frame.BackgroundTransparency = 0.38
+	frame.BackgroundTransparency = 0.22
 	local grad = Instance.new("UIGradient")
 	grad.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0.00, Color3.fromRGB(48, 66, 84)),
-		ColorSequenceKeypoint.new(0.48, Color3.fromRGB(78, 104, 128)),
-		ColorSequenceKeypoint.new(0.56, Color3.fromRGB(150, 184, 210)),
-		ColorSequenceKeypoint.new(0.78, Color3.fromRGB(88, 116, 142)),
-		ColorSequenceKeypoint.new(1.00, Color3.fromRGB(44, 62, 80)),
+		ColorSequenceKeypoint.new(0.00, Color3.fromRGB(38, 48, 62)),
+		ColorSequenceKeypoint.new(0.50, Color3.fromRGB(26, 34, 44)),
+		ColorSequenceKeypoint.new(1.00, Color3.fromRGB(18, 24, 32)),
 	})
-	grad.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0.00, 0.32),
-		NumberSequenceKeypoint.new(0.52, 0.22),
-		NumberSequenceKeypoint.new(0.56, 0.08),
-		NumberSequenceKeypoint.new(1.00, 0.35),
-	})
-	grad.Rotation = 18
+	grad.Rotation = 90
 	grad.Parent = frame
 	return grad
 end
 
 local function applyButtonGradient(frame, isHovered)
 	frame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	frame.BackgroundTransparency = isHovered and 0.12 or 0.26
+	frame.BackgroundTransparency = isHovered and 0.06 or 0.14
 
 	local grad = frame:FindFirstChildOfClass("UIGradient")
 	if not grad then
 		grad = Instance.new("UIGradient")
-		grad.Rotation = 22
+		grad.Rotation = 90
 		grad.Parent = frame
 	end
 
 	if isHovered then
 		grad.Color = ColorSequence.new({
-			ColorSequenceKeypoint.new(0.00, Color3.fromRGB(84, 122, 154)),
-			ColorSequenceKeypoint.new(0.50, Color3.fromRGB(152, 206, 242)),
-			ColorSequenceKeypoint.new(0.56, Color3.fromRGB(190, 232, 255)),
-			ColorSequenceKeypoint.new(1.00, Color3.fromRGB(74, 108, 138)),
-		})
-		grad.Transparency = NumberSequence.new({
-			NumberSequenceKeypoint.new(0.00, 0.15),
-			NumberSequenceKeypoint.new(0.54, 0.05),
-			NumberSequenceKeypoint.new(1.00, 0.18),
+			ColorSequenceKeypoint.new(0.00, Color3.fromRGB(56, 70, 88)),
+			ColorSequenceKeypoint.new(0.50, Color3.fromRGB(40, 50, 64)),
+			ColorSequenceKeypoint.new(1.00, Color3.fromRGB(26, 34, 44)),
 		})
 	else
 		grad.Color = ColorSequence.new({
-			ColorSequenceKeypoint.new(0.00, Color3.fromRGB(52, 76, 98)),
-			ColorSequenceKeypoint.new(0.50, Color3.fromRGB(96, 136, 168)),
-			ColorSequenceKeypoint.new(0.56, Color3.fromRGB(128, 174, 208)),
-			ColorSequenceKeypoint.new(1.00, Color3.fromRGB(44, 64, 84)),
-		})
-		grad.Transparency = NumberSequence.new({
-			NumberSequenceKeypoint.new(0.00, 0.28),
-			NumberSequenceKeypoint.new(0.54, 0.14),
-			NumberSequenceKeypoint.new(1.00, 0.32),
+			ColorSequenceKeypoint.new(0.00, Color3.fromRGB(42, 52, 66)),
+			ColorSequenceKeypoint.new(0.50, Color3.fromRGB(28, 36, 46)),
+			ColorSequenceKeypoint.new(1.00, Color3.fromRGB(20, 26, 34)),
 		})
 	end
 
@@ -206,8 +186,8 @@ local function applyButtonGradient(frame, isHovered)
 		shine.Name = "TopShine"
 		shine.Size = UDim2.new(1, -8, 0, 1)
 		shine.Position = UDim2.new(0, 4, 0, 1)
-		shine.BackgroundColor3 = Color3.fromRGB(225, 246, 255)
-		shine.BackgroundTransparency = 0.42
+		shine.BackgroundColor3 = Color3.fromRGB(180, 210, 240)
+		shine.BackgroundTransparency = 0.65
 		shine.BorderSizePixel = 0
 		shine.ZIndex = frame.ZIndex + 1
 		shine.Parent = frame
@@ -881,14 +861,14 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 	MainWin.AnchorPoint = Vector2.new(0.5, 0.5)
 	MainWin.Size = UDim2.new(0, winWidth, 0, winHeight)
 	MainWin.Position = UDim2.new(0.5, 0, 0.5, 0)
-	MainWin.BackgroundColor3 = Color3.fromRGB(16, 24, 34)
+	MainWin.BackgroundColor3 = Library.Theme.GlassBg
 	MainWin.BackgroundTransparency = Library.Theme.Transparency
 	MainWin.BorderSizePixel = 0
 	MainWin.Active = true
 	MainWin.Visible = false
 	MainWin.Parent = ScreenGui
-	addCorner(MainWin, 10)
-	local MainStroke = addStroke(MainWin, Library.Theme.NeonBorder, 1.4, 0.12)
+	addCorner(MainWin, 8)
+	local MainStroke = addStroke(MainWin, Color3.fromRGB(68, 84, 105), 1.2, 0.15)
 
 	local userScale = 1.0
 	local WinScale = Instance.new("UIScale")
@@ -897,21 +877,25 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 	local WinGrad = Instance.new("UIGradient")
 	WinGrad.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0.00, Color3.fromRGB(20, 30, 42)),
-		ColorSequenceKeypoint.new(0.53, Color3.fromRGB(34, 46, 60)),
-		ColorSequenceKeypoint.new(0.55, Color3.fromRGB(118, 145, 172)),
-		ColorSequenceKeypoint.new(0.74, Color3.fromRGB(46, 62, 80)),
-		ColorSequenceKeypoint.new(1.00, Color3.fromRGB(16, 24, 34)),
+		ColorSequenceKeypoint.new(0.00, Color3.fromRGB(34, 42, 54)),
+		ColorSequenceKeypoint.new(0.12, Color3.fromRGB(22, 28, 36)),
+		ColorSequenceKeypoint.new(0.85, Color3.fromRGB(15, 18, 24)),
+		ColorSequenceKeypoint.new(1.00, Color3.fromRGB(22, 28, 36)),
 	})
-	WinGrad.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0.00, 0.38),
-		NumberSequenceKeypoint.new(0.53, 0.35),
-		NumberSequenceKeypoint.new(0.55, 0.10),
-		NumberSequenceKeypoint.new(0.76, 0.28),
-		NumberSequenceKeypoint.new(1.00, 0.40),
-	})
-	WinGrad.Rotation = 68
+	WinGrad.Rotation = 90
 	WinGrad.Parent = MainWin
+
+	local CarbonTexture = Instance.new("ImageLabel")
+	CarbonTexture.Name = "CarbonTexture"
+	CarbonTexture.Size = UDim2.new(1, 0, 1, 0)
+	CarbonTexture.BackgroundTransparency = 1
+	CarbonTexture.Image = "rbxassetid://2151741365"
+	CarbonTexture.ImageTransparency = 0.88
+	CarbonTexture.ScaleType = Enum.ScaleType.Tile
+	CarbonTexture.TileSize = UDim2.new(0, 16, 0, 16)
+	CarbonTexture.ZIndex = 1
+	CarbonTexture.Parent = MainWin
+	addCorner(CarbonTexture, 8)
 
 	local OuterGlow = Instance.new("Frame")
 	OuterGlow.Name = "OuterGlow"
@@ -920,38 +904,51 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 	OuterGlow.BackgroundTransparency = 1
 	OuterGlow.ZIndex = 0
 	OuterGlow.Parent = MainWin
-	addCorner(OuterGlow, 12)
-	addStroke(OuterGlow, Library.Theme.NeonBorder, 2, 0.65)
+	addCorner(OuterGlow, 10)
+	addStroke(OuterGlow, Color3.fromRGB(50, 64, 82), 1.5, 0.65)
 
 	local BottomAccent = Instance.new("Frame")
 	BottomAccent.Name = "BottomAccent"
-	BottomAccent.Size = UDim2.new(0, 185, 0, 2)
-	BottomAccent.Position = UDim2.new(0, 8, 1, 1)
-	BottomAccent.BackgroundColor3 = Library.Theme.NeonBorder
-	BottomAccent.BackgroundTransparency = 0.35
+	BottomAccent.Size = UDim2.new(0.70, 0, 0, 2)
+	BottomAccent.Position = UDim2.new(0.15, 0, 1, -1)
+	BottomAccent.BackgroundColor3 = Color3.fromRGB(175, 210, 245)
+	BottomAccent.BackgroundTransparency = 0.25
 	BottomAccent.BorderSizePixel = 0
+	BottomAccent.ZIndex = 2
 	BottomAccent.Parent = MainWin
 	addCorner(BottomAccent, 1)
+
+	local bGrad = Instance.new("UIGradient")
+	bGrad.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0.00, 1.0),
+		NumberSequenceKeypoint.new(0.20, 0.2),
+		NumberSequenceKeypoint.new(0.50, 0.0),
+		NumberSequenceKeypoint.new(0.80, 0.2),
+		NumberSequenceKeypoint.new(1.00, 1.0),
+	})
+	bGrad.Parent = BottomAccent
 
 	local ContentWrap = Instance.new("Frame")
 	ContentWrap.Name = "ContentWrap"
 	ContentWrap.Size = UDim2.new(1, 0, 0, winHeight - 36)
 	ContentWrap.Position = UDim2.new(0, 0, 0, 36)
 	ContentWrap.BackgroundTransparency = 1
+	ContentWrap.ZIndex = 2
 	ContentWrap.Parent = MainWin
 
 	local TitleBar = Instance.new("Frame")
 	TitleBar.Name = "TitleBar"
 	TitleBar.Size = UDim2.new(1, 0, 0, 36)
 	TitleBar.BackgroundTransparency = 1
+	TitleBar.ZIndex = 3
 	TitleBar.Parent = MainWin
 
 	local TitleDivider = Instance.new("Frame")
 	TitleDivider.Name = "TitleDivider"
 	TitleDivider.Size = UDim2.new(1, 0, 0, 1)
 	TitleDivider.Position = UDim2.new(0, 0, 1, -1)
-	TitleDivider.BackgroundColor3 = Library.Theme.NeonBorder
-	TitleDivider.BackgroundTransparency = 0.65
+	TitleDivider.BackgroundColor3 = Color3.fromRGB(52, 65, 82)
+	TitleDivider.BackgroundTransparency = 0.55
 	TitleDivider.BorderSizePixel = 0
 	TitleDivider.Parent = TitleBar
 
@@ -959,24 +956,25 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		local dot = Instance.new("Frame")
 		dot.Size = UDim2.new(0, 10, 0, 10)
 		dot.Position = UDim2.new(0, 16 + (i - 1) * 16, 0, 13)
-		dot.BackgroundColor3 = Color3.fromRGB(24, 34, 46)
-		dot.BackgroundTransparency = 0.75
+		dot.BackgroundColor3 = Color3.fromRGB(42, 50, 62)
+		dot.BackgroundTransparency = 0.25
 		dot.Parent = TitleBar
 		addCorner(dot, 5)
-		addStroke(dot, Library.Theme.NeonBorder, 1.1, 0.25)
+		addStroke(dot, Color3.fromRGB(58, 70, 86), 1, 0.4)
 	end
 
 	local TitleText = Instance.new("TextLabel")
 	TitleText.Name = "TitleText"
-	TitleText.Size = UDim2.new(1, -240, 1, 0)
-	TitleText.Position = UDim2.new(0, 120, 0, 0)
+	TitleText.Size = UDim2.new(1, 0, 1, 0)
+	TitleText.Position = UDim2.new(0, 0, 0, 0)
 	TitleText.BackgroundTransparency = 1
 	TitleText.Text = tostring(windowTitle)
-	TitleText.TextColor3 = Color3.fromRGB(224, 240, 252)
+	TitleText.TextColor3 = Color3.fromRGB(205, 218, 232)
 	TitleText.Font = Enum.Font.GothamMedium
-	TitleText.TextSize = 13
-	TitleText.TextStrokeColor3 = Color3.fromRGB(10, 18, 28)
-	TitleText.TextStrokeTransparency = 0.52
+	TitleText.TextSize = 15
+	TitleText.TextXAlignment = Enum.TextXAlignment.Center
+	TitleText.TextStrokeColor3 = Color3.fromRGB(10, 14, 20)
+	TitleText.TextStrokeTransparency = 0.5
 	TitleText.TextTruncate = Enum.TextTruncate.AtEnd
 	TitleText.Parent = TitleBar
 
@@ -1393,58 +1391,19 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 	local InnerBorderFrame = Instance.new("Frame")
 	InnerBorderFrame.Name = "InnerBorderFrame"
-	InnerBorderFrame.Size = UDim2.new(1, -164, 1, -12)
-	InnerBorderFrame.Position = UDim2.new(0, 154, 0, 0)
-	InnerBorderFrame.BackgroundColor3 = Library.Theme.GlassBg
-	InnerBorderFrame.BackgroundTransparency = 0.82
+	InnerBorderFrame.Size = UDim2.new(1, -156, 1, -16)
+	InnerBorderFrame.Position = UDim2.new(0, 146, 0, 6)
+	InnerBorderFrame.BackgroundColor3 = Color3.fromRGB(14, 18, 24)
+	InnerBorderFrame.BackgroundTransparency = 0.45
 	InnerBorderFrame.BorderSizePixel = 0
 	InnerBorderFrame.Parent = ContentWrap
 	addCorner(InnerBorderFrame, 8)
-	addStroke(InnerBorderFrame, Library.Theme.NeonBorder, 1.4, 0.12)
-
-	local InsetBorder = Instance.new("Frame")
-	InsetBorder.Name = "InsetBorder"
-	InsetBorder.Size = UDim2.new(1, -14, 1, -14)
-	InsetBorder.Position = UDim2.new(0, 7, 0, 7)
-	InsetBorder.BackgroundTransparency = 1
-	InsetBorder.BorderSizePixel = 0
-	InsetBorder.Parent = InnerBorderFrame
-	addCorner(InsetBorder, 6)
-	addStroke(InsetBorder, Library.Theme.NeonBorder, 1, 0.45)
-
-	local function createCornerBracket(xScale, xOffset, yScale, yOffset, isTop, isLeft)
-		local bracket = Instance.new("Frame")
-		bracket.Name = "CornerBracket"
-		bracket.Size = UDim2.new(0, 12, 0, 12)
-		bracket.Position = UDim2.new(xScale, xOffset, yScale, yOffset)
-		bracket.BackgroundTransparency = 1
-		bracket.Parent = InnerBorderFrame
-
-		local hLine = Instance.new("Frame")
-		hLine.Size = UDim2.new(1, 0, 0, 1)
-		hLine.Position = UDim2.new(0, 0, isTop and 0 or 1, isTop and 0 or -1)
-		hLine.BackgroundColor3 = Library.Theme.NeonBorder
-		hLine.BackgroundTransparency = 0.35
-		hLine.BorderSizePixel = 0
-		hLine.Parent = bracket
-
-		local vLine = Instance.new("Frame")
-		vLine.Size = UDim2.new(0, 1, 1, 0)
-		vLine.Position = UDim2.new(isLeft and 0 or 1, isLeft and 0 or -1, 0, 0)
-		vLine.BackgroundColor3 = Library.Theme.NeonBorder
-		vLine.BackgroundTransparency = 0.35
-		vLine.BorderSizePixel = 0
-		vLine.Parent = bracket
-	end
-	createCornerBracket(0, 16, 0, 16, true, true)
-	createCornerBracket(1, -28, 0, 16, true, false)
-	createCornerBracket(0, 16, 1, -28, false, true)
-	createCornerBracket(1, -28, 1, -28, false, false)
+	addStroke(InnerBorderFrame, Color3.fromRGB(48, 60, 78), 1.1, 0.35)
 
 	local SideTabScroll = Instance.new("ScrollingFrame")
 	SideTabScroll.Name = "SideTabScroll"
-	SideTabScroll.Size = UDim2.new(0, 126, 1, -16)
-	SideTabScroll.Position = UDim2.new(0, 8, 0, 4)
+	SideTabScroll.Size = UDim2.new(0, 124, 1, -16)
+	SideTabScroll.Position = UDim2.new(0, 12, 0, 6)
 	SideTabScroll.BackgroundTransparency = 1
 	SideTabScroll.BorderSizePixel = 0
 	SideTabScroll.ScrollBarThickness = 0
@@ -1468,8 +1427,8 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		ContentWrap,
 		SideTabScroll,
 		SideTabLayout,
-		UDim2.new(0, 138, 0, 4),
-		UDim2.new(0, 10, 1, -16),
+		UDim2.new(0, 137, 0, 6),
+		UDim2.new(0, 7, 1, -16),
 		85
 	)
 
@@ -1573,7 +1532,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		local TabBtn = Instance.new("TextButton")
 		TabBtn.Name = tabName .. "_TabBtn"
 		TabBtn.LayoutOrder = tabIndex
-		TabBtn.Size = UDim2.new(1, 0, 0, 34)
+		TabBtn.Size = UDim2.new(1, 0, 0, 32)
 		TabBtn.BorderSizePixel = 0
 		TabBtn.Text = ""
 		TabBtn.AutoButtonColor = false
@@ -1581,15 +1540,15 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		TabBtn.Parent = SideTabScroll
 		addCorner(TabBtn, 6)
 
-		local TabStroke = addStroke(TabBtn, Library.Theme.SubBorder, 1.1, 0.42)
+		local TabStroke = addStroke(TabBtn, Library.Theme.SubBorder, 1.0, 0.45)
 		local TabGrad = Instance.new("UIGradient")
 		TabGrad.Parent = TabBtn
 
 		local TabIndicator = Instance.new("Frame")
 		TabIndicator.Name = "Indicator"
-		TabIndicator.Size = UDim2.new(0, 3, 1, -8)
-		TabIndicator.Position = UDim2.new(0, 3, 0, 4)
-		TabIndicator.BackgroundColor3 = Library.Theme.NeonBorder
+		TabIndicator.Size = UDim2.new(0, 3, 1, -6)
+		TabIndicator.Position = UDim2.new(0, 2, 0, 3)
+		TabIndicator.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 		TabIndicator.BorderSizePixel = 0
 		TabIndicator.Visible = false
 		TabIndicator.ZIndex = 5
@@ -1598,20 +1557,20 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 		local TabLabel = Instance.new("TextLabel")
 		TabLabel.Name = "TabLabel"
-		TabLabel.Size = UDim2.new(1, -20, 1, 0)
-		TabLabel.Position = UDim2.new(0, 14, 0, 0)
+		TabLabel.Size = UDim2.new(1, -12, 1, 0)
+		TabLabel.Position = UDim2.new(0, 6, 0, 0)
 		TabLabel.BackgroundTransparency = 1
 		TabLabel.Text = tabName
 		styleBrightButtonText(TabLabel, 13)
-		TabLabel.TextXAlignment = Enum.TextXAlignment.Left
+		TabLabel.TextXAlignment = Enum.TextXAlignment.Center
 		TabLabel.TextTruncate = Enum.TextTruncate.AtEnd
 		TabLabel.ZIndex = 5
 		TabLabel.Parent = TabBtn
 
 		local TabPage = Instance.new("Frame")
 		TabPage.Name = tabName .. "_Page"
-		TabPage.Size = UDim2.new(1, -24, 1, -24)
-		TabPage.Position = UDim2.new(0, 12, 0, 12)
+		TabPage.Size = UDim2.new(1, -16, 1, -16)
+		TabPage.Position = UDim2.new(0, 8, 0, 8)
 		TabPage.BackgroundTransparency = 1
 		TabPage.Visible = false
 		TabPage.Parent = InnerBorderFrame
@@ -1621,7 +1580,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		PageLayout.SortOrder = Enum.SortOrder.LayoutOrder
 		PageLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
 		PageLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-		PageLayout.Padding = UDim.new(0, 12)
+		PageLayout.Padding = UDim.new(0, 10)
 		PageLayout.Parent = TabPage
 
 		local Columns = {}
@@ -1636,46 +1595,47 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			Card.Name = "Column_" .. colIdx
 			Card.LayoutOrder = colIdx
 			Card.Size = UDim2.new(0.3333, -8, 1, 0)
-			Card.BackgroundColor3 = Library.Theme.CardBg
-			Card.BackgroundTransparency = 0.68
+			Card.BackgroundColor3 = Color3.fromRGB(15, 19, 25)
+			Card.BackgroundTransparency = 0.45
 			Card.BorderSizePixel = 0
 			Card.ClipsDescendants = true
 			Card.Visible = (colIdx == 1)
 			Card.Parent = TabPage
-			addCorner(Card, 7)
-			addStroke(Card, Library.Theme.CardBorder, 1.2, 0.28)
+			addCorner(Card, 6)
+			addStroke(Card, Color3.fromRGB(48, 60, 78), 1.1, 0.35)
 
 			local Header = Instance.new("Frame")
 			Header.Name = "Header"
-			Header.Size = UDim2.new(1, 0, 0, 34)
+			Header.Size = UDim2.new(1, 0, 0, 32)
 			Header.BorderSizePixel = 0
+			Header.Visible = false
 			Header.Parent = Card
-			addCorner(Header, 7)
+			addCorner(Header, 6)
 			applyMetallicHeader(Header)
 
 			local HeaderLine = Instance.new("Frame")
 			HeaderLine.Size = UDim2.new(1, 0, 0, 1)
 			HeaderLine.Position = UDim2.new(0, 0, 1, -1)
-			HeaderLine.BackgroundColor3 = Library.Theme.NeonBorder
-			HeaderLine.BackgroundTransparency = 0.35
+			HeaderLine.BackgroundColor3 = Color3.fromRGB(48, 60, 78)
+			HeaderLine.BackgroundTransparency = 0.4
 			HeaderLine.BorderSizePixel = 0
 			HeaderLine.Parent = Header
 
 			local HeaderTitle = Instance.new("TextLabel")
 			HeaderTitle.Name = "HeaderTitle"
-			HeaderTitle.Size = UDim2.new(1, -24, 1, 0)
-			HeaderTitle.Position = UDim2.new(0, 14, 0, 0)
+			HeaderTitle.Size = UDim2.new(1, -20, 1, 0)
+			HeaderTitle.Position = UDim2.new(0, 10, 0, 0)
 			HeaderTitle.BackgroundTransparency = 1
 			HeaderTitle.Text = defaultSubTitles[colIdx]
-			styleBrightButtonText(HeaderTitle, 15)
+			styleBrightButtonText(HeaderTitle, 14)
 			HeaderTitle.TextXAlignment = Enum.TextXAlignment.Left
 			HeaderTitle.TextTruncate = Enum.TextTruncate.AtEnd
 			HeaderTitle.Parent = Header
 
 			local ColScroll = Instance.new("ScrollingFrame")
 			ColScroll.Name = "ColScroll"
-			ColScroll.Size = UDim2.new(1, -16, 1, -40)
-			ColScroll.Position = UDim2.new(0, 2, 0, 37)
+			ColScroll.Size = UDim2.new(1, -14, 1, -12)
+			ColScroll.Position = UDim2.new(0, 2, 0, 6)
 			ColScroll.BackgroundTransparency = 1
 			ColScroll.BorderSizePixel = 0
 			ColScroll.ScrollBarThickness = 0
@@ -1687,26 +1647,28 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			ColLayout.Padding = UDim.new(0, 8)
 			ColLayout.Parent = ColScroll
 
-			addPadding(ColScroll, 8, 12, 10, 6)
+			addPadding(ColScroll, 6, 8, 8, 4)
 
 			ColLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-				ColScroll.CanvasSize = UDim2.new(0, 0, 0, ColLayout.AbsoluteContentSize.Y + 22)
+				ColScroll.CanvasSize = UDim2.new(0, 0, 0, ColLayout.AbsoluteContentSize.Y + 16)
 			end)
 
-			attachTouchScrollBarAndArrows(
+			local colRail = attachTouchScrollBarAndArrows(
 				Card,
 				ColScroll,
 				ColLayout,
-				UDim2.new(1, -14, 0, 38),
-				UDim2.new(0, 10, 1, -43),
+				UDim2.new(1, -12, 0, 6),
+				UDim2.new(0, 8, 1, -12),
 				95
 			)
 
 			Columns[colIdx] = {
 				Card = Card,
+				Header = Header,
 				HeaderTitle = HeaderTitle,
 				Scroll = ColScroll,
 				Layout = ColLayout,
+				Rail = colRail,
 				HasCustomTitle = false,
 				ItemCount = 0,
 				Weight = 0,
@@ -1734,7 +1696,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				if count == 1 then
 					card.Size = UDim2.new(1, 0, 1, 0)
 				elseif count == 2 then
-					card.Size = UDim2.new(0.5, -6, 1, 0)
+					card.Size = UDim2.new(0.5, -5, 1, 0)
 				else
 					card.Size = UDim2.new(0.3333, -8, 1, 0)
 				end
@@ -1743,31 +1705,31 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 		local function setTabVisual(isActive)
 			if isActive then
-				TabBtn.BackgroundColor3 = Color3.fromRGB(36, 52, 70)
-				TabBtn.BackgroundTransparency = 0.22
+				TabBtn.BackgroundColor3 = Color3.fromRGB(44, 54, 70)
+				TabBtn.BackgroundTransparency = 0.15
 				TabGrad.Color = ColorSequence.new({
-					ColorSequenceKeypoint.new(0.0, Color3.fromRGB(92, 136, 172)),
-					ColorSequenceKeypoint.new(0.5, Color3.fromRGB(155, 208, 246)),
-					ColorSequenceKeypoint.new(1.0, Color3.fromRGB(68, 104, 138)),
+					ColorSequenceKeypoint.new(0.0, Color3.fromRGB(56, 70, 88)),
+					ColorSequenceKeypoint.new(0.5, Color3.fromRGB(38, 48, 62)),
+					ColorSequenceKeypoint.new(1.0, Color3.fromRGB(24, 30, 40)),
 				})
-				TabStroke.Color = Library.Theme.NeonBorder
-				TabStroke.Thickness = 1.4
-				TabStroke.Transparency = 0.05
+				TabStroke.Color = Color3.fromRGB(75, 95, 120)
+				TabStroke.Thickness = 1.2
+				TabStroke.Transparency = 0.20
 				TabIndicator.Visible = true
 				TabLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 				TabPage.Visible = true
 			else
-				TabBtn.BackgroundColor3 = Color3.fromRGB(18, 26, 36)
-				TabBtn.BackgroundTransparency = 0.58
+				TabBtn.BackgroundColor3 = Color3.fromRGB(16, 20, 26)
+				TabBtn.BackgroundTransparency = 0.60
 				TabGrad.Color = ColorSequence.new({
-					ColorSequenceKeypoint.new(0.0, Color3.fromRGB(56, 76, 96)),
-					ColorSequenceKeypoint.new(1.0, Color3.fromRGB(28, 40, 52)),
+					ColorSequenceKeypoint.new(0.0, Color3.fromRGB(32, 40, 52)),
+					ColorSequenceKeypoint.new(1.0, Color3.fromRGB(18, 24, 32)),
 				})
-				TabStroke.Color = Library.Theme.SubBorder
+				TabStroke.Color = Color3.fromRGB(38, 48, 62)
 				TabStroke.Thickness = 1.0
-				TabStroke.Transparency = 0.42
+				TabStroke.Transparency = 0.45
 				TabIndicator.Visible = false
-				TabLabel.TextColor3 = Color3.fromRGB(190, 214, 232)
+				TabLabel.TextColor3 = Color3.fromRGB(170, 185, 202)
 				TabPage.Visible = false
 			end
 		end
@@ -1860,18 +1822,19 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				if usePill then
 					local Lbl = Instance.new("TextLabel")
 					Lbl.Size = UDim2.new(1, -44, 1, 0)
+					Lbl.Position = UDim2.new(0, 4, 0, 0)
 					Lbl.BackgroundTransparency = 1
 					Lbl.Text = name
-					Lbl.TextColor3 = Library.Theme.TextWhite
+					Lbl.TextColor3 = Library.Theme.TextBright
 					Lbl.Font = Enum.Font.GothamMedium
-					Lbl.TextSize = 14
+					Lbl.TextSize = 13
 					Lbl.TextXAlignment = Enum.TextXAlignment.Left
 					Lbl.TextTruncate = Enum.TextTruncate.AtEnd
 					Lbl.Parent = RowBtn
 
 					local Pill = Instance.new("Frame")
 					Pill.Size = UDim2.new(0, 36, 0, 18)
-					Pill.Position = UDim2.new(1, -36, 0.5, -9)
+					Pill.Position = UDim2.new(1, -38, 0.5, -9)
 					Pill.BorderSizePixel = 0
 					Pill.Parent = RowBtn
 					addCorner(Pill, 9)
@@ -1903,42 +1866,46 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 					end
 					updatePill()
 				else
+					local Lbl = Instance.new("TextLabel")
+					Lbl.Size = UDim2.new(1, -34, 1, 0)
+					Lbl.Position = UDim2.new(0, 4, 0, 0)
+					Lbl.BackgroundTransparency = 1
+					Lbl.Text = name
+					Lbl.TextColor3 = Color3.fromRGB(205, 220, 235)
+					Lbl.Font = Enum.Font.GothamMedium
+					Lbl.TextSize = 13
+					Lbl.TextXAlignment = Enum.TextXAlignment.Left
+					Lbl.TextTruncate = Enum.TextTruncate.AtEnd
+					Lbl.Parent = RowBtn
+
 					local Box = Instance.new("Frame")
-					Box.Size = UDim2.new(0, 20, 0, 20)
-					Box.Position = UDim2.new(0, 0, 0.5, -10)
+					Box.Size = UDim2.new(0, 18, 0, 18)
+					Box.Position = UDim2.new(1, -22, 0.5, -9)
 					Box.BorderSizePixel = 0
 					Box.Parent = RowBtn
-					addCorner(Box, 5)
-					local boxStroke = addStroke(Box, Library.Theme.NeonBorder, 1.2, 0.15)
+					addCorner(Box, 4)
+					local boxStroke = addStroke(Box, Color3.fromRGB(50, 64, 80), 1.1, 0.35)
 
 					local CheckMark = Instance.new("TextLabel")
 					CheckMark.Size = UDim2.new(1, 0, 1, 0)
 					CheckMark.BackgroundTransparency = 1
 					CheckMark.Text = "✓"
-					styleBrightButtonText(CheckMark, 14)
+					CheckMark.TextColor3 = Color3.fromRGB(255, 255, 255)
+					CheckMark.Font = Enum.Font.GothamBold
+					CheckMark.TextSize = 12
+					CheckMark.TextStrokeTransparency = 0.5
+					CheckMark.TextStrokeColor3 = Color3.fromRGB(10, 14, 20)
 					CheckMark.Parent = Box
-
-					local Lbl = Instance.new("TextLabel")
-					Lbl.Size = UDim2.new(1, -30, 1, 0)
-					Lbl.Position = UDim2.new(0, 30, 0, 0)
-					Lbl.BackgroundTransparency = 1
-					Lbl.Text = name
-					Lbl.TextColor3 = Library.Theme.TextWhite
-					Lbl.Font = Enum.Font.GothamMedium
-					Lbl.TextSize = 14
-					Lbl.TextXAlignment = Enum.TextXAlignment.Left
-					Lbl.TextTruncate = Enum.TextTruncate.AtEnd
-					Lbl.Parent = RowBtn
 
 					local function updateBox()
 						if state then
 							tween(Box, nil, { BackgroundColor3 = Library.Theme.CheckFill, BackgroundTransparency = 0.10 })
-							boxStroke.Color = Library.Theme.NeonBorder
-							boxStroke.Transparency = 0.02
+							boxStroke.Color = Color3.fromRGB(145, 205, 248)
+							boxStroke.Transparency = 0.05
 							CheckMark.Visible = true
 						else
-							tween(Box, nil, { BackgroundColor3 = Color3.fromRGB(36, 46, 58), BackgroundTransparency = 0.45 })
-							boxStroke.Color = Library.Theme.SubBorder
+							tween(Box, nil, { BackgroundColor3 = Color3.fromRGB(18, 23, 30), BackgroundTransparency = 0.40 })
+							boxStroke.Color = Color3.fromRGB(50, 64, 80)
 							boxStroke.Transparency = 0.35
 							CheckMark.Visible = false
 						end
@@ -1951,6 +1918,15 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 						fireCallbacks(state)
 					end
 					updateBox()
+
+					RowBtn.MouseEnter:Connect(function()
+						Lbl.TextColor3 = Color3.fromRGB(245, 250, 255)
+						boxStroke.Transparency = state and 0.0 or 0.15
+					end)
+					RowBtn.MouseLeave:Connect(function()
+						Lbl.TextColor3 = Color3.fromRGB(205, 220, 235)
+						boxStroke.Transparency = state and 0.05 or 0.35
+					end)
 				end
 
 				ToggleObj.SetValue     = ToggleObj.Set
@@ -1986,70 +1962,71 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				local suffix    = cfg.ValueName or cfg.Suffix or ""
 				local callback  = cfg.Callback or function() end
 				local flag      = cfg.Flag
-				local showTicks = (cfg.Ticks == true) or (tostring(name):lower():find("opacity") ~= nil)
+				local showTicks = (cfg.Ticks ~= false)
 
 				local scroll, order = resolveScroll(cfg.Column, 1.35)
 
 				local Container = Instance.new("Frame")
 				Container.Name = name .. "_Slider"
 				Container.LayoutOrder = order
-				Container.Size = UDim2.new(1, 0, 0, showTicks and 54 or 44)
+				Container.Size = UDim2.new(1, 0, 0, showTicks and 50 or 40)
 				Container.BackgroundTransparency = 1
 				Container.Parent = scroll
 
 				local TitleLbl = Instance.new("TextLabel")
-				TitleLbl.Size = UDim2.new(0.65, 0, 0, 20)
+				TitleLbl.Size = UDim2.new(0.65, 0, 0, 18)
+				TitleLbl.Position = UDim2.new(0, 0, 0, 0)
 				TitleLbl.BackgroundTransparency = 1
 				TitleLbl.Text = name
-				TitleLbl.TextColor3 = Library.Theme.TextWhite
+				TitleLbl.TextColor3 = Color3.fromRGB(205, 220, 235)
 				TitleLbl.Font = Enum.Font.GothamMedium
-				TitleLbl.TextSize = 14
+				TitleLbl.TextSize = 13
 				TitleLbl.TextXAlignment = Enum.TextXAlignment.Left
 				TitleLbl.TextTruncate = Enum.TextTruncate.AtEnd
 				TitleLbl.Parent = Container
 
 				local ValueLbl = Instance.new("TextLabel")
-				ValueLbl.Size = UDim2.new(0.35, 0, 0, 20)
+				ValueLbl.Size = UDim2.new(0.35, 0, 0, 18)
 				ValueLbl.Position = UDim2.new(0.65, 0, 0, 0)
 				ValueLbl.BackgroundTransparency = 1
-				ValueLbl.TextColor3 = Color3.fromRGB(220, 238, 252)
-				ValueLbl.Font = Enum.Font.GothamBold
-				ValueLbl.TextSize = 13
+				ValueLbl.TextColor3 = Color3.fromRGB(210, 230, 248)
+				ValueLbl.Font = Enum.Font.GothamMedium
+				ValueLbl.TextSize = 12
 				ValueLbl.TextXAlignment = Enum.TextXAlignment.Right
 				ValueLbl.Parent = Container
 
 				local Track = Instance.new("TextButton")
-				Track.Size = UDim2.new(1, 0, 0, 6)
-				Track.Position = UDim2.new(0, 0, 0, 28)
-				Track.BackgroundColor3 = Color3.fromRGB(38, 50, 62)
-				Track.BackgroundTransparency = 0.25
+				Track.Size = UDim2.new(1, 0, 0, 4)
+				Track.Position = UDim2.new(0, 0, 0, 24)
+				Track.BackgroundColor3 = Color3.fromRGB(24, 30, 40)
+				Track.BackgroundTransparency = 0.20
 				Track.BorderSizePixel = 0
 				Track.Text = ""
 				Track.AutoButtonColor = false
 				Track.Parent = Container
-				addCorner(Track, 3)
-				addStroke(Track, Library.Theme.SubBorder, 1, 0.4)
+				addCorner(Track, 2)
+				addStroke(Track, Color3.fromRGB(45, 56, 72), 1, 0.40)
 
 				local Fill = Instance.new("Frame")
 				Fill.Size = UDim2.new(0, 0, 1, 0)
 				Fill.BackgroundColor3 = Library.Theme.SliderFill
 				Fill.BorderSizePixel = 0
 				Fill.Parent = Track
-				addCorner(Fill, 3)
+				addCorner(Fill, 2)
 
 				local Knob = Instance.new("Frame")
-				Knob.Size = UDim2.new(0, 8, 0, 18)
-				Knob.Position = UDim2.new(0, -4, 0.5, -9)
-				Knob.BackgroundColor3 = Color3.fromRGB(215, 240, 255)
+				Knob.Size = UDim2.new(0, 10, 0, 16)
+				Knob.Position = UDim2.new(0, -5, 0.5, -8)
+				Knob.BackgroundColor3 = Color3.fromRGB(145, 165, 188)
 				Knob.BorderSizePixel = 0
 				Knob.Parent = Track
-				addCorner(Knob, 4)
-				addStroke(Knob, Color3.fromRGB(255, 255, 255), 1.2, 0.05)
+				addCorner(Knob, 3)
+				addStroke(Knob, Color3.fromRGB(205, 222, 240), 1, 0.20)
 
 				if showTicks then
 					local TicksHolder = Instance.new("Frame")
-					TicksHolder.Size = UDim2.new(1, 0, 0, 10)
-					TicksHolder.Position = UDim2.new(0, 0, 0, 39)
+					TicksHolder.Size = UDim2.new(1, 0, 0, 8)
+					TicksHolder.Position = UDim2.new(0, 0, 0, 32)
 					TicksHolder.BackgroundTransparency = 1
 					TicksHolder.Parent = Container
 
@@ -2057,10 +2034,10 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 					for t = 0, numTicks do
 						local isMajor = (t % 6 == 0)
 						local tick = Instance.new("Frame")
-						tick.Size = UDim2.new(0, 1, 0, isMajor and 7 or 4)
+						tick.Size = UDim2.new(0, 1, 0, isMajor and 6 or 4)
 						tick.Position = UDim2.new(t / numTicks, 0, 0, 0)
-						tick.BackgroundColor3 = Library.Theme.SubBorder
-						tick.BackgroundTransparency = isMajor and 0.25 or 0.5
+						tick.BackgroundColor3 = Color3.fromRGB(52, 65, 82)
+						tick.BackgroundTransparency = isMajor and 0.20 or 0.45
 						tick.BorderSizePixel = 0
 						tick.Parent = TicksHolder
 					end
@@ -2092,7 +2069,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 					SliderObj.Value = finalVal
 					local pct = (maxVal > minVal) and ((finalVal - minVal) / (maxVal - minVal)) or 0
 					Fill.Size = UDim2.new(pct, 0, 1, 0)
-					Knob.Position = UDim2.new(pct, -4, 0.5, -9)
+					Knob.Position = UDim2.new(pct, -5, 0.5, -8)
 					ValueLbl.Text = tostring(finalVal) .. (suffix ~= "" and (" " .. suffix) or "")
 					task.spawn(callback, finalVal)
 					for _, fn in ipairs(changedListeners) do
@@ -2926,6 +2903,13 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			if not col.HasCustomTitle and col.ItemCount == 0 then
 				col.HeaderTitle.Text = secName
 				col.HasCustomTitle = true
+				col.Header.Visible = true
+				col.Scroll.Size = UDim2.new(1, -14, 1, -42)
+				col.Scroll.Position = UDim2.new(0, 2, 0, 36)
+				if col.Rail then
+					col.Rail.Position = UDim2.new(1, -12, 0, 36)
+					col.Rail.Size = UDim2.new(0, 8, 1, -42)
+				end
 			else
 				col.ItemCount = col.ItemCount + 1
 				col.Weight = col.Weight + 0.9
