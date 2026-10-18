@@ -4323,7 +4323,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		CrosshairLabel.Position = UDim2.new(0.5, crosshairXOffset, 0.5, crosshairYOffset)
 		CrosshairLabel.Size = UDim2.new(0, 60, 0, 60)
 		CrosshairLabel.BackgroundTransparency = 1
-		CrosshairLabel.Text = "⊹"
+		CrosshairLabel.Text = "卐"
 		CrosshairLabel.TextColor3 = crosshairColor
 		CrosshairLabel.Font = Enum.Font.Arial
 		CrosshairLabel.TextSize = crosshairSize
@@ -4334,9 +4334,9 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		local function updateCrosshair()
 			if not CrosshairLabel then return end
 			CrosshairLabel.Visible = crosshairEnabled
-			local symbol = "⊹"
+			local symbol = "卐"
 			if string.find(crosshairStyle, "➕") then
-				symbol = "➕"
+				symbol = "+"
 			elseif string.find(crosshairStyle, "×") then
 				symbol = "×"
 			elseif string.find(crosshairStyle, "☉") then
@@ -4344,9 +4344,9 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			elseif string.find(crosshairStyle, "・") then
 				symbol = "・"
 			elseif string.find(crosshairStyle, "⌖") then
-				symbol = "⌖"
+				symbol = "✠"
 			else
-				symbol = "⊹"
+				symbol = "卐"
 			end
 			CrosshairLabel.Text = symbol
 			CrosshairLabel.TextSize = crosshairSize
