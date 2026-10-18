@@ -3764,7 +3764,9 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			scroll.BorderSizePixel = 0
 			scroll.ScrollBarThickness = 4
 			scroll.ScrollBarImageColor3 = Library.Theme.Accent
-			scroll.AutomaticCanvasSize = Enum.AutomaticCanvasSize.Y
+			pcall(function()
+				scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+			end)
 			scroll.CanvasSize = UDim2.new(0, 0, 0, 420)
 			scroll.ZIndex = 62
 			scroll.Visible = false
