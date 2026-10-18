@@ -266,7 +266,7 @@ local function attachTouchScrollBarAndArrows(parentFrame, scrollFrame, layoutObj
 	Rail.ZIndex = 6
 	Rail.Parent = parentFrame
 
-	local btnHeight = 20
+	local btnHeight = 15
 
 	local UpBtn = Instance.new("TextButton")
 	UpBtn.Name = "ScrollUpBtn"
@@ -276,9 +276,9 @@ local function attachTouchScrollBarAndArrows(parentFrame, scrollFrame, layoutObj
 	UpBtn.AutoButtonColor = false
 	UpBtn.ZIndex = 7
 	UpBtn.Parent = Rail
-	styleBrightButtonText(UpBtn, 11)
-	addCorner(UpBtn, 5)
-	local upStroke = addStroke(UpBtn, Library.Theme.NeonBorder, 1.1, 0.18)
+	styleBrightButtonText(UpBtn, 9)
+	addCorner(UpBtn, 4)
+	local upStroke = addStroke(UpBtn, Library.Theme.NeonBorder, 1.0, 0.18)
 	applyButtonGradient(UpBtn, false)
 	attachButtonFX(UpBtn, upStroke)
 
@@ -290,16 +290,16 @@ local function attachTouchScrollBarAndArrows(parentFrame, scrollFrame, layoutObj
 	DownBtn.AutoButtonColor = false
 	DownBtn.ZIndex = 7
 	DownBtn.Parent = Rail
-	styleBrightButtonText(DownBtn, 11)
-	addCorner(DownBtn, 5)
-	local downStroke = addStroke(DownBtn, Library.Theme.NeonBorder, 1.1, 0.18)
+	styleBrightButtonText(DownBtn, 9)
+	addCorner(DownBtn, 4)
+	local downStroke = addStroke(DownBtn, Library.Theme.NeonBorder, 1.0, 0.18)
 	applyButtonGradient(DownBtn, false)
 	attachButtonFX(DownBtn, downStroke)
 
 	local TrackBtn = Instance.new("TextButton")
 	TrackBtn.Name = "ThickScrollTrack"
-	TrackBtn.Size = UDim2.new(0, 8, 1, -(btnHeight * 2 + 8))
-	TrackBtn.Position = UDim2.new(0.5, -4, 0, btnHeight + 4)
+	TrackBtn.Size = UDim2.new(0, 4, 1, -(btnHeight * 2 + 6))
+	TrackBtn.Position = UDim2.new(0.5, -2, 0, btnHeight + 3)
 	TrackBtn.BackgroundColor3 = Color3.fromRGB(20, 30, 42)
 	TrackBtn.BackgroundTransparency = 0.52
 	TrackBtn.BorderSizePixel = 0
@@ -307,7 +307,7 @@ local function attachTouchScrollBarAndArrows(parentFrame, scrollFrame, layoutObj
 	TrackBtn.AutoButtonColor = false
 	TrackBtn.ZIndex = 7
 	TrackBtn.Parent = Rail
-	addCorner(TrackBtn, 4)
+	addCorner(TrackBtn, 2)
 	addStroke(TrackBtn, Library.Theme.SubBorder, 1, 0.35)
 
 	local Thumb = Instance.new("Frame")
@@ -319,7 +319,7 @@ local function attachTouchScrollBarAndArrows(parentFrame, scrollFrame, layoutObj
 	Thumb.BorderSizePixel = 0
 	Thumb.ZIndex = 8
 	Thumb.Parent = TrackBtn
-	addCorner(Thumb, 4)
+	addCorner(Thumb, 2)
 	addStroke(Thumb, Color3.fromRGB(240, 252, 255), 1, 0.2)
 
 	local function getMaxScroll()
@@ -820,9 +820,10 @@ local function playPrettyLoader(screenGui, titleText, onFinished)
 
 	task.spawn(function()
 		local steps = {
-			{ pct = 0.38, txt = "Loading Frosted-Glass Theme...", waitTime = 0.28 },
-			{ pct = 0.76, txt = "Building Tabs & Controls...", waitTime = 0.32 },
-			{ pct = 1.00, txt = "Ready!", waitTime = 0.28 },
+			{ pct = 0.22, txt = "Initializing NightSystem Glass UI...", waitTime = 1.15 },
+			{ pct = 0.54, txt = "Loading Frosted Theme & Shaders...", waitTime = 1.35 },
+			{ pct = 0.85, txt = "Building Tabs & Responsive Grid...", waitTime = 1.30 },
+			{ pct = 1.00, txt = "Ready!", waitTime = 1.20 },
 		}
 		local currentPct = 0
 		for _, st in ipairs(steps) do
@@ -1290,8 +1291,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 	UserInputService.InputBegan:Connect(function(input, gp)
 		local isCtrl = (input.KeyCode == Enum.KeyCode.LeftControl or input.KeyCode == Enum.KeyCode.RightControl)
-		local isMatch = (toggleKey and (input.KeyCode == toggleKey or input.UserInputType == toggleKey)) or isCtrl
-		if not gp and isMatch then
+		if not gp and isCtrl then
 			if isWindowOpen then
 				closeWindowAnimated()
 			else
@@ -1393,8 +1393,8 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 	local InnerBorderFrame = Instance.new("Frame")
 	InnerBorderFrame.Name = "InnerBorderFrame"
-	InnerBorderFrame.Size = UDim2.new(1, -66, 1, -12)
-	InnerBorderFrame.Position = UDim2.new(0, 54, 0, 0)
+	InnerBorderFrame.Size = UDim2.new(1, -164, 1, -12)
+	InnerBorderFrame.Position = UDim2.new(0, 154, 0, 0)
 	InnerBorderFrame.BackgroundColor3 = Library.Theme.GlassBg
 	InnerBorderFrame.BackgroundTransparency = 0.82
 	InnerBorderFrame.BorderSizePixel = 0
@@ -1443,8 +1443,8 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 	local SideTabScroll = Instance.new("ScrollingFrame")
 	SideTabScroll.Name = "SideTabScroll"
-	SideTabScroll.Size = UDim2.new(0, 34, 1, -56)
-	SideTabScroll.Position = UDim2.new(0, 6, 0, 22)
+	SideTabScroll.Size = UDim2.new(0, 126, 1, -16)
+	SideTabScroll.Position = UDim2.new(0, 8, 0, 4)
 	SideTabScroll.BackgroundTransparency = 1
 	SideTabScroll.BorderSizePixel = 0
 	SideTabScroll.ScrollBarThickness = 0
@@ -1455,10 +1455,10 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 	local SideTabLayout = Instance.new("UIListLayout")
 	SideTabLayout.SortOrder = Enum.SortOrder.LayoutOrder
 	SideTabLayout.Padding = UDim.new(0, 6)
-	SideTabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	SideTabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
 	SideTabLayout.Parent = SideTabScroll
 
-	addPadding(SideTabScroll, 2, 4, 0, 0)
+	addPadding(SideTabScroll, 2, 4, 2, 2)
 
 	SideTabLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
 		SideTabScroll.CanvasSize = UDim2.new(0, 0, 0, SideTabLayout.AbsoluteContentSize.Y + 8)
@@ -1468,8 +1468,8 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		ContentWrap,
 		SideTabScroll,
 		SideTabLayout,
-		UDim2.new(0, 38, 0, 0),
-		UDim2.new(0, 14, 1, -12),
+		UDim2.new(0, 138, 0, 4),
+		UDim2.new(0, 10, 1, -16),
 		85
 	)
 
@@ -1569,12 +1569,11 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		local tabName = tabConfig.Name or tabConfig.Title or ("Tab " .. tostring(#WindowObj.Tabs + 1))
 
 		local tabIndex = #WindowObj.Tabs + 1
-		local tabHeight = math.clamp(#tabName * 7 + 34, 76, 114)
 
 		local TabBtn = Instance.new("TextButton")
 		TabBtn.Name = tabName .. "_TabBtn"
 		TabBtn.LayoutOrder = tabIndex
-		TabBtn.Size = UDim2.new(0, 30, 0, tabHeight)
+		TabBtn.Size = UDim2.new(1, 0, 0, 34)
 		TabBtn.BorderSizePixel = 0
 		TabBtn.Text = ""
 		TabBtn.AutoButtonColor = false
@@ -1582,20 +1581,32 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		TabBtn.Parent = SideTabScroll
 		addCorner(TabBtn, 6)
 
-		local TabStroke = addStroke(TabBtn, Library.Theme.SubBorder, 1.2, 0.35)
+		local TabStroke = addStroke(TabBtn, Library.Theme.SubBorder, 1.1, 0.42)
 		local TabGrad = Instance.new("UIGradient")
 		TabGrad.Parent = TabBtn
 
-		local RotatedLabel = Instance.new("TextLabel")
-		RotatedLabel.Size = UDim2.new(0, tabHeight - 8, 0, 26)
-		RotatedLabel.Position = UDim2.new(0.5, -(tabHeight - 8) / 2, 0.5, -13)
-		RotatedLabel.BackgroundTransparency = 1
-		RotatedLabel.Text = tabName
-		styleBrightButtonText(RotatedLabel, 13)
-		RotatedLabel.Rotation = -90
-		RotatedLabel.TextTruncate = Enum.TextTruncate.AtEnd
-		RotatedLabel.ZIndex = 5
-		RotatedLabel.Parent = TabBtn
+		local TabIndicator = Instance.new("Frame")
+		TabIndicator.Name = "Indicator"
+		TabIndicator.Size = UDim2.new(0, 3, 1, -8)
+		TabIndicator.Position = UDim2.new(0, 3, 0, 4)
+		TabIndicator.BackgroundColor3 = Library.Theme.NeonBorder
+		TabIndicator.BorderSizePixel = 0
+		TabIndicator.Visible = false
+		TabIndicator.ZIndex = 5
+		TabIndicator.Parent = TabBtn
+		addCorner(TabIndicator, 2)
+
+		local TabLabel = Instance.new("TextLabel")
+		TabLabel.Name = "TabLabel"
+		TabLabel.Size = UDim2.new(1, -20, 1, 0)
+		TabLabel.Position = UDim2.new(0, 14, 0, 0)
+		TabLabel.BackgroundTransparency = 1
+		TabLabel.Text = tabName
+		styleBrightButtonText(TabLabel, 13)
+		TabLabel.TextXAlignment = Enum.TextXAlignment.Left
+		TabLabel.TextTruncate = Enum.TextTruncate.AtEnd
+		TabLabel.ZIndex = 5
+		TabLabel.Parent = TabBtn
 
 		local TabPage = Instance.new("Frame")
 		TabPage.Name = tabName .. "_Page"
@@ -1663,7 +1674,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 			local ColScroll = Instance.new("ScrollingFrame")
 			ColScroll.Name = "ColScroll"
-			ColScroll.Size = UDim2.new(1, -24, 1, -40)
+			ColScroll.Size = UDim2.new(1, -16, 1, -40)
 			ColScroll.Position = UDim2.new(0, 2, 0, 37)
 			ColScroll.BackgroundTransparency = 1
 			ColScroll.BorderSizePixel = 0
@@ -1686,8 +1697,8 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				Card,
 				ColScroll,
 				ColLayout,
-				UDim2.new(1, -20, 0, 38),
-				UDim2.new(0, 16, 1, -43),
+				UDim2.new(1, -14, 0, 38),
+				UDim2.new(0, 10, 1, -43),
 				95
 			)
 
@@ -1733,28 +1744,30 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		local function setTabVisual(isActive)
 			if isActive then
 				TabBtn.BackgroundColor3 = Color3.fromRGB(36, 52, 70)
-				TabBtn.BackgroundTransparency = 0.26
+				TabBtn.BackgroundTransparency = 0.22
 				TabGrad.Color = ColorSequence.new({
 					ColorSequenceKeypoint.new(0.0, Color3.fromRGB(92, 136, 172)),
 					ColorSequenceKeypoint.new(0.5, Color3.fromRGB(155, 208, 246)),
 					ColorSequenceKeypoint.new(1.0, Color3.fromRGB(68, 104, 138)),
 				})
 				TabStroke.Color = Library.Theme.NeonBorder
-				TabStroke.Thickness = 1.5
+				TabStroke.Thickness = 1.4
 				TabStroke.Transparency = 0.05
-				RotatedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+				TabIndicator.Visible = true
+				TabLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 				TabPage.Visible = true
 			else
-				TabBtn.BackgroundColor3 = Color3.fromRGB(20, 28, 38)
-				TabBtn.BackgroundTransparency = 0.62
+				TabBtn.BackgroundColor3 = Color3.fromRGB(18, 26, 36)
+				TabBtn.BackgroundTransparency = 0.58
 				TabGrad.Color = ColorSequence.new({
 					ColorSequenceKeypoint.new(0.0, Color3.fromRGB(56, 76, 96)),
 					ColorSequenceKeypoint.new(1.0, Color3.fromRGB(28, 40, 52)),
 				})
 				TabStroke.Color = Library.Theme.SubBorder
 				TabStroke.Thickness = 1.0
-				TabStroke.Transparency = 0.45
-				RotatedLabel.TextColor3 = Color3.fromRGB(190, 214, 232)
+				TabStroke.Transparency = 0.42
+				TabIndicator.Visible = false
+				TabLabel.TextColor3 = Color3.fromRGB(190, 214, 232)
 				TabPage.Visible = false
 			end
 		end
@@ -2966,6 +2979,19 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		end
 
 		TabObj._setVisual = setTabVisual
+
+		TabBtn.MouseEnter:Connect(function()
+			if WindowObj.ActiveTab ~= TabObj then
+				tween(TabBtn, TweenInfo.new(0.12), { BackgroundTransparency = 0.42 })
+				tween(TabStroke, TweenInfo.new(0.12), { Transparency = 0.22, Color = Library.Theme.NeonBorder })
+			end
+		end)
+		TabBtn.MouseLeave:Connect(function()
+			if WindowObj.ActiveTab ~= TabObj then
+				tween(TabBtn, TweenInfo.new(0.12), { BackgroundTransparency = 0.58 })
+				tween(TabStroke, TweenInfo.new(0.12), { Transparency = 0.42, Color = Library.Theme.SubBorder })
+			end
+		end)
 
 		TabBtn.MouseButton1Click:Connect(function()
 			for _, t in ipairs(WindowObj.Tabs) do
