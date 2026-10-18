@@ -2023,6 +2023,10 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			secConfig = secConfig or {}
 			local secName = secConfig.Name or secConfig.Title or ("Section " .. tostring(sectionCounter + 1))
 
+			if sectionCounter == 0 and Columns[1].ItemCount > 0 then
+				sectionCounter = 1
+				Columns[1].HasCustomTitle = true
+			end
 			sectionCounter = sectionCounter + 1
 			local targetColIdx = forcedColumn or secConfig.Column
 			if not targetColIdx then
