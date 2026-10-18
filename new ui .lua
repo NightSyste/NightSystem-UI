@@ -1442,8 +1442,12 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		end
 	end)
 
-	createGlassControlBtn("−", -102, false, function()
+	local function toggleMinimize()
 		if isAnimatingWindow then return end
+		if not isWindowOpen then
+			openWindowAnimated()
+			return
+		end
 		isMinimized = not isMinimized
 		if isMinimized then
 			preMinimizePos = MainWin.Position
@@ -1451,8 +1455,9 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			ContentWrap.Size = UDim2.new(1, 0, 0, winHeight - 36)
 			MainWin.ClipsDescendants = true
 			BottomAccent.Visible = false
+			local minBarWidth = math.clamp(math.floor(winWidth * 0.64), 380, 450)
 			tween(MainWin, TweenInfo.new(0.28, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-				Size = UDim2.new(0, winWidth, 0, 36),
+				Size = UDim2.new(0, minBarWidth, 0, 36),
 				Position = UDim2.new(0.5, 0, 0, 18)
 			})
 			tween(MobileOpenPill, TweenInfo.new(0.28, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
@@ -1475,7 +1480,9 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				end
 			end)
 		end
-	end)
+	end
+
+	createGlassControlBtn("−", -102, false, toggleMinimize)
 
 	createGlassControlBtn("☰", -68, false, function()
 		if isAnimatingWindow then return end
@@ -1497,8 +1504,10 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 	end)
 
 	UserInputService.InputBegan:Connect(function(input, gp)
-		local isToggle = (input.KeyCode == Enum.KeyCode.RightShift or input.KeyCode == Enum.KeyCode.LeftControl or input.KeyCode == Enum.KeyCode.RightControl)
-		if not gp and isToggle then
+		if gp then return end
+		if input.KeyCode == Enum.KeyCode.LeftControl then
+			toggleMinimize()
+		elseif input.KeyCode == Enum.KeyCode.RightShift or input.KeyCode == Enum.KeyCode.RightControl or (toggleKey and input.KeyCode == toggleKey and input.KeyCode ~= Enum.KeyCode.LeftControl) then
 			if isWindowOpen then
 				closeWindowAnimated()
 			else
