@@ -31,17 +31,19 @@ local Library = {
 	Notifications = {},
 	ToggleKey = Enum.KeyCode.RightShift,
 	Theme = {
-		NeonBorder   = Color3.fromRGB(130, 215, 250),
-		CardBorder   = Color3.fromRGB(125, 175, 205),
-		SubBorder    = Color3.fromRGB(110, 145, 170),
-		GlassBg      = Color3.fromRGB(20, 27, 35),
-		CardBg       = Color3.fromRGB(18, 24, 32),
+		NeonBorder   = Color3.fromRGB(135, 220, 255),
+		CardBorder   = Color3.fromRGB(125, 178, 210),
+		SubBorder    = Color3.fromRGB(110, 150, 178),
+		GlassBg      = Color3.fromRGB(18, 25, 33),
+		CardBg       = Color3.fromRGB(16, 22, 30),
 		ControlBg    = Color3.fromRGB(36, 48, 60),
-		TextWhite    = Color3.fromRGB(232, 240, 248),
-		TextMuted    = Color3.fromRGB(165, 182, 198),
-		CheckFill    = Color3.fromRGB(112, 165, 198),
-		SliderFill   = Color3.fromRGB(130, 182, 212),
-		Transparency = 0.22,
+		TextWhite    = Color3.fromRGB(238, 245, 252),
+		TextMuted    = Color3.fromRGB(168, 186, 204),
+		CheckFill    = Color3.fromRGB(115, 172, 208),
+		SliderFill   = Color3.fromRGB(132, 188, 220),
+		CloseRed     = Color3.fromRGB(235, 70, 92),
+		CloseBorder  = Color3.fromRGB(255, 115, 135),
+		Transparency = 0.20,
 	}
 }
 Library.__index = Library
@@ -117,21 +119,120 @@ local function applyMetallicHeader(frame)
 	return grad
 end
 
-local function applyButtonGradient(frame)
+local function applyButtonGradient(frame, isHovered)
 	frame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	frame.BackgroundTransparency = 0.25
-	local grad = Instance.new("UIGradient")
-	grad.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0.00, Color3.fromRGB(62, 82, 102)),
-		ColorSequenceKeypoint.new(0.55, Color3.fromRGB(105, 136, 162)),
-		ColorSequenceKeypoint.new(1.00, Color3.fromRGB(52, 70, 88)),
-	})
-	grad.Rotation = 12
-	grad.Parent = frame
+	frame.BackgroundTransparency = isHovered and 0.10 or 0.20
+
+	local grad = frame:FindFirstChildOfClass("UIGradient")
+	if not grad then
+		grad = Instance.new("UIGradient")
+		grad.Rotation = 18
+		grad.Parent = frame
+	end
+
+	if isHovered then
+		grad.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0.00, Color3.fromRGB(78, 108, 135)),
+			ColorSequenceKeypoint.new(0.48, Color3.fromRGB(135, 182, 215)),
+			ColorSequenceKeypoint.new(0.75, Color3.fromRGB(98, 140, 172)),
+			ColorSequenceKeypoint.new(1.00, Color3.fromRGB(64, 90, 115)),
+		})
+	else
+		grad.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0.00, Color3.fromRGB(54, 74, 94)),
+			ColorSequenceKeypoint.new(0.48, Color3.fromRGB(96, 130, 158)),
+			ColorSequenceKeypoint.new(0.75, Color3.fromRGB(70, 96, 120)),
+			ColorSequenceKeypoint.new(1.00, Color3.fromRGB(44, 62, 80)),
+		})
+	end
+
+	if not frame:FindFirstChild("TopShine") then
+		local shine = Instance.new("Frame")
+		shine.Name = "TopShine"
+		shine.Size = UDim2.new(1, -8, 0, 1)
+		shine.Position = UDim2.new(0, 4, 0, 1)
+		shine.BackgroundColor3 = Color3.fromRGB(225, 248, 255)
+		shine.BackgroundTransparency = 0.62
+		shine.BorderSizePixel = 0
+		shine.ZIndex = frame.ZIndex + 1
+		shine.Parent = frame
+	end
+
 	return grad
 end
 
-local function normalizeArgs(kind, a, b, c, d, e, f)
+local function attachButtonFX(btn, stroke)
+	local btnScale = btn:FindFirstChildOfClass("UIScale")
+	if not btnScale then
+		btnScale = Instance.new("UIScale")
+		btnScale.Scale = 1
+		btnScale.Parent = btn
+	end
+
+	btn.MouseEnter:Connect(function()
+		applyButtonGradient(btn, true)
+		if stroke then
+			tween(stroke, TweenInfo.new(0.14), {
+				Transparency = 0.0,
+				Color = Library.Theme.NeonBorder
+			})
+		end
+		tween(btnScale, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = 1.015 })
+	end)
+
+	btn.MouseLeave:Connect(function()
+		applyButtonGradient(btn, false)
+		if stroke then
+			tween(stroke, TweenInfo.new(0.16), {
+				Transparency = 0.22,
+				Color = Library.Theme.NeonBorder
+			})
+		end
+		tween(btnScale, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = 1.0 })
+	end)
+
+	btn.MouseButton1Down:Connect(function()
+		tween(btnScale, TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = 0.965 })
+	end)
+
+	btn.MouseButton1Up:Connect(function()
+		tween(btnScale, TweenInfo.new(0.14, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1.015 })
+	end)
+end
+
+local function resolveKeyItem(val)
+	if typeof(val) == "EnumItem" then
+		return val
+	elseif type(val) == "string" and val ~= "" then
+		if Enum.KeyCode[val] then
+			return Enum.KeyCode[val]
+		elseif Enum.UserInputType[val] then
+			return Enum.UserInputType[val]
+		end
+	end
+	return nil
+end
+
+local function formatKeyName(keyItem)
+	if not keyItem then return "None" end
+	local name = keyItem.Name or tostring(keyItem)
+	local shortNames = {
+		RightShift = "RShift",
+		LeftShift = "LShift",
+		RightControl = "RCtrl",
+		LeftControl = "LCtrl",
+		RightAlt = "RAlt",
+		LeftAlt = "LAlt",
+		MouseButton1 = "MB1",
+		MouseButton2 = "MB2",
+		MouseButton3 = "MB3",
+		Backspace = "Back",
+		CapsLock = "Caps",
+	}
+	return shortNames[name] or name
+end
+
+local function normalizeArgs(kind, a, b, c, d, e)
 	if type(a) == "table" then
 		return a
 	end
@@ -186,12 +287,14 @@ local function normalizeArgs(kind, a, b, c, d, e, f)
 			cfg.Callback = type(d) == "function" and d or nil
 		end
 	elseif kind == "Bind" then
-		if typeof(b) == "EnumItem" or type(b) == "string" and type(c) == "function" then
+		if (typeof(b) == "EnumItem" or type(b) == "string") and type(c) == "function" then
 			cfg.Default = b
 			cfg.Callback = c
-		elseif typeof(c) == "EnumItem" then
+		elseif typeof(c) == "EnumItem" or type(c) == "string" then
 			cfg.Default = c
 			cfg.Callback = type(d) == "function" and d or nil
+		elseif type(b) == "function" then
+			cfg.Callback = b
 		end
 	elseif kind == "Textbox" then
 		if type(b) == "function" then
@@ -257,6 +360,11 @@ function Library.MakeNotification(selfOrCfg, maybeCfg)
 	addCorner(card, 7)
 	addStroke(card, Library.Theme.NeonBorder, 1.3, 0.15)
 
+	local cardScale = Instance.new("UIScale")
+	cardScale.Scale = 0.85
+	cardScale.Parent = card
+	tween(cardScale, TweenInfo.new(0.22, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1.0 })
+
 	local hdr = Instance.new("Frame")
 	hdr.Size = UDim2.new(1, 0, 0, 24)
 	hdr.BorderSizePixel = 0
@@ -298,8 +406,9 @@ function Library.MakeNotification(selfOrCfg, maybeCfg)
 	tween(bar, TweenInfo.new(duration, Enum.EasingStyle.Linear), { Size = UDim2.new(0, 0, 0, 2) })
 	task.delay(duration, function()
 		if card and card.Parent then
-			tween(card, TweenInfo.new(0.25), { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 0) })
-			task.wait(0.26)
+			tween(cardScale, TweenInfo.new(0.18, Enum.EasingStyle.Back, Enum.EasingDirection.In), { Scale = 0.05 })
+			tween(card, TweenInfo.new(0.22), { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 0) })
+			task.wait(0.23)
 			if card then card:Destroy() end
 		end
 	end)
@@ -307,6 +416,18 @@ end
 Library.Notify           = Library.MakeNotification
 Library.Notification     = Library.MakeNotification
 Library.SendNotification = Library.MakeNotification
+
+function Library:SetToggleKey(newKey)
+	local resolved = resolveKeyItem(newKey)
+	if resolved then
+		self.ToggleKey = resolved
+		for _, win in ipairs(self.Windows) do
+			if win.SetToggleKey then
+				win:SetToggleKey(resolved)
+			end
+		end
+	end
+end
 
 function Library:Init()
 	return self
@@ -341,7 +462,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 	config = config or {}
 
 	local windowTitle = config.Name or config.Title or config.LoadingTitle or "NightSystem"
-	local toggleKey   = config.ToggleKey or config.Bind or Library.ToggleKey
+	local toggleKey   = resolveKeyItem(config.ToggleKey or config.Bind) or Library.ToggleKey
 	local winWidth    = config.Width or BASE_WIDTH
 	local winHeight   = config.Height or BASE_HEIGHT
 
@@ -359,19 +480,23 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 	local MainWin = Instance.new("Frame")
 	MainWin.Name = "MainWin"
+	MainWin.AnchorPoint = Vector2.new(0.5, 0.5)
 	MainWin.Size = UDim2.new(0, winWidth, 0, winHeight)
-	MainWin.Position = UDim2.new(0.5, -math.floor(winWidth / 2), 0.5, -math.floor(winHeight / 2))
+	MainWin.Position = UDim2.new(0.5, 0, 0.5, 0)
 	MainWin.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 	MainWin.BackgroundTransparency = Library.Theme.Transparency
 	MainWin.BorderSizePixel = 0
 	MainWin.Active = true
 	MainWin.Parent = ScreenGui
 	addCorner(MainWin, 10)
-	addStroke(MainWin, Library.Theme.NeonBorder, 1.8, 0.08)
+	local MainStroke = addStroke(MainWin, Library.Theme.NeonBorder, 1.8, 0.08)
 
+	local userScale = 1.0
 	local WinScale = Instance.new("UIScale")
-	WinScale.Scale = 1
+	WinScale.Scale = 0.05
 	WinScale.Parent = MainWin
+
+	tween(WinScale, TweenInfo.new(0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = userScale })
 
 	local WinGrad = Instance.new("UIGradient")
 	WinGrad.Color = ColorSequence.new({
@@ -405,21 +530,21 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 	local ContentWrap = Instance.new("Frame")
 	ContentWrap.Name = "ContentWrap"
-	ContentWrap.Size = UDim2.new(1, 0, 0, winHeight - 36)
-	ContentWrap.Position = UDim2.new(0, 0, 0, 36)
+	ContentWrap.Size = UDim2.new(1, 0, 0, winHeight - 38)
+	ContentWrap.Position = UDim2.new(0, 0, 0, 38)
 	ContentWrap.BackgroundTransparency = 1
 	ContentWrap.Parent = MainWin
 
 	local TitleBar = Instance.new("Frame")
 	TitleBar.Name = "TitleBar"
-	TitleBar.Size = UDim2.new(1, 0, 0, 34)
+	TitleBar.Size = UDim2.new(1, 0, 0, 36)
 	TitleBar.BackgroundTransparency = 1
 	TitleBar.Parent = MainWin
 
 	for i = 1, 3 do
 		local dot = Instance.new("Frame")
 		dot.Size = UDim2.new(0, 11, 0, 11)
-		dot.Position = UDim2.new(0, 16 + (i - 1) * 18, 0, 12)
+		dot.Position = UDim2.new(0, 16 + (i - 1) * 18, 0, 13)
 		dot.BackgroundColor3 = Color3.fromRGB(45, 58, 70)
 		dot.BackgroundTransparency = 0.45
 		dot.Parent = TitleBar
@@ -429,51 +554,209 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 	local TitleText = Instance.new("TextLabel")
 	TitleText.Name = "TitleText"
-	TitleText.Size = UDim2.new(1, -220, 1, 0)
-	TitleText.Position = UDim2.new(0, 110, 0, 0)
+	TitleText.Size = UDim2.new(1, -240, 1, 0)
+	TitleText.Position = UDim2.new(0, 120, 0, 0)
 	TitleText.BackgroundTransparency = 1
 	TitleText.Text = tostring(windowTitle)
-	TitleText.TextColor3 = Color3.fromRGB(198, 212, 225)
+	TitleText.TextColor3 = Color3.fromRGB(210, 225, 238)
 	TitleText.Font = Enum.Font.GothamMedium
 	TitleText.TextSize = 14
 	TitleText.TextTruncate = Enum.TextTruncate.AtEnd
 	TitleText.Parent = TitleBar
 
-	local function createTopBtn(txt, rightOffset, callback)
-		local b = Instance.new("TextButton")
-		b.Size = UDim2.new(0, 24, 0, 22)
-		b.Position = UDim2.new(1, rightOffset, 0, 6)
-		b.BackgroundTransparency = 1
-		b.Text = txt
-		b.TextColor3 = Library.Theme.TextMuted
-		b.Font = Enum.Font.Gotham
-		b.TextSize = 13
-		b.Parent = TitleBar
-		b.MouseEnter:Connect(function()
-			b.TextColor3 = Library.Theme.NeonBorder
+	local function createGlassControlBtn(iconText, rightOffset, isCloseBtn, callback)
+		local btn = Instance.new("TextButton")
+		btn.Size = UDim2.new(0, 28, 0, 22)
+		btn.Position = UDim2.new(1, rightOffset, 0.5, -11)
+		btn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		btn.BackgroundTransparency = isCloseBtn and 0.18 or 0.24
+		btn.BorderSizePixel = 0
+		btn.Text = iconText
+		btn.TextColor3 = Color3.fromRGB(242, 248, 255)
+		btn.Font = Enum.Font.GothamBold
+		btn.TextSize = isCloseBtn and 13 or 12
+		btn.AutoButtonColor = false
+		btn.Parent = TitleBar
+		addCorner(btn, 6)
+
+		local btnScale = Instance.new("UIScale")
+		btnScale.Scale = 1
+		btnScale.Parent = btn
+
+		local grad = Instance.new("UIGradient")
+		grad.Rotation = 25
+		grad.Parent = btn
+
+		local stroke = addStroke(
+			btn,
+			isCloseBtn and Library.Theme.CloseBorder or Library.Theme.NeonBorder,
+			1.2,
+			isCloseBtn and 0.12 or 0.25
+		)
+
+		local shine = Instance.new("Frame")
+		shine.Size = UDim2.new(1, -8, 0, 1)
+		shine.Position = UDim2.new(0, 4, 0, 1)
+		shine.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		shine.BackgroundTransparency = 0.55
+		shine.BorderSizePixel = 0
+		shine.Parent = btn
+
+		local function setVisual(hovered)
+			if isCloseBtn then
+				if hovered then
+					grad.Color = ColorSequence.new({
+						ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 95, 118)),
+						ColorSequenceKeypoint.new(0.50, Color3.fromRGB(235, 55, 80)),
+						ColorSequenceKeypoint.new(1.00, Color3.fromRGB(175, 28, 52)),
+					})
+					btn.BackgroundTransparency = 0.04
+					stroke.Transparency = 0.0
+					stroke.Color = Color3.fromRGB(255, 165, 180)
+				else
+					grad.Color = ColorSequence.new({
+						ColorSequenceKeypoint.new(0.00, Color3.fromRGB(195, 58, 78)),
+						ColorSequenceKeypoint.new(0.50, Color3.fromRGB(155, 38, 58)),
+						ColorSequenceKeypoint.new(1.00, Color3.fromRGB(115, 24, 40)),
+					})
+					btn.BackgroundTransparency = 0.18
+					stroke.Transparency = 0.15
+					stroke.Color = Library.Theme.CloseBorder
+				end
+			else
+				if hovered then
+					grad.Color = ColorSequence.new({
+						ColorSequenceKeypoint.new(0.00, Color3.fromRGB(92, 130, 162)),
+						ColorSequenceKeypoint.new(0.50, Color3.fromRGB(145, 195, 230)),
+						ColorSequenceKeypoint.new(1.00, Color3.fromRGB(70, 102, 130)),
+					})
+					btn.BackgroundTransparency = 0.08
+					stroke.Transparency = 0.0
+					stroke.Color = Library.Theme.NeonBorder
+				else
+					grad.Color = ColorSequence.new({
+						ColorSequenceKeypoint.new(0.00, Color3.fromRGB(56, 78, 98)),
+						ColorSequenceKeypoint.new(0.50, Color3.fromRGB(88, 120, 146)),
+						ColorSequenceKeypoint.new(1.00, Color3.fromRGB(44, 62, 78)),
+					})
+					btn.BackgroundTransparency = 0.24
+					stroke.Transparency = 0.28
+					stroke.Color = Library.Theme.CardBorder
+				end
+			end
+		end
+
+		setVisual(false)
+
+		btn.MouseEnter:Connect(function()
+			setVisual(true)
+			tween(btnScale, TweenInfo.new(0.14, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1.08 })
 		end)
-		b.MouseLeave:Connect(function()
-			b.TextColor3 = Library.Theme.TextMuted
+		btn.MouseLeave:Connect(function()
+			setVisual(false)
+			tween(btnScale, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = 1.0 })
 		end)
-		b.MouseButton1Click:Connect(callback)
-		return b
+		btn.MouseButton1Down:Connect(function()
+			tween(btnScale, TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = 0.92 })
+		end)
+		btn.MouseButton1Up:Connect(function()
+			tween(btnScale, TweenInfo.new(0.14, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1.08 })
+		end)
+		btn.MouseButton1Click:Connect(callback)
+		return btn
 	end
 
 	local isMinimized = false
+	local isWindowOpen = true
+	local isAnimatingWindow = false
 	local currentScalePreset = 1
 
-	createTopBtn("—", -78, function()
+	local function closeWindowAnimated()
+		if isAnimatingWindow or not isWindowOpen then return end
+		isAnimatingWindow = true
+		isWindowOpen = false
+
+		local expandScale = userScale * 1.085
+		local step1 = tween(WinScale, TweenInfo.new(0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Scale = expandScale
+		})
+		step1.Completed:Connect(function()
+			tween(MainWin, TweenInfo.new(0.28, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+				BackgroundTransparency = 0.92
+			})
+			tween(MainStroke, TweenInfo.new(0.26, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+				Transparency = 0.95
+			})
+			local step2 = tween(WinScale, TweenInfo.new(0.30, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+				Scale = 0.01
+			})
+			step2.Completed:Connect(function()
+				MainWin.Visible = false
+				isAnimatingWindow = false
+				if type(config.CloseCallback) == "function" then
+					task.spawn(config.CloseCallback)
+				end
+			end)
+		end)
+	end
+
+	local function openWindowAnimated()
+		if isAnimatingWindow or isWindowOpen then return end
+		isAnimatingWindow = true
+		isWindowOpen = true
+
+		WinScale.Scale = 0.02
+		MainWin.BackgroundTransparency = 0.85
+		MainStroke.Transparency = 0.85
+		MainWin.Visible = true
+
+		tween(MainWin, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			BackgroundTransparency = Library.Theme.Transparency
+		})
+		tween(MainStroke, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Transparency = 0.08
+		})
+
+		local popScale = userScale * 1.06
+		local step1 = tween(WinScale, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Scale = popScale
+		})
+		step1.Completed:Connect(function()
+			local step2 = tween(WinScale, TweenInfo.new(0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
+				Scale = userScale
+			})
+			step2.Completed:Connect(function()
+				isAnimatingWindow = false
+			end)
+		end)
+	end
+
+	createGlassControlBtn("—", -98, false, function()
+		if isAnimatingWindow then return end
 		isMinimized = not isMinimized
+		local halfDelta = math.floor((winHeight - 36) / 2 * userScale)
 		if isMinimized then
-			ContentWrap.Size = UDim2.new(1, 0, 0, winHeight - 36)
+			ContentWrap.Size = UDim2.new(1, 0, 0, winHeight - 38)
 			MainWin.ClipsDescendants = true
 			BottomAccent.Visible = false
-			tween(MainWin, TweenInfo.new(0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-				Size = UDim2.new(0, winWidth, 0, 36)
+			tween(MainWin, TweenInfo.new(0.24, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+				Size = UDim2.new(0, winWidth, 0, 36),
+				Position = UDim2.new(
+					MainWin.Position.X.Scale,
+					MainWin.Position.X.Offset,
+					MainWin.Position.Y.Scale,
+					MainWin.Position.Y.Offset - halfDelta
+				)
 			})
 		else
-			local t = tween(MainWin, TweenInfo.new(0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-				Size = UDim2.new(0, winWidth, 0, winHeight)
+			local t = tween(MainWin, TweenInfo.new(0.24, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+				Size = UDim2.new(0, winWidth, 0, winHeight),
+				Position = UDim2.new(
+					MainWin.Position.X.Scale,
+					MainWin.Position.X.Offset,
+					MainWin.Position.Y.Scale,
+					MainWin.Position.Y.Offset + halfDelta
+				)
 			})
 			t.Completed:Connect(function()
 				if not isMinimized then
@@ -484,29 +767,32 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		end
 	end)
 
-	createTopBtn("□", -52, function()
+	createGlassControlBtn("□", -66, false, function()
+		if isAnimatingWindow then return end
 		if currentScalePreset == 1 then
 			currentScalePreset = 2
-			tween(WinScale, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = 0.82 })
+			userScale = 0.82
 		elseif currentScalePreset == 2 then
 			currentScalePreset = 3
-			tween(WinScale, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = 1.12 })
+			userScale = 1.12
 		else
 			currentScalePreset = 1
-			tween(WinScale, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = 1.0 })
+			userScale = 1.0
 		end
+		tween(WinScale, TweenInfo.new(0.22, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = userScale })
 	end)
 
-	createTopBtn("✕", -26, function()
-		MainWin.Visible = false
-		if type(config.CloseCallback) == "function" then
-			task.spawn(config.CloseCallback)
-		end
+	createGlassControlBtn("✕", -34, true, function()
+		closeWindowAnimated()
 	end)
 
 	UserInputService.InputBegan:Connect(function(input, gp)
-		if not gp and input.KeyCode == toggleKey then
-			MainWin.Visible = not MainWin.Visible
+		if not gp and toggleKey and (input.KeyCode == toggleKey or input.UserInputType == toggleKey) then
+			if isWindowOpen then
+				closeWindowAnimated()
+			else
+				openWindowAnimated()
+			end
 		end
 	end)
 
@@ -566,7 +852,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 				resizing = true
 				resizeStartPos = input.Position
-				startScale = WinScale.Scale
+				startScale = userScale
 				startWidth = winWidth
 				startHeight = winHeight
 				input.Changed:Connect(function()
@@ -584,25 +870,26 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				local desiredVisualH = math.clamp(startHeight * startScale + delta.Y, 300, 950)
 
 				if desiredVisualW < BASE_WIDTH then
-					local newScale = math.clamp(desiredVisualW / BASE_WIDTH, 0.55, 1)
-					WinScale.Scale = newScale
+					userScale = math.clamp(desiredVisualW / BASE_WIDTH, 0.55, 1)
+					WinScale.Scale = userScale
 					winWidth = BASE_WIDTH
-					winHeight = math.clamp(math.floor(desiredVisualH / newScale), 420, 850)
+					winHeight = math.clamp(math.floor(desiredVisualH / userScale), 420, 850)
 				else
+					userScale = 1
 					WinScale.Scale = 1
 					winWidth = math.clamp(math.floor(desiredVisualW), BASE_WIDTH, 1300)
 					winHeight = math.clamp(math.floor(desiredVisualH), 420, 850)
 				end
 
 				MainWin.Size = UDim2.new(0, winWidth, 0, winHeight)
-				ContentWrap.Size = UDim2.new(1, 0, 0, winHeight - 36)
+				ContentWrap.Size = UDim2.new(1, 0, 0, winHeight - 38)
 			end
 		end)
 	end
 
 	local InnerBorderFrame = Instance.new("Frame")
 	InnerBorderFrame.Name = "InnerBorderFrame"
-	InnerBorderFrame.Size = UDim2.new(1, -54, 1, -14)
+	InnerBorderFrame.Size = UDim2.new(1, -54, 1, -12)
 	InnerBorderFrame.Position = UDim2.new(0, 42, 0, 0)
 	InnerBorderFrame.BackgroundColor3 = Library.Theme.GlassBg
 	InnerBorderFrame.BackgroundTransparency = 0.35
@@ -613,7 +900,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 	local SideTabScroll = Instance.new("ScrollingFrame")
 	SideTabScroll.Name = "SideTabScroll"
-	SideTabScroll.Size = UDim2.new(0, 38, 1, -14)
+	SideTabScroll.Size = UDim2.new(0, 38, 1, -12)
 	SideTabScroll.Position = UDim2.new(0, 8, 0, 0)
 	SideTabScroll.BackgroundTransparency = 1
 	SideTabScroll.BorderSizePixel = 0
@@ -646,11 +933,36 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 	function WindowObj:SetOpacity(pct)
 		pct = math.clamp(tonumber(pct) or 0.68, 0, 1)
-		MainWin.BackgroundTransparency = math.clamp(1 - pct * 0.85, 0.08, 0.78)
+		Library.Theme.Transparency = math.clamp(1 - pct * 0.85, 0.08, 0.78)
+		MainWin.BackgroundTransparency = Library.Theme.Transparency
 	end
 
 	function WindowObj:SetScale(scale)
-		WinScale.Scale = math.clamp(tonumber(scale) or 1, 0.5, 1.5)
+		userScale = math.clamp(tonumber(scale) or 1, 0.5, 1.5)
+		tween(WinScale, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = userScale })
+	end
+
+	function WindowObj:SetToggleKey(newKey)
+		local resolved = resolveKeyItem(newKey)
+		if resolved then
+			toggleKey = resolved
+		end
+	end
+
+	function WindowObj:Toggle()
+		if isWindowOpen then
+			closeWindowAnimated()
+		else
+			openWindowAnimated()
+		end
+	end
+
+	function WindowObj:Close()
+		closeWindowAnimated()
+	end
+
+	function WindowObj:Open()
+		openWindowAnimated()
 	end
 
 	function WindowObj:SetTitle(newTitle)
@@ -864,7 +1176,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		local function setTabVisual(isActive)
 			if isActive then
 				TabBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-				TabBtn.BackgroundTransparency = 0.12
+				TabBtn.BackgroundTransparency = 0.10
 				TabGrad.Color = ColorSequence.new({
 					ColorSequenceKeypoint.new(0.0, Color3.fromRGB(165, 210, 235)),
 					ColorSequenceKeypoint.new(0.5, Color3.fromRGB(215, 238, 248)),
@@ -1026,7 +1338,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 					Box.Position = UDim2.new(0, 0, 0.5, -10)
 					Box.BorderSizePixel = 0
 					Box.Parent = RowBtn
-					addCorner(Box, 4)
+					addCorner(Box, 5)
 					local boxStroke = addStroke(Box, Library.Theme.NeonBorder, 1.2, 0.15)
 
 					local CheckMark = Instance.new("TextLabel")
@@ -1052,9 +1364,9 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 					local function updateBox()
 						if state then
-							tween(Box, nil, { BackgroundColor3 = Library.Theme.CheckFill, BackgroundTransparency = 0.15 })
+							tween(Box, nil, { BackgroundColor3 = Library.Theme.CheckFill, BackgroundTransparency = 0.12 })
 							boxStroke.Color = Library.Theme.NeonBorder
-							boxStroke.Transparency = 0.1
+							boxStroke.Transparency = 0.05
 							CheckMark.Visible = true
 						else
 							tween(Box, nil, { BackgroundColor3 = Color3.fromRGB(36, 46, 58), BackgroundTransparency = 0.45 })
@@ -1160,11 +1472,11 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				local Knob = Instance.new("Frame")
 				Knob.Size = UDim2.new(0, 8, 0, 18)
 				Knob.Position = UDim2.new(0, -4, 0.5, -9)
-				Knob.BackgroundColor3 = Color3.fromRGB(190, 222, 242)
+				Knob.BackgroundColor3 = Color3.fromRGB(198, 230, 250)
 				Knob.BorderSizePixel = 0
 				Knob.Parent = Track
 				addCorner(Knob, 4)
-				addStroke(Knob, Color3.fromRGB(235, 248, 255), 1.2, 0.1)
+				addStroke(Knob, Color3.fromRGB(238, 250, 255), 1.2, 0.08)
 
 				if showTicks then
 					local TicksHolder = Instance.new("Frame")
@@ -1282,10 +1594,12 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 					CircleBtn.TextColor3 = Library.Theme.TextWhite
 					CircleBtn.Font = Enum.Font.GothamMedium
 					CircleBtn.TextSize = 13
+					CircleBtn.AutoButtonColor = false
 					CircleBtn.Parent = Holder
 					addCorner(CircleBtn, 45)
-					addStroke(CircleBtn, Library.Theme.NeonBorder, 1.4, 0.15)
-					applyButtonGradient(CircleBtn)
+					local cStroke = addStroke(CircleBtn, Library.Theme.NeonBorder, 1.4, 0.15)
+					applyButtonGradient(CircleBtn, false)
+					attachButtonFX(CircleBtn, cStroke)
 
 					CircleBtn.MouseButton1Click:Connect(function()
 						task.spawn(callback)
@@ -1295,15 +1609,16 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 						local ResetBtn = Instance.new("TextButton")
 						ResetBtn.Size = UDim2.new(0, 76, 0, 30)
 						ResetBtn.Position = UDim2.new(0, 124, 0.5, -15)
-						ResetBtn.BackgroundColor3 = Color3.fromRGB(55, 72, 88)
-						ResetBtn.BackgroundTransparency = 0.28
 						ResetBtn.Text = cfg.ResetName or "Reset"
 						ResetBtn.TextColor3 = Library.Theme.TextWhite
-						ResetBtn.Font = Enum.Font.Gotham
+						ResetBtn.Font = Enum.Font.GothamMedium
 						ResetBtn.TextSize = 13
+						ResetBtn.AutoButtonColor = false
 						ResetBtn.Parent = Holder
 						addCorner(ResetBtn, 6)
-						addStroke(ResetBtn, Library.Theme.CardBorder, 1.1, 0.25)
+						local rStroke = addStroke(ResetBtn, Library.Theme.CardBorder, 1.1, 0.22)
+						applyButtonGradient(ResetBtn, false)
+						attachButtonFX(ResetBtn, rStroke)
 						ResetBtn.MouseButton1Click:Connect(function()
 							if cfg.ResetCallback then task.spawn(cfg.ResetCallback) end
 						end)
@@ -1314,23 +1629,19 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				local Btn = Instance.new("TextButton")
 				Btn.Name = name .. "_Button"
 				Btn.LayoutOrder = order
-				Btn.Size = UDim2.new(1, 0, 0, 30)
+				Btn.Size = UDim2.new(1, 0, 0, 32)
 				Btn.Text = name
 				Btn.TextColor3 = Library.Theme.TextWhite
-				Btn.Font = Enum.Font.Gotham
+				Btn.Font = Enum.Font.GothamMedium
 				Btn.TextSize = 13
 				Btn.TextTruncate = Enum.TextTruncate.AtEnd
+				Btn.AutoButtonColor = false
 				Btn.Parent = scroll
-				addCorner(Btn, 6)
-				local btnStroke = addStroke(Btn, Library.Theme.NeonBorder, 1.1, 0.25)
-				applyButtonGradient(Btn)
+				addCorner(Btn, 7)
+				local btnStroke = addStroke(Btn, Library.Theme.NeonBorder, 1.2, 0.22)
+				applyButtonGradient(Btn, false)
+				attachButtonFX(Btn, btnStroke)
 
-				Btn.MouseEnter:Connect(function()
-					btnStroke.Transparency = 0.02
-				end)
-				Btn.MouseLeave:Connect(function()
-					btnStroke.Transparency = 0.25
-				end)
 				Btn.MouseButton1Click:Connect(function()
 					task.spawn(callback)
 				end)
@@ -1354,7 +1665,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 				local Row = Instance.new("Frame")
 				Row.LayoutOrder = order
-				Row.Size = UDim2.new(1, 0, 0, 30)
+				Row.Size = UDim2.new(1, 0, 0, 32)
 				Row.BackgroundTransparency = 1
 				Row.Parent = scroll
 
@@ -1364,21 +1675,23 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 					b.Position = UDim2.new(xScale, 0, 0, 0)
 					b.Text = txt
 					b.TextColor3 = Library.Theme.TextWhite
-					b.Font = Enum.Font.Gotham
+					b.Font = Enum.Font.GothamMedium
 					b.TextSize = 13
 					b.TextTruncate = Enum.TextTruncate.AtEnd
+					b.AutoButtonColor = false
 					b.Parent = Row
-					addCorner(b, 6)
-					addStroke(b, Library.Theme.NeonBorder, 1.1, 0.25)
-					applyButtonGradient(b)
+					addCorner(b, 7)
+					local st = addStroke(b, Library.Theme.NeonBorder, 1.2, 0.22)
+					applyButtonGradient(b, false)
+					attachButtonFX(b, st)
 					b.MouseButton1Click:Connect(function()
 						if cb then task.spawn(cb) end
 					end)
 					return b
 				end
 
-				local b1 = makeHalfBtn(cfg.Name1 or "Color Picker", 0, cfg.Callback1)
-				local b2 = makeHalfBtn(cfg.Name2 or "Preview", 0.52, cfg.Callback2)
+				local b1 = makeHalfBtn(cfg.Name1 or "Button 1", 0, cfg.Callback1)
+				local b2 = makeHalfBtn(cfg.Name2 or "Button 2", 0.52, cfg.Callback2)
 				return b1, b2
 			end
 			Methods.CreateDualButton = Methods.AddDualButton
@@ -1431,9 +1744,10 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				MainBox.Text = ""
 				MainBox.AutoButtonColor = false
 				MainBox.Parent = Container
-				addCorner(MainBox, 6)
-				addStroke(MainBox, Library.Theme.NeonBorder, 1.2, 0.2)
-				applyButtonGradient(MainBox)
+				addCorner(MainBox, 7)
+				local ddStroke = addStroke(MainBox, Library.Theme.NeonBorder, 1.2, 0.22)
+				applyButtonGradient(MainBox, false)
+				attachButtonFX(MainBox, ddStroke)
 
 				local SelectedLbl = Instance.new("TextLabel")
 				SelectedLbl.Size = UDim2.new(1, -34, 1, 0)
@@ -1441,7 +1755,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				SelectedLbl.BackgroundTransparency = 1
 				SelectedLbl.Text = tostring(default)
 				SelectedLbl.TextColor3 = Library.Theme.TextWhite
-				SelectedLbl.Font = Enum.Font.Gotham
+				SelectedLbl.Font = Enum.Font.GothamMedium
 				SelectedLbl.TextSize = 13
 				SelectedLbl.TextXAlignment = Enum.TextXAlignment.Left
 				SelectedLbl.TextTruncate = Enum.TextTruncate.AtEnd
@@ -1524,8 +1838,16 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 						OptBtn.Font = Enum.Font.Gotham
 						OptBtn.TextSize = 12
 						OptBtn.TextTruncate = Enum.TextTruncate.AtEnd
+						OptBtn.AutoButtonColor = false
 						OptBtn.Parent = OptionHolder
 						addCorner(OptBtn, 4)
+
+						OptBtn.MouseEnter:Connect(function()
+							tween(OptBtn, TweenInfo.new(0.12), { BackgroundTransparency = 0.15, BackgroundColor3 = Color3.fromRGB(58, 82, 104) })
+						end)
+						OptBtn.MouseLeave:Connect(function()
+							tween(OptBtn, TweenInfo.new(0.12), { BackgroundTransparency = 0.45, BackgroundColor3 = Color3.fromRGB(38, 52, 66) })
+						end)
 
 						OptBtn.MouseButton1Click:Connect(function()
 							DropdownObj:Set(opt)
@@ -1571,13 +1893,13 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				local Container = Instance.new("Frame")
 				Container.Name = name .. "_Colorpicker"
 				Container.LayoutOrder = order
-				Container.Size = UDim2.new(1, 0, 0, 30)
+				Container.Size = UDim2.new(1, 0, 0, 32)
 				Container.BackgroundTransparency = 1
 				Container.ClipsDescendants = true
 				Container.Parent = scroll
 
 				local TopRow = Instance.new("Frame")
-				TopRow.Size = UDim2.new(1, 0, 0, 30)
+				TopRow.Size = UDim2.new(1, 0, 0, 32)
 				TopRow.BackgroundTransparency = 1
 				TopRow.Parent = Container
 
@@ -1585,13 +1907,15 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				PickerBtn.Size = UDim2.new(0.48, 0, 1, 0)
 				PickerBtn.Text = name
 				PickerBtn.TextColor3 = Library.Theme.TextWhite
-				PickerBtn.Font = Enum.Font.Gotham
+				PickerBtn.Font = Enum.Font.GothamMedium
 				PickerBtn.TextSize = 13
 				PickerBtn.TextTruncate = Enum.TextTruncate.AtEnd
+				PickerBtn.AutoButtonColor = false
 				PickerBtn.Parent = TopRow
-				addCorner(PickerBtn, 6)
-				addStroke(PickerBtn, Library.Theme.NeonBorder, 1.1, 0.25)
-				applyButtonGradient(PickerBtn)
+				addCorner(PickerBtn, 7)
+				local pStroke = addStroke(PickerBtn, Library.Theme.NeonBorder, 1.2, 0.22)
+				applyButtonGradient(PickerBtn, false)
+				attachButtonFX(PickerBtn, pStroke)
 
 				local PreviewBtn = Instance.new("TextButton")
 				PreviewBtn.Size = UDim2.new(0.48, 0, 1, 0)
@@ -1600,15 +1924,16 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				PreviewBtn.BackgroundTransparency = 0.15
 				PreviewBtn.Text = "Preview"
 				PreviewBtn.TextColor3 = Library.Theme.TextWhite
-				PreviewBtn.Font = Enum.Font.Gotham
+				PreviewBtn.Font = Enum.Font.GothamMedium
 				PreviewBtn.TextSize = 13
+				PreviewBtn.AutoButtonColor = false
 				PreviewBtn.Parent = TopRow
-				addCorner(PreviewBtn, 6)
-				addStroke(PreviewBtn, Library.Theme.NeonBorder, 1.1, 0.25)
+				addCorner(PreviewBtn, 7)
+				addStroke(PreviewBtn, Library.Theme.NeonBorder, 1.2, 0.22)
 
 				local Drawer = Instance.new("Frame")
 				Drawer.Size = UDim2.new(1, 0, 0, 74)
-				Drawer.Position = UDim2.new(0, 0, 0, 34)
+				Drawer.Position = UDim2.new(0, 0, 0, 36)
 				Drawer.BackgroundColor3 = Color3.fromRGB(22, 31, 40)
 				Drawer.BackgroundTransparency = 0.25
 				Drawer.Parent = Container
@@ -1697,7 +2022,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				local function toggleDrawer()
 					open = not open
 					tween(Container, TweenInfo.new(0.18), {
-						Size = UDim2.new(1, 0, 0, open and 110 or 30)
+						Size = UDim2.new(1, 0, 0, open and 114 or 32)
 					})
 				end
 
@@ -1720,28 +2045,22 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 					or normalizeArgs("Bind", selfOrA, a, b, c)
 
 				local name     = cfg.Name or cfg.Title or "Keybind"
-				local default  = cfg.Default or cfg.CurrentKeybind or Enum.KeyCode.X
+				local default  = resolveKeyItem(cfg.Default or cfg.CurrentKeybind) or Enum.KeyCode.X
 				local hold     = cfg.Hold or cfg.HoldToInteract or false
 				local callback = cfg.Callback or function() end
 				local flag     = cfg.Flag
-
-				if type(default) == "string" and Enum.KeyCode[default] then
-					default = Enum.KeyCode[default]
-				elseif typeof(default) ~= "EnumItem" then
-					default = Enum.KeyCode.X
-				end
 
 				local scroll, order = resolveScroll(cfg.Column, 1)
 
 				local Row = Instance.new("Frame")
 				Row.Name = name .. "_Bind"
 				Row.LayoutOrder = order
-				Row.Size = UDim2.new(1, 0, 0, 28)
+				Row.Size = UDim2.new(1, 0, 0, 30)
 				Row.BackgroundTransparency = 1
 				Row.Parent = scroll
 
 				local Lbl = Instance.new("TextLabel")
-				Lbl.Size = UDim2.new(1, -80, 1, 0)
+				Lbl.Size = UDim2.new(1, -86, 1, 0)
 				Lbl.BackgroundTransparency = 1
 				Lbl.Text = name
 				Lbl.TextColor3 = Library.Theme.TextWhite
@@ -1752,59 +2071,79 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				Lbl.Parent = Row
 
 				local BindBtn = Instance.new("TextButton")
-				BindBtn.Size = UDim2.new(0, 72, 0, 24)
-				BindBtn.Position = UDim2.new(1, -72, 0.5, -12)
-				BindBtn.Text = default.Name or "None"
+				BindBtn.Size = UDim2.new(0, 78, 0, 26)
+				BindBtn.Position = UDim2.new(1, -78, 0.5, -13)
+				BindBtn.Text = "[ " .. formatKeyName(default) .. " ]"
 				BindBtn.TextColor3 = Library.Theme.TextWhite
 				BindBtn.Font = Enum.Font.GothamMedium
 				BindBtn.TextSize = 12
+				BindBtn.AutoButtonColor = false
 				BindBtn.Parent = Row
-				addCorner(BindBtn, 5)
-				addStroke(BindBtn, Library.Theme.NeonBorder, 1, 0.25)
-				applyButtonGradient(BindBtn)
+				addCorner(BindBtn, 6)
+				local bindStroke = addStroke(BindBtn, Library.Theme.NeonBorder, 1.2, 0.22)
+				applyButtonGradient(BindBtn, false)
+				attachButtonFX(BindBtn, bindStroke)
 
 				local currentKey = default
 				local binding = false
+				local changedListeners = {}
 				local BindObj = { Value = currentKey, Type = "Bind" }
 
-				function BindObj:Set(newKey)
-					if type(newKey) == "string" and Enum.KeyCode[newKey] then
-						newKey = Enum.KeyCode[newKey]
+				function BindObj:OnChanged(fn)
+					if type(fn) == "function" then
+						table.insert(changedListeners, fn)
 					end
-					currentKey = newKey
+				end
+
+				function BindObj:Get()
+					return currentKey
+				end
+
+				function BindObj:Set(newKey)
+					currentKey = resolveKeyItem(newKey)
 					BindObj.Value = currentKey
-					BindBtn.Text = currentKey and currentKey.Name or "None"
+					BindBtn.Text = "[ " .. formatKeyName(currentKey) .. " ]"
+					for _, fn in ipairs(changedListeners) do
+						task.spawn(fn, currentKey)
+					end
 				end
 				BindObj.SetValue = BindObj.Set
 
 				BindBtn.MouseButton1Click:Connect(function()
 					binding = true
-					BindBtn.Text = "..."
+					BindBtn.Text = "[ ... ]"
+					bindStroke.Transparency = 0.0
+					bindStroke.Color = Color3.fromRGB(185, 240, 255)
 				end)
 
 				UserInputService.InputBegan:Connect(function(input, gp)
 					if binding then
 						if input.UserInputType == Enum.UserInputType.Keyboard then
 							binding = false
-							if input.KeyCode == Enum.KeyCode.Escape then
+							bindStroke.Transparency = 0.22
+							if input.KeyCode == Enum.KeyCode.Escape or input.KeyCode == Enum.KeyCode.Backspace then
 								BindObj:Set(nil)
 							else
 								BindObj:Set(input.KeyCode)
 							end
+						elseif input.UserInputType == Enum.UserInputType.MouseButton2 or input.UserInputType == Enum.UserInputType.MouseButton3 then
+							binding = false
+							bindStroke.Transparency = 0.22
+							BindObj:Set(input.UserInputType)
 						end
 						return
 					end
-					if not gp and currentKey and input.KeyCode == currentKey then
+					if not gp and currentKey and (input.KeyCode == currentKey or input.UserInputType == currentKey) then
 						if hold then
 							task.spawn(callback, true)
 						else
-							task.spawn(callback)
+							task.spawn(callback, currentKey)
 						end
 					end
 				end)
 
 				UserInputService.InputEnded:Connect(function(input, gp)
-					if not gp and hold and currentKey and input.KeyCode == currentKey then
+					if not gp and hold and currentKey and (input.KeyCode == currentKey or input.UserInputType == currentKey) then
 						task.spawn(callback, false)
 					end
 				end)
@@ -1856,7 +2195,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				Box.Size = UDim2.new(1, 0, 0, 28)
 				Box.Position = UDim2.new(0, 0, 0, 22)
 				Box.BackgroundColor3 = Color3.fromRGB(32, 44, 56)
-				Box.BackgroundTransparency = 0.3
+				Box.BackgroundTransparency = 0.25
 				Box.Text = tostring(default)
 				Box.PlaceholderText = placeholder
 				Box.PlaceholderColor3 = Library.Theme.TextMuted
@@ -1866,8 +2205,8 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				Box.TextXAlignment = Enum.TextXAlignment.Left
 				Box.ClearTextOnFocus = false
 				Box.Parent = Container
-				addCorner(Box, 5)
-				local boxStroke = addStroke(Box, Library.Theme.SubBorder, 1, 0.35)
+				addCorner(Box, 6)
+				local boxStroke = addStroke(Box, Library.Theme.SubBorder, 1.1, 0.3)
 				addPadding(Box, 0, 0, 10, 10)
 
 				local TextboxObj = { Value = default, Type = "Textbox" }
@@ -1881,11 +2220,11 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 				Box.Focused:Connect(function()
 					boxStroke.Color = Library.Theme.NeonBorder
-					boxStroke.Transparency = 0.05
+					boxStroke.Transparency = 0.0
 				end)
 				Box.FocusLost:Connect(function()
 					boxStroke.Color = Library.Theme.SubBorder
-					boxStroke.Transparency = 0.35
+					boxStroke.Transparency = 0.3
 					TextboxObj.Value = Box.Text
 					task.spawn(callback, Box.Text)
 					if disappear then
@@ -2137,7 +2476,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		"AddButton", "CreateButton", "NewButton",
 		"AddDropdown", "CreateDropdown", "NewDropdown",
 		"AddColorpicker", "CreateColorPicker", "NewColorPicker",
-		"AddBind", "CreateBind", "NewKeybind",
+		"AddBind", "CreateBind", "NewKeybind", "AddKeybind", "CreateKeybind",
 		"AddTextbox", "CreateInput", "NewTextBox",
 		"AddLabel", "CreateLabel", "NewLabel",
 		"AddParagraph", "CreateParagraph"
@@ -2159,154 +2498,5 @@ Library.Window       = Library.MakeWindow
 Library.NewWindow    = Library.MakeWindow
 Library.CreateLib    = Library.MakeWindow
 Library.Load         = Library.MakeWindow
-
-task.defer(function()
-	if #Library.Windows == 0 then
-		local DemoWin = Library:MakeWindow({
-			Name = "NightSystem",
-			ToggleKey = Enum.KeyCode.RightShift
-		})
-
-		local origMakeWindow = Library.MakeWindow
-		local function replaceDemoAndMakeWindow(selfOrCfg, maybeCfg)
-			if DemoWin and DemoWin.ScreenGui and DemoWin.ScreenGui.Parent then
-				DemoWin.ScreenGui:Destroy()
-			end
-			for i = #Library.Windows, 1, -1 do
-				if Library.Windows[i] == DemoWin then
-					table.remove(Library.Windows, i)
-				end
-			end
-			Library.MakeWindow   = origMakeWindow
-			Library.CreateWindow = origMakeWindow
-			Library.Window       = origMakeWindow
-			Library.NewWindow    = origMakeWindow
-			Library.CreateLib    = origMakeWindow
-			Library.Load         = origMakeWindow
-			return origMakeWindow(selfOrCfg, maybeCfg)
-		end
-
-		Library.MakeWindow   = replaceDemoAndMakeWindow
-		Library.CreateWindow = replaceDemoAndMakeWindow
-		Library.Window       = replaceDemoAndMakeWindow
-		Library.NewWindow    = replaceDemoAndMakeWindow
-		Library.CreateLib    = replaceDemoAndMakeWindow
-		Library.Load         = replaceDemoAndMakeWindow
-
-		local EspTab      = DemoWin:MakeTab({ Name = "ESP" })
-		local VisualsTab  = DemoWin:MakeTab({ Name = "Visuals" })
-		local AimbotTab   = DemoWin:MakeTab({ Name = "Aimbot" })
-		local SettingsTab = DemoWin:MakeTab({ Name = "Settings" })
-		local LuaTab      = DemoWin:MakeTab({ Name = "Lua Script" })
-
-		local Sec1 = EspTab:AddSection({ Name = "Player ESP" })
-		Sec1:AddToggle({ Name = "Enable ESP",    Default = true,  Flag = "EnableESP" })
-		Sec1:AddToggle({ Name = "Show Names",    Default = true,  Flag = "ShowNames" })
-		Sec1:AddToggle({ Name = "Show Boxes",    Default = false, Flag = "ShowBoxes" })
-		Sec1:AddToggle({ Name = "Show Skeleton", Default = true,  Flag = "ShowSkeleton" })
-		Sec1:AddToggle({ Name = "Show Health",   Default = false, Flag = "ShowHealth" })
-		Sec1:AddToggle({ Name = "Show Distance", Default = false, Flag = "ShowDistance" })
-		Sec1:AddSlider({
-			Name = "Max Distance",
-			Min = 50,
-			Max = 1000,
-			Default = 400,
-			Increment = 10,
-			ValueName = "m",
-			Flag = "MaxDistance"
-		})
-
-		local Sec2 = EspTab:AddSection({ Name = "Visuals & Effects" })
-		Sec2:AddToggle({ Name = "Chams",          Default = true,  Flag = "Chams" })
-		Sec2:AddToggle({ Name = "Glow Effect",    Default = false, Flag = "GlowEffect" })
-		Sec2:AddToggle({ Name = "Bullet Tracers", Default = true,  Flag = "BulletTracers" })
-		Sec2:AddToggle({ Name = "Crosshair",      Default = false, Flag = "Crosshair" })
-		Sec2:AddColorpicker({
-			Name = "Color Picker",
-			Default = Color3.fromRGB(130, 215, 250),
-			Flag = "ESPColor"
-		})
-		Sec2:AddSlider({
-			Name = "Opacity",
-			Min = 10,
-			Max = 100,
-			Default = 68,
-			Increment = 1,
-			Ticks = true,
-			Flag = "UIOpacity",
-			Callback = function(val)
-				DemoWin:SetOpacity(val / 100)
-			end
-		})
-
-		local Sec3 = EspTab:AddSection({ Name = "Aimbot & Misc" })
-		Sec3:AddToggle({ Name = "Active",     Default = true,  Flag = "AimActive" })
-		Sec3:AddToggle({ Name = "Silent Aim", Default = false, Flag = "SilentAim" })
-		Sec3:AddToggle({ Name = "FOV Circle", Default = false, Flag = "FOVCircle" })
-		Sec3:AddToggle({ Name = "Auto Fire",  Default = true,  Flag = "AutoFire" })
-		Sec3:AddSlider({
-			Name = "FOV Radius",
-			Min = 20,
-			Max = 500,
-			Default = 180,
-			Increment = 5,
-			Flag = "FOVRadius"
-		})
-		Sec3:AddDropdown({
-			Name = "Hitbox",
-			Options = { "Head", "HumanoidRootPart", "UpperTorso", "LowerTorso" },
-			Default = "Head",
-			Flag = "AimHitbox"
-		})
-		Sec3:AddApplyButton({
-			Name = "Apply\nSettings",
-			ResetName = "Reset",
-			Callback = function()
-				Library:MakeNotification({
-					Name = "NightSystem",
-					Content = "Settings applied successfully!",
-					Time = 3
-				})
-			end,
-			ResetCallback = function()
-				DemoWin:SetOpacity(0.68)
-				DemoWin:SetScale(1.0)
-				Library:MakeNotification({
-					Name = "NightSystem",
-					Content = "Settings reset to default.",
-					Time = 3
-				})
-			end
-		})
-
-		local vSec1 = VisualsTab:AddSection({ Name = "World Visuals" })
-		vSec1:AddToggle({ Name = "Fullbright", Default = false })
-		vSec1:AddSlider({ Name = "Time of Day", Min = 0, Max = 24, Default = 14 })
-
-		local aSec1 = AimbotTab:AddSection({ Name = "Aimbot Settings" })
-		aSec1:AddToggle({ Name = "Enable Aimbot", Default = true })
-		aSec1:AddBind({ Name = "Aimbot Keybind", Default = Enum.KeyCode.E })
-
-		local sSec1 = SettingsTab:AddSection({ Name = "UI Settings" })
-		sSec1:AddSlider({
-			Name = "UI Scale (Size)",
-			Min = 60,
-			Max = 130,
-			Default = 100,
-			ValueName = "%",
-			Callback = function(val)
-				DemoWin:SetScale(val / 100)
-			end
-		})
-		sSec1:AddBind({
-			Name = "Toggle UI Keybind",
-			Default = Enum.KeyCode.RightShift,
-			Callback = function() end
-		})
-
-		local lSec1 = LuaTab:AddSection({ Name = "Script Executor" })
-		lSec1:AddTextbox({ Name = "Script Name", Placeholder = "main.lua" })
-	end
-end)
 
 return Library
