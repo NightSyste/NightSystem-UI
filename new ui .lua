@@ -51,6 +51,8 @@ local Library = {
 	Toggles = FlagsProxy,
 	Windows = {},
 	Notifications = {},
+	ConfigStore = {},
+	ConfigFileName = "NightSystem_Config.json",
 	ToggleKey = Enum.KeyCode.LeftControl,
 	Theme = {
 		Accent       = Color3.fromRGB(85, 115, 250),
@@ -653,15 +655,94 @@ function Library:SetToggleKey(newKey)
 	end
 end
 
+local function serializeValue(v)
+	if typeof(v) == "Color3" then
+		return { __type = "Color3", r = v.R, g = v.G, b = v.B }
+	elseif typeof(v) == "EnumItem" then
+		return { __type = "EnumItem", enum = tostring(v.EnumType), name = v.Name }
+	else
+		return v
+	end
+end
+
+local function deserializeValue(v)
+	if type(v) == "table" and v.__type == "Color3" then
+		return Color3.new(v.r, v.g, v.b)
+	elseif type(v) == "table" and v.__type == "EnumItem" then
+		local et = Enum[v.enum]
+		if et and et[v.name] then
+			return et[v.name]
+		end
+		return nil
+	else
+		return v
+	end
+end
+
+local isAutoSaving = false
+local function scheduleAutoSave()
+	if isAutoSaving then return end
+	isAutoSaving = true
+	task.delay(0.25, function()
+		isAutoSaving = false
+		pcall(function()
+			if writefile then
+				local json = HttpService:JSONEncode(Library.ConfigStore)
+				writefile(Library.ConfigFileName, json)
+			end
+		end)
+	end)
+end
+
 function Library:Init()
 	return self
 end
-function Library:LoadConfiguration()
+
+function Library:LoadConfiguration(fileName)
+	local target = fileName or self.ConfigFileName
+	pcall(function()
+		if isfile and readfile and isfile(target) then
+			local raw = readfile(target)
+			local decoded = HttpService:JSONDecode(raw)
+			if type(decoded) == "table" then
+				for k, v in pairs(decoded) do
+					self.ConfigStore[k] = deserializeValue(v)
+				end
+			end
+		end
+	end)
 	return self
 end
-function Library:SaveConfiguration()
+Library.LoadConfig = Library.LoadConfiguration
+
+function Library:SaveConfiguration(fileName)
+	local target = fileName or self.ConfigFileName
+	pcall(function()
+		if writefile then
+			local json = HttpService:JSONEncode(self.ConfigStore)
+			writefile(target, json)
+		end
+	end)
 	return self
 end
+Library.SaveConfig = Library.SaveConfiguration
+
+function Library:DeleteConfiguration(fileName)
+	local target = fileName or self.ConfigFileName
+	self.ConfigStore = {}
+	pcall(function()
+		if delfile and isfile and isfile(target) then
+			delfile(target)
+		elseif writefile then
+			writefile(target, "{}")
+		end
+	end)
+	return self
+end
+Library.DeleteConfig = Library.DeleteConfiguration
+Library.ResetConfig  = Library.DeleteConfiguration
+
+Library:LoadConfiguration()
 
 function Library:Destroy()
 	for _, win in ipairs(self.Windows) do
@@ -870,6 +951,15 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		config = { Name = config }
 	end
 	config = config or {}
+
+	local customCfg = config.SaveName or config.ConfigFolder or config.ConfigName or config.FileName
+	if customCfg and customCfg ~= "" then
+		if not string.find(customCfg, "%.json$") then
+			customCfg = customCfg .. ".json"
+		end
+		Library.ConfigFileName = customCfg
+		Library:LoadConfiguration(customCfg)
+	end
 
 	local windowTitle = config.Name or config.Title or config.LoadingTitle or "NightSystem"
 	local toggleKey   = resolveKeyItem(config.ToggleKey or config.Bind) or Library.ToggleKey
@@ -1884,6 +1974,11 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				local flag     = cfg.Flag
 				local usePill  = (cfg.Style == "Switch" or cfg.Pill == true)
 
+				local savedKey = (flag and flag ~= "") and flag or name
+				if savedKey and Library.ConfigStore[savedKey] ~= nil then
+					default = not not Library.ConfigStore[savedKey]
+				end
+
 				local scroll, order = resolveScroll(cfg.Column, 1)
 
 				local RowBtn = Instance.new("TextButton")
@@ -1957,6 +2052,10 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 					function ToggleObj:Set(val)
 						state = not not val
 						ToggleObj.Value = state
+						if savedKey then
+							Library.ConfigStore[savedKey] = state
+							scheduleAutoSave()
+						end
 						updatePill()
 						fireCallbacks(state)
 					end
@@ -2009,6 +2108,10 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 					function ToggleObj:Set(val)
 						state = not not val
 						ToggleObj.Value = state
+						if savedKey then
+							Library.ConfigStore[savedKey] = state
+							scheduleAutoSave()
+						end
 						updateBox()
 						fireCallbacks(state)
 					end
@@ -2057,6 +2160,11 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				local suffix    = cfg.ValueName or cfg.Suffix or ""
 				local callback  = cfg.Callback or function() end
 				local flag      = cfg.Flag
+
+				local savedKey = (flag and flag ~= "") and flag or name
+				if savedKey and Library.ConfigStore[savedKey] ~= nil then
+					default = tonumber(Library.ConfigStore[savedKey]) or default
+				end
 
 				local scroll, order = resolveScroll(cfg.Column, 1.35)
 
@@ -2150,6 +2258,10 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				function SliderObj:Set(val)
 					local finalVal = roundToIncrement(tonumber(val) or minVal)
 					SliderObj.Value = finalVal
+					if savedKey then
+						Library.ConfigStore[savedKey] = finalVal
+						scheduleAutoSave()
+					end
 					local pct = (maxVal > minVal) and ((finalVal - minVal) / (maxVal - minVal)) or 0
 					Fill.Size = UDim2.new(pct, 0, 1, 0)
 					Knob.Position = UDim2.new(pct, -6, 0.5, -6)
@@ -2415,6 +2527,11 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				local callback = cfg.Callback or function() end
 				local flag     = cfg.Flag
 
+				local savedKey = (flag and flag ~= "") and flag or name
+				if savedKey and Library.ConfigStore[savedKey] ~= nil then
+					default = tostring(Library.ConfigStore[savedKey])
+				end
+
 				local scroll, order = resolveScroll(cfg.Column, 1.4)
 
 				local Container = Instance.new("Frame")
@@ -2523,6 +2640,10 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				function DropdownObj:Set(val)
 					if type(val) == "table" then val = val[1] end
 					DropdownObj.Value = val
+					if savedKey then
+						Library.ConfigStore[savedKey] = tostring(val or "")
+						scheduleAutoSave()
+					end
 					SelectedLbl.Text = tostring(val or "")
 					task.spawn(callback, val)
 					for _, fn in ipairs(changedListeners) do
@@ -2597,6 +2718,11 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				local callback = cfg.Callback or function() end
 				local flag     = cfg.Flag
 
+				local savedKey = (flag and flag ~= "") and flag or name
+				if savedKey and Library.ConfigStore[savedKey] ~= nil then
+					default = deserializeValue(Library.ConfigStore[savedKey]) or default
+				end
+
 				local scroll, order = resolveScroll(cfg.Column, 1.2)
 
 				local Container = Instance.new("Frame")
@@ -2634,15 +2760,76 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				local prevStroke = addStroke(PreviewBtn, Color3.fromRGB(255, 255, 255), 1.2, 0.25)
 
 				local Drawer = Instance.new("Frame")
-				Drawer.Size = UDim2.new(1, -20, 0, 74)
-				Drawer.Position = UDim2.new(0, 10, 0, 42)
+				Drawer.Size = UDim2.new(1, -20, 0, 56)
+				Drawer.Position = UDim2.new(0, 10, 0, 40)
 				Drawer.BackgroundColor3 = Color3.fromRGB(22, 25, 34)
 				Drawer.BackgroundTransparency = 0.2
 				Drawer.Parent = Container
 				addCorner(Drawer, 6)
 				addStroke(Drawer, Color3.fromRGB(46, 52, 70), 1, 0.35)
 
-				local h, s, v = Color3.toHSV(default)
+				local RainbowTrack = Instance.new("TextButton")
+				RainbowTrack.Size = UDim2.new(1, -20, 0, 14)
+				RainbowTrack.Position = UDim2.new(0, 10, 0, 8)
+				RainbowTrack.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+				RainbowTrack.AutoButtonColor = false
+				RainbowTrack.Text = ""
+				RainbowTrack.Parent = Drawer
+				addCorner(RainbowTrack, 7)
+				addStroke(RainbowTrack, Color3.fromRGB(48, 54, 72), 1, 0.4)
+
+				local RainbowGrad = Instance.new("UIGradient")
+				RainbowGrad.Color = ColorSequence.new({
+					ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 0, 0)),
+					ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 255, 0)),
+					ColorSequenceKeypoint.new(0.33, Color3.fromRGB(0, 255, 0)),
+					ColorSequenceKeypoint.new(0.50, Color3.fromRGB(0, 255, 255)),
+					ColorSequenceKeypoint.new(0.67, Color3.fromRGB(0, 0, 255)),
+					ColorSequenceKeypoint.new(0.83, Color3.fromRGB(255, 0, 255)),
+					ColorSequenceKeypoint.new(1.00, Color3.fromRGB(255, 0, 0)),
+				})
+				RainbowGrad.Parent = RainbowTrack
+
+				local initH, _, _ = Color3.toHSV(default)
+				local Knob = Instance.new("Frame")
+				Knob.Size = UDim2.new(0, 16, 0, 16)
+				Knob.AnchorPoint = Vector2.new(0.5, 0.5)
+				Knob.Position = UDim2.new(initH, 0, 0.5, 0)
+				Knob.BackgroundColor3 = default
+				Knob.BorderSizePixel = 0
+				Knob.ZIndex = 68
+				Knob.Parent = RainbowTrack
+				addCorner(Knob, 8)
+				addStroke(Knob, Color3.fromRGB(255, 255, 255), 1.8, 0)
+
+				local SwatchesFrame = Instance.new("Frame")
+				SwatchesFrame.Size = UDim2.new(1, -20, 0, 20)
+				SwatchesFrame.Position = UDim2.new(0, 10, 0, 28)
+				SwatchesFrame.BackgroundTransparency = 1
+				SwatchesFrame.Parent = Drawer
+
+				local SwatchLayout = Instance.new("UIListLayout")
+				SwatchLayout.FillDirection = Enum.FillDirection.Horizontal
+				SwatchLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+				SwatchLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+				SwatchLayout.SortOrder = Enum.SortOrder.LayoutOrder
+				SwatchLayout.Padding = UDim.new(0, 6)
+				SwatchLayout.Parent = SwatchesFrame
+
+				local presets = {
+					Color3.fromRGB(255, 255, 255),
+					Color3.fromRGB(180, 185, 195),
+					Color3.fromRGB(75, 80, 95),
+					Color3.fromRGB(18, 20, 26),
+					Color3.fromRGB(255, 60, 60),
+					Color3.fromRGB(255, 150, 40),
+					Color3.fromRGB(255, 220, 45),
+					Color3.fromRGB(45, 215, 95),
+					Color3.fromRGB(45, 200, 255),
+					Color3.fromRGB(85, 115, 250),
+					Color3.fromRGB(185, 75, 255),
+				}
+
 				local changedListeners = {}
 				local ColorObj = { Value = default, Type = "Colorpicker" }
 
@@ -2655,7 +2842,14 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				function ColorObj:Set(col)
 					if typeof(col) == "Color3" then
 						ColorObj.Value = col
+						if savedKey then
+							Library.ConfigStore[savedKey] = serializeValue(col)
+							scheduleAutoSave()
+						end
 						PreviewBtn.BackgroundColor3 = col
+						local h, s, v = Color3.toHSV(col)
+						Knob.Position = UDim2.new(h, 0, 0.5, 0)
+						Knob.BackgroundColor3 = col
 						task.spawn(callback, col)
 						for _, fn in ipairs(changedListeners) do
 							task.spawn(fn, col)
@@ -2664,67 +2858,51 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				end
 				ColorObj.SetValue = ColorObj.Set
 
-				local function makeChannelBar(label, yOffset, initPct, onChange)
-					local lbl = Instance.new("TextLabel")
-					lbl.Size = UDim2.new(0, 18, 0, 18)
-					lbl.Position = UDim2.new(0, 8, 0, yOffset)
-					lbl.BackgroundTransparency = 1
-					lbl.Text = label
-					lbl.TextColor3 = Color3.fromRGB(240, 245, 255)
-					lbl.Font = Enum.Font.GothamBold
-					lbl.TextSize = 11
-					lbl.Parent = Drawer
+				for i, pcol in ipairs(presets) do
+					local SwatchBtn = Instance.new("TextButton")
+					SwatchBtn.LayoutOrder = i
+					SwatchBtn.Size = UDim2.new(0, 18, 0, 18)
+					SwatchBtn.BackgroundColor3 = pcol
+					SwatchBtn.Text = ""
+					SwatchBtn.AutoButtonColor = false
+					SwatchBtn.Parent = SwatchesFrame
+					addCorner(SwatchBtn, 5)
+					addStroke(SwatchBtn, Color3.fromRGB(255, 255, 255), 1, 0.4)
 
-					local trk = Instance.new("TextButton")
-					trk.Size = UDim2.new(1, -38, 0, 6)
-					trk.Position = UDim2.new(0, 28, 0, yOffset + 6)
-					trk.BackgroundColor3 = Color3.fromRGB(36, 42, 58)
-					trk.Text = ""
-					trk.AutoButtonColor = false
-					trk.Parent = Drawer
-					addCorner(trk, 3)
-
-					local fl = Instance.new("Frame")
-					fl.Size = UDim2.new(initPct, 0, 1, 0)
-					fl.BackgroundColor3 = Library.Theme.Accent
-					fl.BorderSizePixel = 0
-					fl.Parent = trk
-					addCorner(fl, 3)
-
-					local draggingBar = false
-					local function upd(inp)
-						local p = math.clamp((inp.Position.X - trk.AbsolutePosition.X) / math.max(1, trk.AbsoluteSize.X), 0, 1)
-						fl.Size = UDim2.new(p, 0, 1, 0)
-						onChange(p)
-						ColorObj:Set(Color3.fromHSV(h, s, v))
-					end
-					trk.InputBegan:Connect(function(inp)
-						if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-							draggingBar = true
-							upd(inp)
-						end
-					end)
-					UserInputService.InputEnded:Connect(function(inp)
-						if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-							draggingBar = false
-						end
-					end)
-					UserInputService.InputChanged:Connect(function(inp)
-						if draggingBar and (inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch) then
-							upd(inp)
-						end
+					SwatchBtn.MouseButton1Click:Connect(function()
+						ColorObj:Set(pcol)
 					end)
 				end
 
-				makeChannelBar("H", 6,  h, function(p) h = p end)
-				makeChannelBar("S", 28, s, function(p) s = p end)
-				makeChannelBar("V", 50, v, function(p) v = p end)
+				local draggingRainbow = false
+				local function updateRainbow(inp)
+					local p = math.clamp((inp.Position.X - RainbowTrack.AbsolutePosition.X) / math.max(1, RainbowTrack.AbsoluteSize.X), 0, 1)
+					local newCol = Color3.fromHSV(p, 1, 1)
+					ColorObj:Set(newCol)
+				end
+
+				RainbowTrack.InputBegan:Connect(function(inp)
+					if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+						draggingRainbow = true
+						updateRainbow(inp)
+					end
+				end)
+				UserInputService.InputEnded:Connect(function(inp)
+					if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+						draggingRainbow = false
+					end
+				end)
+				UserInputService.InputChanged:Connect(function(inp)
+					if draggingRainbow and (inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch) then
+						updateRainbow(inp)
+					end
+				end)
 
 				local open = false
 				local function toggleDrawer()
 					open = not open
 					tween(Container, TweenInfo.new(0.18), {
-						Size = UDim2.new(1, 0, 0, open and 124 or 38)
+						Size = UDim2.new(1, 0, 0, open and 104 or 38)
 					})
 				end
 
@@ -2750,6 +2928,11 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				local hold     = cfg.Hold or cfg.HoldToInteract or false
 				local callback = cfg.Callback or function() end
 				local flag     = cfg.Flag
+
+				local savedKey = (flag and flag ~= "") and flag or name
+				if savedKey and Library.ConfigStore[savedKey] ~= nil then
+					default = deserializeValue(Library.ConfigStore[savedKey]) or default
+				end
 
 				local scroll, order = resolveScroll(cfg.Column, 1)
 
@@ -2808,6 +2991,10 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				function BindObj:Set(newKey)
 					currentKey = resolveKeyItem(newKey)
 					BindObj.Value = currentKey
+					if savedKey then
+						Library.ConfigStore[savedKey] = serializeValue(currentKey)
+						scheduleAutoSave()
+					end
 					BindBtn.Text = "[ " .. formatKeyName(currentKey) .. " ]"
 					for _, fn in ipairs(changedListeners) do
 						task.spawn(fn, currentKey)
@@ -2897,6 +3084,11 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				local callback    = cfg.Callback or function() end
 				local flag        = cfg.Flag
 
+				local savedKey = (flag and flag ~= "") and flag or name
+				if savedKey and Library.ConfigStore[savedKey] ~= nil then
+					default = tostring(Library.ConfigStore[savedKey])
+				end
+
 				local scroll, order = resolveScroll(cfg.Column, 1.4)
 
 				local Container = Instance.new("Frame")
@@ -2944,6 +3136,10 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				function TextboxObj:Set(txt)
 					Box.Text = tostring(txt)
 					TextboxObj.Value = Box.Text
+					if savedKey then
+						Library.ConfigStore[savedKey] = Box.Text
+						scheduleAutoSave()
+					end
 					task.spawn(callback, Box.Text)
 				end
 				TextboxObj.SetValue = TextboxObj.Set
@@ -2956,6 +3152,10 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 					boxStroke.Color = Color3.fromRGB(46, 52, 70)
 					boxStroke.Transparency = 0.35
 					TextboxObj.Value = Box.Text
+					if savedKey then
+						Library.ConfigStore[savedKey] = Box.Text
+						scheduleAutoSave()
+					end
 					task.spawn(callback, Box.Text)
 					if disappear then
 						Box.Text = ""
@@ -3262,7 +3462,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		local SettingsWin = Instance.new("Frame")
 		SettingsWin.Name = "NightSystem_SettingsWindow"
 		SettingsWin.AnchorPoint = Vector2.new(0.5, 0.5)
-		SettingsWin.Size = UDim2.new(0, 500, 0, 410)
+		SettingsWin.Size = UDim2.new(0, 500, 0, 420)
 		SettingsWin.Position = UDim2.new(0.5, 25, 0.5, 15)
 		SettingsWin.BackgroundColor3 = Color3.fromRGB(22, 24, 30)
 		SettingsWin.BackgroundTransparency = 0.04
@@ -3352,7 +3552,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		SetLogo.Parent = SetTitleBar
 
 		local SetTitleText = Instance.new("TextLabel")
-		SetTitleText.Size = UDim2.new(1, -90, 1, 0)
+		SetTitleText.Size = UDim2.new(1, -160, 1, 0)
 		SetTitleText.Position = UDim2.new(0, 40, 0, 0)
 		SetTitleText.BackgroundTransparency = 1
 		SetTitleText.Text = "NightSystem — Settings"
@@ -3363,6 +3563,39 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		SetTitleText.TextStrokeTransparency = 1
 		SetTitleText.ZIndex = 63
 		SetTitleText.Parent = SetTitleBar
+
+		local SetResetBtn = Instance.new("TextButton")
+		SetResetBtn.Size = UDim2.new(0, 58, 0, 24)
+		SetResetBtn.Position = UDim2.new(1, -98, 0.5, -12)
+		SetResetBtn.BackgroundColor3 = Color3.fromRGB(44, 38, 56)
+		SetResetBtn.BackgroundTransparency = 0.15
+		SetResetBtn.BorderSizePixel = 0
+		SetResetBtn.Text = "↺ Reset"
+		SetResetBtn.TextColor3 = Color3.fromRGB(225, 235, 255)
+		SetResetBtn.Font = Enum.Font.GothamBold
+		SetResetBtn.TextSize = 11
+		SetResetBtn.AutoButtonColor = false
+		SetResetBtn.ZIndex = 64
+		SetResetBtn.Parent = SetTitleBar
+		addCorner(SetResetBtn, 6)
+		local setResetStroke = addStroke(SetResetBtn, Color3.fromRGB(130, 95, 195), 1.0, 0.25)
+
+		local setResetScale = Instance.new("UIScale")
+		setResetScale.Scale = 1
+		setResetScale.Parent = SetResetBtn
+
+		SetResetBtn.MouseEnter:Connect(function()
+			tween(SetResetBtn, TweenInfo.new(0.12), { BackgroundColor3 = Color3.fromRGB(75, 55, 115), BackgroundTransparency = 0 })
+			setResetStroke.Color = Color3.fromRGB(180, 140, 255)
+			setResetStroke.Transparency = 0
+			tween(setResetScale, TweenInfo.new(0.14, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1.06 })
+		end)
+		SetResetBtn.MouseLeave:Connect(function()
+			tween(SetResetBtn, TweenInfo.new(0.12), { BackgroundColor3 = Color3.fromRGB(44, 38, 56), BackgroundTransparency = 0.15 })
+			setResetStroke.Color = Color3.fromRGB(130, 95, 195)
+			setResetStroke.Transparency = 0.25
+			tween(setResetScale, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = 1.0 })
+		end)
 
 		local SetCloseBtn = Instance.new("TextButton")
 		SetCloseBtn.Size = UDim2.new(0, 28, 0, 24)
@@ -3555,7 +3788,9 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			Knob.Parent = Pill
 			addCorner(Knob, 7)
 
-			local state = default
+			local state = not not default
+			local ToggleObj = { Value = state }
+
 			local function updatePill()
 				if state then
 					tween(Pill, nil, { BackgroundColor3 = Library.Theme.Accent, BackgroundTransparency = 0.05 })
@@ -3568,6 +3803,13 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				end
 			end
 
+			function ToggleObj:Set(val)
+				state = not not val
+				ToggleObj.Value = state
+				updatePill()
+				if callback then task.spawn(callback, state) end
+			end
+
 			RowBtn.MouseEnter:Connect(function()
 				tween(RowBtn, nil, { BackgroundColor3 = Color3.fromRGB(36, 42, 58), BackgroundTransparency = 0.20 })
 				rowStroke.Color = Color3.fromRGB(65, 75, 105)
@@ -3578,13 +3820,12 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			end)
 
 			RowBtn.MouseButton1Click:Connect(function()
-				state = not state
-				updatePill()
-				if callback then task.spawn(callback, state) end
+				ToggleObj:Set(not state)
 			end)
 
 			updatePill()
 			if default and callback then task.spawn(callback, default) end
+			return ToggleObj
 		end
 
 		local function addSetSlider(name, minVal, maxVal, defaultVal, callback)
@@ -3647,24 +3888,32 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			local Knob = Instance.new("Frame")
 			Knob.Size = UDim2.new(0, 11, 0, 11)
 			Knob.AnchorPoint = Vector2.new(0.5, 0.5)
-			Knob.Position = UDim2.new(1, 0, 0.5, 0)
+			Knob.Position = UDim2.new(math.clamp((defaultVal - minVal) / math.max(1, maxVal - minVal), 0, 1), 0, 0.5, 0)
 			Knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 			Knob.BorderSizePixel = 0
 			Knob.ZIndex = 66
-			Knob.Parent = Fill
+			Knob.Parent = Track
 			addCorner(Knob, 6)
 
 			local currentVal = defaultVal
-			local dragging = false
+			local SliderObj = { Value = currentVal }
 
-			local function updateSlider(input)
-				local frac = math.clamp((input.Position.X - Track.AbsolutePosition.X) / math.max(1, Track.AbsoluteSize.X), 0, 1)
-				local raw = minVal + (maxVal - minVal) * frac
-				local snapped = math.floor(raw + 0.5)
-				currentVal = snapped
-				Fill.Size = UDim2.new(frac, 0, 1, 0)
-				ValBadge.Text = tostring(snapped)
-				if callback then task.spawn(callback, snapped) end
+			function SliderObj:Set(val)
+				local clamped = math.clamp(math.floor((tonumber(val) or minVal) + 0.5), minVal, maxVal)
+				currentVal = clamped
+				SliderObj.Value = clamped
+				local p = (maxVal > minVal) and ((clamped - minVal) / (maxVal - minVal)) or 0
+				Fill.Size = UDim2.new(p, 0, 1, 0)
+				Knob.Position = UDim2.new(p, 0, 0.5, 0)
+				ValBadge.Text = tostring(clamped)
+				if callback then task.spawn(callback, clamped) end
+			end
+
+			local dragging = false
+			local function updateSlider(inp)
+				local p = math.clamp((inp.Position.X - Track.AbsolutePosition.X) / math.max(1, Track.AbsoluteSize.X), 0, 1)
+				local val = math.floor(minVal + (maxVal - minVal) * p + 0.5)
+				SliderObj:Set(val)
 			end
 
 			Track.InputBegan:Connect(function(input)
@@ -3683,6 +3932,8 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 					updateSlider(input)
 				end
 			end)
+
+			return SliderObj
 		end
 
 		local function addSetDropdown(name, options, defaultVal, callback)
@@ -3766,6 +4017,9 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			OptLayout.Parent = OptionHolder
 			addPadding(OptionHolder, 4, 4, 4, 6)
 
+			local currentSelection = tostring(defaultVal)
+			local DropdownObj = { Value = currentSelection }
+
 			local isOpen = false
 			local function toggleOpen(state)
 				isOpen = state
@@ -3777,6 +4031,13 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				tween(Container, TweenInfo.new(0.18), {
 					Size = UDim2.new(1, 0, 0, isOpen and (48 + listH) or 38)
 				})
+			end
+
+			function DropdownObj:Set(opt)
+				currentSelection = tostring(opt)
+				DropdownObj.Value = currentSelection
+				SelectedLbl.Text = currentSelection
+				if callback then task.spawn(callback, currentSelection) end
 			end
 
 			for i, opt in ipairs(options) do
@@ -3802,15 +4063,16 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 					tween(OptBtn, TweenInfo.new(0.12), { BackgroundTransparency = 0.3, BackgroundColor3 = Color3.fromRGB(28, 32, 44), TextColor3 = Color3.fromRGB(220, 230, 250) })
 				end)
 				OptBtn.MouseButton1Click:Connect(function()
-					SelectedLbl.Text = tostring(opt)
+					DropdownObj:Set(opt)
 					toggleOpen(false)
-					if callback then task.spawn(callback, opt) end
 				end)
 			end
 
 			MainBox.MouseButton1Click:Connect(function()
 				toggleOpen(not isOpen)
 			end)
+
+			return DropdownObj
 		end
 
 		local function addSetColorpicker(name, defaultCol, callback)
@@ -3851,8 +4113,8 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			addStroke(PreviewBtn, Color3.fromRGB(255, 255, 255), 1.2, 0.25)
 
 			local Drawer = Instance.new("Frame")
-			Drawer.Size = UDim2.new(1, -20, 0, 74)
-			Drawer.Position = UDim2.new(0, 10, 0, 42)
+			Drawer.Size = UDim2.new(1, -20, 0, 56)
+			Drawer.Position = UDim2.new(0, 10, 0, 40)
 			Drawer.BackgroundColor3 = Color3.fromRGB(22, 25, 34)
 			Drawer.BackgroundTransparency = 0.2
 			Drawer.ZIndex = 64
@@ -3860,142 +4122,202 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			addCorner(Drawer, 6)
 			addStroke(Drawer, Color3.fromRGB(46, 52, 70), 1, 0.35)
 
-			local h, s, v = Color3.toHSV(defaultCol)
-			local function setCol(c)
-				PreviewBtn.BackgroundColor3 = c
-				if callback then task.spawn(callback, c) end
-			end
+			local RainbowTrack = Instance.new("TextButton")
+			RainbowTrack.Size = UDim2.new(1, -20, 0, 14)
+			RainbowTrack.Position = UDim2.new(0, 10, 0, 8)
+			RainbowTrack.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			RainbowTrack.AutoButtonColor = false
+			RainbowTrack.Text = ""
+			RainbowTrack.ZIndex = 65
+			RainbowTrack.Parent = Drawer
+			addCorner(RainbowTrack, 7)
+			addStroke(RainbowTrack, Color3.fromRGB(48, 54, 72), 1, 0.4)
 
-			local function makeBar(lblTxt, yOff, initP, onCh)
-				local lbl = Instance.new("TextLabel")
-				lbl.Size = UDim2.new(0, 18, 0, 18)
-				lbl.Position = UDim2.new(0, 8, 0, yOff)
-				lbl.BackgroundTransparency = 1
-				lbl.Text = lblTxt
-				lbl.TextColor3 = Color3.fromRGB(240, 245, 255)
-				lbl.Font = Enum.Font.GothamBold
-				lbl.TextSize = 11
-				lbl.ZIndex = 65
-				lbl.Parent = Drawer
+			local RainbowGrad = Instance.new("UIGradient")
+			RainbowGrad.Color = ColorSequence.new({
+				ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 0, 0)),
+				ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 255, 0)),
+				ColorSequenceKeypoint.new(0.33, Color3.fromRGB(0, 255, 0)),
+				ColorSequenceKeypoint.new(0.50, Color3.fromRGB(0, 255, 255)),
+				ColorSequenceKeypoint.new(0.67, Color3.fromRGB(0, 0, 255)),
+				ColorSequenceKeypoint.new(0.83, Color3.fromRGB(255, 0, 255)),
+				ColorSequenceKeypoint.new(1.00, Color3.fromRGB(255, 0, 0)),
+			})
+			RainbowGrad.Parent = RainbowTrack
 
-				local trk = Instance.new("TextButton")
-				trk.Size = UDim2.new(1, -38, 0, 6)
-				trk.Position = UDim2.new(0, 28, 0, yOff + 6)
-				trk.BackgroundColor3 = Color3.fromRGB(36, 42, 58)
-				trk.Text = ""
-				trk.AutoButtonColor = false
-				trk.ZIndex = 65
-				trk.Parent = Drawer
-				addCorner(trk, 3)
+			local initH, _, _ = Color3.toHSV(defaultCol)
+			local Knob = Instance.new("Frame")
+			Knob.Size = UDim2.new(0, 16, 0, 16)
+			Knob.AnchorPoint = Vector2.new(0.5, 0.5)
+			Knob.Position = UDim2.new(initH, 0, 0.5, 0)
+			Knob.BackgroundColor3 = defaultCol
+			Knob.BorderSizePixel = 0
+			Knob.ZIndex = 66
+			Knob.Parent = RainbowTrack
+			addCorner(Knob, 8)
+			addStroke(Knob, Color3.fromRGB(255, 255, 255), 1.8, 0)
 
-				local fl = Instance.new("Frame")
-				fl.Size = UDim2.new(initP, 0, 1, 0)
-				fl.BackgroundColor3 = Library.Theme.Accent
-				fl.BorderSizePixel = 0
-				fl.ZIndex = 66
-				fl.Parent = trk
-				addCorner(fl, 3)
+			local SwatchesFrame = Instance.new("Frame")
+			SwatchesFrame.Size = UDim2.new(1, -20, 0, 20)
+			SwatchesFrame.Position = UDim2.new(0, 10, 0, 28)
+			SwatchesFrame.BackgroundTransparency = 1
+			SwatchesFrame.ZIndex = 65
+			SwatchesFrame.Parent = Drawer
 
-				local draggingB = false
-				local function updB(inp)
-					local p = math.clamp((inp.Position.X - trk.AbsolutePosition.X) / math.max(1, trk.AbsoluteSize.X), 0, 1)
-					fl.Size = UDim2.new(p, 0, 1, 0)
-					onCh(p)
-					setCol(Color3.fromHSV(h, s, v))
+			local SwatchLayout = Instance.new("UIListLayout")
+			SwatchLayout.FillDirection = Enum.FillDirection.Horizontal
+			SwatchLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+			SwatchLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+			SwatchLayout.SortOrder = Enum.SortOrder.LayoutOrder
+			SwatchLayout.Padding = UDim.new(0, 6)
+			SwatchLayout.Parent = SwatchesFrame
+
+			local presets = {
+				Color3.fromRGB(255, 255, 255),
+				Color3.fromRGB(180, 185, 195),
+				Color3.fromRGB(75, 80, 95),
+				Color3.fromRGB(18, 20, 26),
+				Color3.fromRGB(255, 60, 60),
+				Color3.fromRGB(255, 150, 40),
+				Color3.fromRGB(255, 220, 45),
+				Color3.fromRGB(45, 215, 95),
+				Color3.fromRGB(45, 200, 255),
+				Color3.fromRGB(85, 115, 250),
+				Color3.fromRGB(185, 75, 255),
+			}
+
+			local currentCol = defaultCol
+			local ColorObj = { Value = currentCol }
+
+			function ColorObj:Set(col)
+				if typeof(col) == "Color3" then
+					currentCol = col
+					ColorObj.Value = col
+					PreviewBtn.BackgroundColor3 = col
+					local h, s, v = Color3.toHSV(col)
+					Knob.Position = UDim2.new(h, 0, 0.5, 0)
+					Knob.BackgroundColor3 = col
+					if callback then task.spawn(callback, col) end
 				end
-				trk.InputBegan:Connect(function(inp)
-					if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-						draggingB = true
-						updB(inp)
-					end
-				end)
-				UserInputService.InputEnded:Connect(function(inp)
-					if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-						draggingB = false
-					end
-				end)
-				UserInputService.InputChanged:Connect(function(inp)
-					if draggingB and (inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch) then
-						updB(inp)
-					end
+			end
+
+			for i, pcol in ipairs(presets) do
+				local SwatchBtn = Instance.new("TextButton")
+				SwatchBtn.LayoutOrder = i
+				SwatchBtn.Size = UDim2.new(0, 18, 0, 18)
+				SwatchBtn.BackgroundColor3 = pcol
+				SwatchBtn.Text = ""
+				SwatchBtn.AutoButtonColor = false
+				SwatchBtn.ZIndex = 66
+				SwatchBtn.Parent = SwatchesFrame
+				addCorner(SwatchBtn, 5)
+				addStroke(SwatchBtn, Color3.fromRGB(255, 255, 255), 1, 0.4)
+
+				SwatchBtn.MouseButton1Click:Connect(function()
+					ColorObj:Set(pcol)
 				end)
 			end
 
-			makeBar("H", 6, h, function(p) h = p end)
-			makeBar("S", 28, s, function(p) s = p end)
-			makeBar("V", 50, v, function(p) v = p end)
+			local draggingRainbow = false
+			local function updateRainbow(inp)
+				local p = math.clamp((inp.Position.X - RainbowTrack.AbsolutePosition.X) / math.max(1, RainbowTrack.AbsoluteSize.X), 0, 1)
+				local newCol = Color3.fromHSV(p, 1, 1)
+				ColorObj:Set(newCol)
+			end
+
+			RainbowTrack.InputBegan:Connect(function(inp)
+				if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+					draggingRainbow = true
+					updateRainbow(inp)
+				end
+			end)
+			UserInputService.InputEnded:Connect(function(inp)
+				if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+					draggingRainbow = false
+				end
+			end)
+			UserInputService.InputChanged:Connect(function(inp)
+				if draggingRainbow and (inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch) then
+					updateRainbow(inp)
+				end
+			end)
 
 			local openD = false
 			PreviewBtn.MouseButton1Click:Connect(function()
 				openD = not openD
 				tween(Container, TweenInfo.new(0.18), {
-					Size = UDim2.new(1, 0, 0, openD and 124 or 38)
+					Size = UDim2.new(1, 0, 0, openD and 104 or 38)
 				})
 			end)
+
+			return ColorObj
 		end
 
-		addSetSection("General Settings")
+		local function addSetButton(name, callback)
+			local Btn = Instance.new("TextButton")
+			Btn.LayoutOrder = nextOrder()
+			Btn.Size = UDim2.new(1, 0, 0, 36)
+			Btn.BackgroundColor3 = Color3.fromRGB(38, 42, 58)
+			Btn.BackgroundTransparency = 0.25
+			Btn.BorderSizePixel = 0
+			Btn.Text = name
+			Btn.TextColor3 = Color3.fromRGB(225, 235, 255)
+			Btn.Font = Enum.Font.GothamBold
+			Btn.TextSize = 12
+			Btn.AutoButtonColor = false
+			Btn.ZIndex = 63
+			Btn.Parent = SetScroll
+			addCorner(Btn, 7)
+			local btnStroke = addStroke(Btn, Color3.fromRGB(60, 68, 95), 1.0, 0.3)
 
-		local antiAfkConn = nil
-		addSetToggle("Anti-AFK", true, function(state)
-			if state then
-				if not antiAfkConn then
-					antiAfkConn = LocalPlayer.Idled:Connect(function()
-						pcall(function()
-							local VirtualUser = game:GetService("VirtualUser")
-							VirtualUser:CaptureController()
-							VirtualUser:ClickButton2(Vector2.new())
-						end)
-					end)
-				end
-			else
-				if antiAfkConn then
-					antiAfkConn:Disconnect()
-					antiAfkConn = nil
-				end
-			end
-		end)
+			local btnScale = Instance.new("UIScale")
+			btnScale.Scale = 1
+			btnScale.Parent = Btn
 
-		local customFovEnabled = false
-		local customFovValue = 70
-		local defaultFov = 70
-		pcall(function()
-			local cam = workspace.CurrentCamera
-			if cam then defaultFov = cam.FieldOfView end
-		end)
+			Btn.MouseEnter:Connect(function()
+				tween(Btn, TweenInfo.new(0.12), { BackgroundColor3 = Library.Theme.Accent, BackgroundTransparency = 0.05, TextColor3 = Color3.fromRGB(255, 255, 255) })
+				btnStroke.Color = Color3.fromRGB(120, 160, 255)
+				tween(btnScale, TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = 1.02 })
+			end)
+			Btn.MouseLeave:Connect(function()
+				tween(Btn, TweenInfo.new(0.12), { BackgroundColor3 = Color3.fromRGB(38, 42, 58), BackgroundTransparency = 0.25, TextColor3 = Color3.fromRGB(225, 235, 255) })
+				btnStroke.Color = Color3.fromRGB(60, 68, 95)
+				tween(btnScale, TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = 1.0 })
+			end)
 
-		addSetToggle("Custom FOV", false, function(state)
-			customFovEnabled = state
-			local cam = workspace.CurrentCamera
-			if cam then
-				cam.FieldOfView = state and customFovValue or defaultFov
-			end
-		end)
+			Btn.MouseButton1Click:Connect(function()
+				if callback then task.spawn(callback) end
+			end)
 
-		addSetSlider("Field of View", 60, 120, 70, function(val)
-			customFovValue = val
-			if customFovEnabled then
-				local cam = workspace.CurrentCamera
-				if cam then cam.FieldOfView = val end
-			end
-		end)
+			return Btn
+		end
 
-		RunService.RenderStepped:Connect(function()
-			if customFovEnabled then
-				local cam = workspace.CurrentCamera
-				if cam and cam.FieldOfView ~= customFovValue then
-					cam.FieldOfView = customFovValue
-				end
-			end
-		end)
+		local savedAntiAfk = Library.ConfigStore["_NS_AntiAFK"]
+		local antiAfkEnabled = (savedAntiAfk ~= nil) and (not not savedAntiAfk) or true
 
-		addSetSection("Crosshair Settings")
+		local savedCustomFov = Library.ConfigStore["_NS_CustomFOV"]
+		local customFovEnabled = (savedCustomFov ~= nil) and (not not savedCustomFov) or false
 
-		local crosshairEnabled = false
-		local crosshairStyle = "1: ⊹"
-		local crosshairSize = 22
-		local crosshairYOffset = 0
-		local crosshairColor = Color3.fromRGB(255, 255, 255)
+		local savedFovVal = tonumber(Library.ConfigStore["_NS_FOV"])
+		local customFovValue = savedFovVal or 70
+
+		local savedCrossEnabled = Library.ConfigStore["_NS_CrosshairEnabled"]
+		local crosshairEnabled = (savedCrossEnabled ~= nil) and (not not savedCrossEnabled) or false
+
+		local savedCrossStyle = Library.ConfigStore["_NS_CrosshairStyle"]
+		local crosshairStyle = savedCrossStyle and tostring(savedCrossStyle) or "1: ⊹"
+
+		local savedCrossSize = tonumber(Library.ConfigStore["_NS_CrosshairSize"])
+		local crosshairSize = savedCrossSize or 22
+
+		local savedCrossX = tonumber(Library.ConfigStore["_NS_CrosshairX"])
+		local crosshairXOffset = savedCrossX or 0
+
+		local savedCrossY = tonumber(Library.ConfigStore["_NS_CrosshairY"])
+		local crosshairYOffset = savedCrossY or 0
+
+		local savedCrossCol = Library.ConfigStore["_NS_CrosshairColor"]
+		local crosshairColor = (savedCrossCol and deserializeValue(savedCrossCol)) or Color3.fromRGB(255, 255, 255)
 
 		local CrosshairGui = Instance.new("ScreenGui")
 		CrosshairGui.Name = "NightSystem_CrosshairGui"
@@ -4006,14 +4328,14 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		local CrosshairLabel = Instance.new("TextLabel")
 		CrosshairLabel.Name = "CrosshairLabel"
 		CrosshairLabel.AnchorPoint = Vector2.new(0.5, 0.5)
-		CrosshairLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
+		CrosshairLabel.Position = UDim2.new(0.5, crosshairXOffset, 0.5, crosshairYOffset)
 		CrosshairLabel.Size = UDim2.new(0, 60, 0, 60)
 		CrosshairLabel.BackgroundTransparency = 1
 		CrosshairLabel.Text = "⊹"
-		CrosshairLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+		CrosshairLabel.TextColor3 = crosshairColor
 		CrosshairLabel.Font = Enum.Font.Arial
-		CrosshairLabel.TextSize = 22
-		CrosshairLabel.Visible = false
+		CrosshairLabel.TextSize = crosshairSize
+		CrosshairLabel.Visible = crosshairEnabled
 		CrosshairLabel.ZIndex = 100
 		CrosshairLabel.Parent = CrosshairGui
 
@@ -4036,34 +4358,155 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			end
 			CrosshairLabel.Text = symbol
 			CrosshairLabel.TextSize = crosshairSize
-			CrosshairLabel.Position = UDim2.new(0.5, 0, 0.5, crosshairYOffset)
+			CrosshairLabel.Position = UDim2.new(0.5, crosshairXOffset, 0.5, crosshairYOffset)
 			CrosshairLabel.TextColor3 = crosshairColor
 		end
 
-		addSetToggle("Enable Crosshair", false, function(state)
+		updateCrosshair()
+
+		local antiAfkConn = nil
+		local function setAntiAfkState(state)
+			antiAfkEnabled = state
+			Library.ConfigStore["_NS_AntiAFK"] = state
+			scheduleAutoSave()
+			if state then
+				if not antiAfkConn then
+					antiAfkConn = LocalPlayer.Idled:Connect(function()
+						pcall(function()
+							local VirtualUser = game:GetService("VirtualUser")
+							VirtualUser:CaptureController()
+							VirtualUser:ClickButton2(Vector2.new())
+						end)
+					end)
+				end
+			else
+				if antiAfkConn then
+					antiAfkConn:Disconnect()
+					antiAfkConn = nil
+				end
+			end
+		end
+
+		local defaultFov = 70
+		pcall(function()
+			local cam = workspace.CurrentCamera
+			if cam then defaultFov = cam.FieldOfView end
+		end)
+
+		local function setCustomFovState(state)
+			customFovEnabled = state
+			Library.ConfigStore["_NS_CustomFOV"] = state
+			scheduleAutoSave()
+			local cam = workspace.CurrentCamera
+			if cam then
+				cam.FieldOfView = state and customFovValue or defaultFov
+			end
+		end
+
+		local function setFovValue(val)
+			customFovValue = val
+			Library.ConfigStore["_NS_FOV"] = val
+			scheduleAutoSave()
+			if customFovEnabled then
+				local cam = workspace.CurrentCamera
+				if cam then cam.FieldOfView = val end
+			end
+		end
+
+		RunService.RenderStepped:Connect(function()
+			if customFovEnabled then
+				local cam = workspace.CurrentCamera
+				if cam and cam.FieldOfView ~= customFovValue then
+					cam.FieldOfView = customFovValue
+				end
+			end
+		end)
+
+		addSetSection("General Settings")
+
+		local setToggleAntiAfk = addSetToggle("Anti-AFK", antiAfkEnabled, setAntiAfkState)
+		local setToggleCustomFov = addSetToggle("Custom FOV", customFovEnabled, setCustomFovState)
+		local setSliderFov = addSetSlider("Field of View", 60, 120, customFovValue, setFovValue)
+
+		addSetSection("Crosshair Settings")
+
+		local setToggleCrosshair = addSetToggle("Enable Crosshair", crosshairEnabled, function(state)
 			crosshairEnabled = state
+			Library.ConfigStore["_NS_CrosshairEnabled"] = state
+			scheduleAutoSave()
 			updateCrosshair()
 		end)
 
-		addSetDropdown("Crosshair Style", { "1: ⊹", "2: ➕", "3: ×", "4: ☉", "5: ・", "6: ⌖" }, "1: ⊹", function(opt)
+		local setDropCrosshairStyle = addSetDropdown("Crosshair Style", { "1: ⊹", "2: ➕", "3: ×", "4: ☉", "5: ・", "6: ⌖" }, crosshairStyle, function(opt)
 			crosshairStyle = tostring(opt)
+			Library.ConfigStore["_NS_CrosshairStyle"] = crosshairStyle
+			scheduleAutoSave()
 			updateCrosshair()
 		end)
 
-		addSetSlider("Crosshair Size", 10, 60, 22, function(val)
+		local setSliderCrosshairSize = addSetSlider("Crosshair Size", 10, 60, crosshairSize, function(val)
 			crosshairSize = val
+			Library.ConfigStore["_NS_CrosshairSize"] = crosshairSize
+			scheduleAutoSave()
 			updateCrosshair()
 		end)
 
-		addSetSlider("Crosshair Height (Y-Offset)", -150, 150, 0, function(val)
+		local setSliderCrosshairX = addSetSlider("Crosshair X-Offset", -250, 250, crosshairXOffset, function(val)
+			crosshairXOffset = val
+			Library.ConfigStore["_NS_CrosshairX"] = crosshairXOffset
+			scheduleAutoSave()
+			updateCrosshair()
+		end)
+
+		local setSliderCrosshairY = addSetSlider("Crosshair Height (Y-Offset)", -250, 250, crosshairYOffset, function(val)
 			crosshairYOffset = val
+			Library.ConfigStore["_NS_CrosshairY"] = crosshairYOffset
+			scheduleAutoSave()
 			updateCrosshair()
 		end)
 
-		addSetColorpicker("Crosshair Color", Color3.fromRGB(255, 255, 255), function(col)
+		local setColorCrosshair = addSetColorpicker("Crosshair Color", crosshairColor, function(col)
 			crosshairColor = col
+			Library.ConfigStore["_NS_CrosshairColor"] = serializeValue(crosshairColor)
+			scheduleAutoSave()
 			updateCrosshair()
 		end)
+
+		local function doResetAllSettings()
+			setToggleAntiAfk:Set(false)
+			setToggleCustomFov:Set(false)
+			setSliderFov:Set(70)
+			setToggleCrosshair:Set(false)
+			setDropCrosshairStyle:Set("1: ⊹")
+			setSliderCrosshairSize:Set(22)
+			setSliderCrosshairX:Set(0)
+			setSliderCrosshairY:Set(0)
+			setColorCrosshair:Set(Color3.fromRGB(255, 255, 255))
+
+			local cam = workspace.CurrentCamera
+			if cam then cam.FieldOfView = 70 end
+
+			Library.ConfigStore["_NS_AntiAFK"] = nil
+			Library.ConfigStore["_NS_CustomFOV"] = nil
+			Library.ConfigStore["_NS_FOV"] = nil
+			Library.ConfigStore["_NS_CrosshairEnabled"] = nil
+			Library.ConfigStore["_NS_CrosshairStyle"] = nil
+			Library.ConfigStore["_NS_CrosshairSize"] = nil
+			Library.ConfigStore["_NS_CrosshairX"] = nil
+			Library.ConfigStore["_NS_CrosshairY"] = nil
+			Library.ConfigStore["_NS_CrosshairColor"] = nil
+			Library:SaveConfiguration()
+
+			SetResetBtn.Text = "✓ Done!"
+			task.delay(1.2, function()
+				if SetResetBtn then SetResetBtn.Text = "↺ Reset" end
+			end)
+		end
+
+		SetResetBtn.MouseButton1Click:Connect(doResetAllSettings)
+
+		addSetSection("Configuration")
+		addSetButton("↺ Reset All Settings to Default", doResetAllSettings)
 	end
 
 	table.insert(Library.Windows, WindowObj)
