@@ -990,18 +990,14 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 	TitleText.TextTruncate = Enum.TextTruncate.AtEnd
 	TitleText.Parent = TitleBar
 
-	local function createGlassControlBtn(iconText, rightOffset, isCloseBtn, callback)
+	local function createGlassControlBtn(iconType, rightOffset, isCloseBtn, callback)
 		local btn = Instance.new("TextButton")
 		btn.Size = UDim2.new(0, 28, 0, 24)
 		btn.Position = UDim2.new(1, rightOffset, 0.5, -12)
-		btn.BackgroundColor3 = Color3.fromRGB(30, 34, 46)
-		btn.BackgroundTransparency = 0.20
+		btn.BackgroundColor3 = isCloseBtn and Color3.fromRGB(44, 30, 38) or Color3.fromRGB(30, 34, 46)
+		btn.BackgroundTransparency = isCloseBtn and 0.15 or 0.20
 		btn.BorderSizePixel = 0
-		btn.Text = iconText
-		btn.TextColor3 = Color3.fromRGB(240, 245, 255)
-		btn.Font = Enum.Font.GothamBold
-		btn.TextSize = isCloseBtn and 14 or 13
-		btn.TextStrokeTransparency = 1
+		btn.Text = ""
 		btn.AutoButtonColor = false
 		btn.Parent = TitleBar
 		addCorner(btn, 6)
@@ -1012,39 +1008,100 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 		local stroke = addStroke(
 			btn,
-			isCloseBtn and Color3.fromRGB(180, 50, 70) or Color3.fromRGB(50, 56, 75),
+			isCloseBtn and Color3.fromRGB(205, 55, 75) or Color3.fromRGB(50, 56, 75),
 			1.0,
-			0.25
+			isCloseBtn and 0.20 or 0.25
 		)
+
+		local iconFrames = {}
+		if iconType == "✙" or iconType == "cross" or isCloseBtn then
+			local barV = Instance.new("Frame")
+			barV.Size = UDim2.new(0, 4, 0, 13)
+			barV.AnchorPoint = Vector2.new(0.5, 0.5)
+			barV.Position = UDim2.new(0.5, 0, 0.5, 0)
+			barV.BackgroundColor3 = Color3.fromRGB(255, 160, 175)
+			barV.BorderSizePixel = 0
+			barV.Parent = btn
+			addCorner(barV, 1)
+			table.insert(iconFrames, barV)
+
+			local barH = Instance.new("Frame")
+			barH.Size = UDim2.new(0, 13, 0, 4)
+			barH.AnchorPoint = Vector2.new(0.5, 0.5)
+			barH.Position = UDim2.new(0.5, 0, 0.5, 0)
+			barH.BackgroundColor3 = Color3.fromRGB(255, 160, 175)
+			barH.BorderSizePixel = 0
+			barH.Parent = btn
+			addCorner(barH, 1)
+			table.insert(iconFrames, barH)
+		elseif iconType == "☰" or iconType == "menu" then
+			for i = -1, 1 do
+				local bar = Instance.new("Frame")
+				bar.Size = UDim2.new(0, 13, 0, 2)
+				bar.AnchorPoint = Vector2.new(0.5, 0.5)
+				bar.Position = UDim2.new(0.5, 0, 0.5, i * 4)
+				bar.BackgroundColor3 = Color3.fromRGB(200, 210, 230)
+				bar.BorderSizePixel = 0
+				bar.Parent = btn
+				addCorner(bar, 1)
+				table.insert(iconFrames, bar)
+			end
+		elseif iconType == "−" or iconType == "minimize" then
+			local bar = Instance.new("Frame")
+			bar.Size = UDim2.new(0, 12, 0, 2)
+			bar.AnchorPoint = Vector2.new(0.5, 0.5)
+			bar.Position = UDim2.new(0.5, 0, 0.5, 0)
+			bar.BackgroundColor3 = Color3.fromRGB(200, 210, 230)
+			bar.BorderSizePixel = 0
+			bar.Parent = btn
+			addCorner(bar, 1)
+			table.insert(iconFrames, bar)
+		else
+			btn.Text = tostring(iconType)
+			btn.TextColor3 = Color3.fromRGB(200, 210, 230)
+			btn.Font = Enum.Font.GothamBold
+			btn.TextSize = 13
+			btn.TextStrokeTransparency = 1
+		end
 
 		local function setVisual(hovered)
 			if isCloseBtn then
 				if hovered then
 					btn.BackgroundColor3 = Color3.fromRGB(235, 60, 80)
 					btn.BackgroundTransparency = 0
-					btn.TextColor3 = Color3.fromRGB(255, 255, 255)
 					stroke.Color = Color3.fromRGB(255, 120, 140)
 					stroke.Transparency = 0
+					for _, f in ipairs(iconFrames) do
+						f.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+					end
 				else
 					btn.BackgroundColor3 = Color3.fromRGB(44, 30, 38)
 					btn.BackgroundTransparency = 0.15
-					btn.TextColor3 = Color3.fromRGB(255, 145, 160)
 					stroke.Color = Color3.fromRGB(205, 55, 75)
 					stroke.Transparency = 0.20
+					for _, f in ipairs(iconFrames) do
+						f.BackgroundColor3 = Color3.fromRGB(255, 160, 175)
+					end
 				end
 			else
 				if hovered then
 					btn.BackgroundColor3 = Color3.fromRGB(48, 62, 105)
 					btn.BackgroundTransparency = 0
-					btn.TextColor3 = Color3.fromRGB(255, 255, 255)
 					stroke.Color = Library.Theme.Accent
 					stroke.Transparency = 0
+					btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+					for _, f in ipairs(iconFrames) do
+						f.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+					end
 				else
 					btn.BackgroundColor3 = Color3.fromRGB(30, 34, 46)
 					btn.BackgroundTransparency = 0.20
-					btn.TextColor3 = Color3.fromRGB(200, 210, 230)
 					stroke.Color = Color3.fromRGB(50, 56, 75)
 					stroke.Transparency = 0.35
+					btn.TextColor3 = Color3.fromRGB(200, 210, 230)
+					for _, f in ipairs(iconFrames) do
+						f.BackgroundColor3 = Color3.fromRGB(200, 210, 230)
+					end
 				end
 			end
 		end
@@ -1080,7 +1137,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 	MobileOpenPill.AnchorPoint = Vector2.new(0.5, 0)
 	MobileOpenPill.Size = UDim2.new(0, pillWidth, 0, 30)
 	MobileOpenPill.Position = UDim2.new(0.5, 0, 0, 10)
-	MobileOpenPill.Text = "≡ " .. tostring(windowTitle)
+	MobileOpenPill.Text = tostring(windowTitle)
 	MobileOpenPill.AutoButtonColor = false
 	MobileOpenPill.Visible = false
 	MobileOpenPill.ZIndex = 40
@@ -1093,9 +1150,9 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 	local function updatePillLabel()
 		if isWindowOpen then
-			MobileOpenPill.Text = "✙ Close " .. tostring(windowTitle)
+			MobileOpenPill.Text = "Close " .. tostring(windowTitle)
 		else
-			MobileOpenPill.Text = "≡ Open " .. tostring(windowTitle)
+			MobileOpenPill.Text = "Open " .. tostring(windowTitle)
 		end
 	end
 
@@ -1259,7 +1316,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		end
 	end)
 
-	createGlassControlBtn("□", -68, false, function()
+	createGlassControlBtn("☰", -68, false, function()
 		if isAnimatingWindow then return end
 		if currentScalePreset == 1 then
 			currentScalePreset = 2
