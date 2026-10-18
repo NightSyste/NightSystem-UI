@@ -4564,19 +4564,23 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		local function updateCrosshair()
 			if not CrosshairLabel then return end
 			CrosshairLabel.Visible = crosshairEnabled
-			local symbol = "卐"
-			if string.find(crosshairStyle, "×") then
+			local symbol = "⊹"
+			if string.find(crosshairStyle, "➕") or string.find(crosshairStyle, "+") then
+				symbol = "➕"
+			elseif string.find(crosshairStyle, "×") then
 				symbol = "×"
-			elseif string.find(crosshairStyle, "+") then
-				symbol = "+"
 			elseif string.find(crosshairStyle, "☉") then
 				symbol = "☉"
 			elseif string.find(crosshairStyle, "・") then
 				symbol = "・"
 			elseif string.find(crosshairStyle, "✠") then
 				symbol = "✠"
-			else
+			elseif string.find(crosshairStyle, "卐") then
 				symbol = "卐"
+			elseif string.find(crosshairStyle, "⊹") then
+				symbol = "⊹"
+			else
+				symbol = "⊹"
 			end
 			CrosshairLabel.Text = symbol
 			CrosshairLabel.TextSize = crosshairSize
@@ -4682,7 +4686,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			updateCrosshair()
 		end, crosshairScroll)
 
-		local setDropCrosshairStyle = addSetDropdown("Crosshair Style", { "1: 卐", "2: ×", "3: ☉", "4: ・", "5: ✠", "6: 卐" }, crosshairStyle, function(opt)
+		local setDropCrosshairStyle = addSetDropdown("Crosshair Style", { "1: ⊹", "2: ➕", "3: ×", "4: ☉", "5: ・", "6: 卐" }, crosshairStyle, function(opt)
 			crosshairStyle = tostring(opt)
 			Library.ConfigStore["_NS_CrosshairStyle"] = crosshairStyle
 			scheduleAutoSave()
