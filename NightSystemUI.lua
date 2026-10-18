@@ -9,6 +9,28 @@ local Lighting = game:GetService("Lighting")
 local Stats = game:GetService("Stats")
 local TeleportService = game:GetService("TeleportService")
 
+local LOGO_URL = "https://i.ibb.co/dqhXvHX/7pj9jqd-removebg-preview.png"
+local function resolveLogoAsset()
+	local asset = LOGO_URL
+	pcall(function()
+		if getcustomasset and writefile and (game.HttpGet or http_request or request) then
+			local fn = "ns_logo.png"
+			if not (isfile and isfile(fn)) then
+				local getter = game.HttpGet or function(self, u) return (http_request or request)({ Url = u, Method = "GET" }).Body end
+				local res = getter(game, LOGO_URL)
+				if res and #res > 0 then
+					writefile(fn, res)
+				end
+			end
+			if isfile and isfile(fn) then
+				asset = getcustomasset(fn)
+			end
+		end
+	end)
+	return asset
+end
+local LOGO_ASSET = resolveLogoAsset()
+
 local FlagsProxy = setmetatable({}, {
 	__index = function(t, k)
 		local dummy = {
@@ -731,15 +753,14 @@ local function playPrettyLoader(screenGui, titleText, onFinished)
 	})
 	spinGrad.Parent = spinStroke
 
-	local SpinnerCore = Instance.new("TextLabel")
-	SpinnerCore.Size = UDim2.new(1, 0, 1, 0)
-	SpinnerCore.BackgroundTransparency = 1
-	SpinnerCore.Text = "✦"
-	SpinnerCore.TextColor3 = Library.Theme.NeonBorder
-	SpinnerCore.Font = Enum.Font.GothamBold
-	SpinnerCore.TextSize = 18
-	SpinnerCore.ZIndex = 53
-	SpinnerCore.Parent = SpinnerOuter
+	local SpinnerLogo = Instance.new("ImageLabel")
+	SpinnerLogo.Size = UDim2.new(0, 26, 0, 26)
+	SpinnerLogo.Position = UDim2.new(0.5, -13, 0.5, -13)
+	SpinnerLogo.BackgroundTransparency = 1
+	SpinnerLogo.Image = LOGO_ASSET
+	SpinnerLogo.ScaleType = Enum.ScaleType.Fit
+	SpinnerLogo.ZIndex = 53
+	SpinnerLogo.Parent = SpinnerOuter
 
 	local TitleLbl = Instance.new("TextLabel")
 	TitleLbl.Size = UDim2.new(1, -88, 0, 24)
@@ -798,7 +819,7 @@ local function playPrettyLoader(screenGui, titleText, onFinished)
 	task.spawn(function()
 		while spinning and LoaderCard.Parent do
 			spinGrad.Rotation = (spinGrad.Rotation + 14) % 360
-			SpinnerCore.Rotation = (SpinnerCore.Rotation - 8) % 360
+			SpinnerLogo.Rotation = (SpinnerLogo.Rotation - 8) % 360
 			task.wait(0.02)
 		end
 	end)
@@ -945,10 +966,20 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 	TitleDivider.BorderSizePixel = 0
 	TitleDivider.Parent = TitleBar
 
+	local TitleLogo = Instance.new("ImageLabel")
+	TitleLogo.Name = "TitleLogo"
+	TitleLogo.Size = UDim2.new(0, 24, 0, 24)
+	TitleLogo.Position = UDim2.new(0, 14, 0.5, -12)
+	TitleLogo.BackgroundTransparency = 1
+	TitleLogo.Image = LOGO_ASSET
+	TitleLogo.ScaleType = Enum.ScaleType.Fit
+	TitleLogo.ZIndex = 4
+	TitleLogo.Parent = TitleBar
+
 	local TitleText = Instance.new("TextLabel")
 	TitleText.Name = "TitleText"
-	TitleText.Size = UDim2.new(0.65, 0, 1, 0)
-	TitleText.Position = UDim2.new(0, 16, 0, 0)
+	TitleText.Size = UDim2.new(0.65, -36, 1, 0)
+	TitleText.Position = UDim2.new(0, 44, 0, 0)
 	TitleText.BackgroundTransparency = 1
 	TitleText.Text = tostring(windowTitle)
 	TitleText.TextColor3 = Color3.fromRGB(245, 248, 255)
@@ -961,13 +992,16 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 	local function createGlassControlBtn(iconText, rightOffset, isCloseBtn, callback)
 		local btn = Instance.new("TextButton")
-		btn.Size = UDim2.new(0, 26, 0, 22)
-		btn.Position = UDim2.new(1, rightOffset, 0.5, -11)
+		btn.Size = UDim2.new(0, 28, 0, 24)
+		btn.Position = UDim2.new(1, rightOffset, 0.5, -12)
 		btn.BackgroundColor3 = Color3.fromRGB(30, 34, 46)
 		btn.BackgroundTransparency = 0.20
 		btn.BorderSizePixel = 0
 		btn.Text = iconText
-		styleBrightButtonText(btn, isCloseBtn and 13 or 12)
+		btn.TextColor3 = Color3.fromRGB(240, 245, 255)
+		btn.Font = Enum.Font.GothamBold
+		btn.TextSize = isCloseBtn and 14 or 13
+		btn.TextStrokeTransparency = 1
 		btn.AutoButtonColor = false
 		btn.Parent = TitleBar
 		addCorner(btn, 6)
@@ -988,11 +1022,13 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				if hovered then
 					btn.BackgroundColor3 = Color3.fromRGB(235, 60, 80)
 					btn.BackgroundTransparency = 0
+					btn.TextColor3 = Color3.fromRGB(255, 255, 255)
 					stroke.Color = Color3.fromRGB(255, 120, 140)
 					stroke.Transparency = 0
 				else
-					btn.BackgroundColor3 = Color3.fromRGB(30, 34, 46)
+					btn.BackgroundColor3 = Color3.fromRGB(34, 38, 50)
 					btn.BackgroundTransparency = 0.20
+					btn.TextColor3 = Color3.fromRGB(230, 235, 245)
 					stroke.Color = Color3.fromRGB(180, 50, 70)
 					stroke.Transparency = 0.35
 				end
@@ -1000,11 +1036,13 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				if hovered then
 					btn.BackgroundColor3 = Color3.fromRGB(48, 62, 105)
 					btn.BackgroundTransparency = 0
+					btn.TextColor3 = Color3.fromRGB(255, 255, 255)
 					stroke.Color = Library.Theme.Accent
 					stroke.Transparency = 0
 				else
 					btn.BackgroundColor3 = Color3.fromRGB(30, 34, 46)
 					btn.BackgroundTransparency = 0.20
+					btn.TextColor3 = Color3.fromRGB(200, 210, 230)
 					stroke.Color = Color3.fromRGB(50, 56, 75)
 					stroke.Transparency = 0.35
 				end
@@ -1185,7 +1223,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		openWindowAnimated()
 	end)
 
-	createGlassControlBtn("—", -98, false, function()
+	createGlassControlBtn("−", -102, false, function()
 		if isAnimatingWindow then return end
 		isMinimized = not isMinimized
 		local halfDelta = math.floor((winHeight - 36) / 2 * userScale)
@@ -1221,7 +1259,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		end
 	end)
 
-	createGlassControlBtn("□", -66, false, function()
+	createGlassControlBtn("□", -68, false, function()
 		if isAnimatingWindow then return end
 		if currentScalePreset == 1 then
 			currentScalePreset = 2
@@ -1241,8 +1279,8 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 	end)
 
 	UserInputService.InputBegan:Connect(function(input, gp)
-		local isCtrl = (input.KeyCode == Enum.KeyCode.LeftControl or input.KeyCode == Enum.KeyCode.RightControl)
-		if not gp and isCtrl then
+		local isToggle = (input.KeyCode == Enum.KeyCode.RightShift or input.KeyCode == Enum.KeyCode.LeftControl or input.KeyCode == Enum.KeyCode.RightControl)
+		if not gp and isToggle then
 			if isWindowOpen then
 				closeWindowAnimated()
 			else
