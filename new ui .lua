@@ -49,17 +49,47 @@ local Library = {
 Library.__index = Library
 
 local function getGuiParent()
-	local ok, hui = pcall(function()
-		return gethui and gethui()
+	local okHui, hui = pcall(function()
+		if gethui then
+			local h = gethui()
+			if h then
+				local _ = h:FindFirstChild("_")
+				return h
+			end
+		end
+		return nil
 	end)
-	if ok and hui then return hui end
+	if okHui and hui then return hui end
 
 	local okCore, core = pcall(function()
-		return game:GetService("CoreGui")
+		local c = game:GetService("CoreGui")
+		local _ = c:FindFirstChild("RobloxGui")
+		return c
 	end)
 	if okCore and core then return core end
 
 	return LocalPlayer:WaitForChild("PlayerGui")
+end
+
+local function mountScreenGui(screenGui, guiName)
+	local parent = getGuiParent()
+	local ok = pcall(function()
+		local existing = parent:FindFirstChild(guiName)
+		if existing then
+			existing:Destroy()
+		end
+		screenGui.Parent = parent
+	end)
+	if not ok or not screenGui.Parent then
+		local pg = LocalPlayer:WaitForChild("PlayerGui")
+		pcall(function()
+			local existing = pg:FindFirstChild(guiName)
+			if existing then
+				existing:Destroy()
+			end
+		end)
+		screenGui.Parent = pg
+	end
 end
 
 local function tween(obj, info, props)
@@ -327,13 +357,12 @@ function Library.MakeNotification(selfOrCfg, maybeCfg)
 	local bodyText  = config.Content or config.Text or config.Description or ""
 	local duration  = config.Time or config.Duration or 4
 
-	local parent = getGuiParent()
 	if not NotifScreenGui or not NotifScreenGui.Parent then
 		NotifScreenGui = Instance.new("ScreenGui")
 		NotifScreenGui.Name = "NightSystemNotifications"
 		NotifScreenGui.ResetOnSpawn = false
 		NotifScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-		NotifScreenGui.Parent = parent
+		mountScreenGui(NotifScreenGui, "NightSystemNotifications")
 
 		local holder = Instance.new("Frame")
 		holder.Name = "Holder"
@@ -466,17 +495,13 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 	local winWidth    = config.Width or BASE_WIDTH
 	local winHeight   = config.Height or BASE_HEIGHT
 
-	local parent = getGuiParent()
 	local guiName = "NightSystemUI_" .. tostring(windowTitle):gsub("%W", "")
-	if parent:FindFirstChild(guiName) then
-		parent[guiName]:Destroy()
-	end
 
 	local ScreenGui = Instance.new("ScreenGui")
 	ScreenGui.Name = guiName
 	ScreenGui.ResetOnSpawn = false
 	ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-	ScreenGui.Parent = parent
+	mountScreenGui(ScreenGui, guiName)
 
 	local MainWin = Instance.new("Frame")
 	MainWin.Name = "MainWin"
