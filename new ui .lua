@@ -4336,9 +4336,9 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			CrosshairLabel.Visible = crosshairEnabled
 			local symbol = "卐"
 			if string.find(crosshairStyle, "➕") then
-				symbol = "+"
-			elseif string.find(crosshairStyle, "×") then
 				symbol = "×"
+			elseif string.find(crosshairStyle, "×") then
+				symbol = "+"
 			elseif string.find(crosshairStyle, "☉") then
 				symbol = "☉"
 			elseif string.find(crosshairStyle, "・") then
