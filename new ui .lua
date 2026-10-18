@@ -1056,6 +1056,39 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			bar.Parent = btn
 			addCorner(bar, 1)
 			table.insert(iconFrames, bar)
+		elseif iconType == "⛭" or iconType == "settings" or iconType == "gear" then
+			local gearHolder = Instance.new("Frame")
+			gearHolder.Name = "GearHolder"
+			gearHolder.Size = UDim2.new(0, 14, 0, 14)
+			gearHolder.AnchorPoint = Vector2.new(0.5, 0.5)
+			gearHolder.Position = UDim2.new(0.5, 0, 0.5, 0)
+			gearHolder.BackgroundTransparency = 1
+			gearHolder.Parent = btn
+
+			local angles = { 0, 45, 90, 135 }
+			for _, ang in ipairs(angles) do
+				local bar = Instance.new("Frame")
+				bar.Size = UDim2.new(1, 0, 0, 3)
+				bar.AnchorPoint = Vector2.new(0.5, 0.5)
+				bar.Position = UDim2.new(0.5, 0, 0.5, 0)
+				bar.Rotation = ang
+				bar.BackgroundColor3 = Color3.fromRGB(200, 210, 230)
+				bar.BorderSizePixel = 0
+				bar.Parent = gearHolder
+				addCorner(bar, 1)
+				table.insert(iconFrames, bar)
+			end
+
+			local gearCenter = Instance.new("Frame")
+			gearCenter.Name = "GearCenter"
+			gearCenter.Size = UDim2.new(0, 6, 0, 6)
+			gearCenter.AnchorPoint = Vector2.new(0.5, 0.5)
+			gearCenter.Position = UDim2.new(0.5, 0, 0.5, 0)
+			gearCenter.BackgroundColor3 = btn.BackgroundColor3
+			gearCenter.BorderSizePixel = 0
+			gearCenter.ZIndex = 4
+			gearCenter.Parent = gearHolder
+			addCorner(gearCenter, 3)
 		else
 			btn.Text = tostring(iconType)
 			btn.TextColor3 = Color3.fromRGB(200, 210, 230)
@@ -1093,6 +1126,11 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 					for _, f in ipairs(iconFrames) do
 						f.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 					end
+					local gh = btn:FindFirstChild("GearHolder")
+					if gh then
+						local gc = gh:FindFirstChild("GearCenter")
+						if gc then gc.BackgroundColor3 = Color3.fromRGB(48, 62, 105) end
+					end
 				else
 					btn.BackgroundColor3 = Color3.fromRGB(30, 34, 46)
 					btn.BackgroundTransparency = 0.20
@@ -1101,6 +1139,11 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 					btn.TextColor3 = Color3.fromRGB(200, 210, 230)
 					for _, f in ipairs(iconFrames) do
 						f.BackgroundColor3 = Color3.fromRGB(200, 210, 230)
+					end
+					local gh = btn:FindFirstChild("GearHolder")
+					if gh then
+						local gc = gh:FindFirstChild("GearCenter")
+						if gc then gc.BackgroundColor3 = Color3.fromRGB(30, 34, 46) end
 					end
 				end
 			end
@@ -1111,6 +1154,10 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		btn.MouseEnter:Connect(function()
 			setVisual(true)
 			tween(btnScale, TweenInfo.new(0.14, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1.08 })
+			local gh = btn:FindFirstChild("GearHolder")
+			if gh then
+				tween(gh, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Rotation = gh.Rotation + 45 })
+			end
 		end)
 		btn.MouseLeave:Connect(function()
 			setVisual(false)
@@ -1278,6 +1325,19 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 	playPrettyLoader(ScreenGui, windowTitle, function()
 		MobileOpenPill.Visible = true
 		openWindowAnimated()
+	end)
+
+	local previousActiveTab = nil
+	createGlassControlBtn("⛭", -136, false, function()
+		if not WindowObj.SettingsTab then return end
+		if WindowObj.ActiveTab == WindowObj.SettingsTab then
+			if previousActiveTab and previousActiveTab ~= WindowObj.SettingsTab then
+				WindowObj:SelectTab(previousActiveTab)
+			end
+		else
+			previousActiveTab = WindowObj.ActiveTab
+			WindowObj:SelectTab(WindowObj.SettingsTab)
+		end
 	end)
 
 	createGlassControlBtn("−", -102, false, function()
@@ -3151,7 +3211,20 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		end)
 
 		table.insert(WindowObj.Tabs, TabObj)
-		if #WindowObj.Tabs == 1 then
+
+		local userTabsCount = 0
+		for _, t in ipairs(WindowObj.Tabs) do
+			if not t.IsSettings then
+				userTabsCount = userTabsCount + 1
+			end
+		end
+
+		if not TabObj.IsSettings and userTabsCount == 1 then
+			for _, t in ipairs(WindowObj.Tabs) do
+				t._setVisual(t == TabObj)
+			end
+			WindowObj.ActiveTab = TabObj
+		elseif #WindowObj.Tabs == 1 then
 			setTabVisual(true)
 			WindowObj.ActiveTab = TabObj
 		else
@@ -3159,6 +3232,16 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		end
 
 		return TabObj
+	end
+
+	function WindowObj:SelectTab(targetTab)
+		if not targetTab then return end
+		for _, t in ipairs(self.Tabs) do
+			if t._setVisual then
+				t._setVisual(t == targetTab)
+			end
+		end
+		self.ActiveTab = targetTab
 	end
 
 	WindowObj.CreateTab = WindowObj.MakeTab
@@ -3192,6 +3275,188 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				return tab[methodName](tab, ...)
 			end
 		end
+	end
+
+	do
+		local SettingsTab = WindowObj:MakeTab({
+			Name = "Settings",
+			Icon = "⛭",
+		})
+		SettingsTab.IsSettings = true
+		WindowObj.SettingsTab = SettingsTab
+
+		local GenSec = SettingsTab:AddSection({ Name = "General Settings", Column = 1 })
+
+		local antiAfkConn = nil
+		GenSec:AddToggle({
+			Name = "Anti-AFK",
+			Default = true,
+			Callback = function(state)
+				if state then
+					if not antiAfkConn then
+						antiAfkConn = LocalPlayer.Idled:Connect(function()
+							pcall(function()
+								local VirtualUser = game:GetService("VirtualUser")
+								VirtualUser:CaptureController()
+								VirtualUser:ClickButton2(Vector2.new())
+							end)
+						end)
+					end
+				else
+					if antiAfkConn then
+						antiAfkConn:Disconnect()
+						antiAfkConn = nil
+					end
+				end
+			end,
+		})
+
+		local customFovEnabled = false
+		local customFovValue = 70
+		local defaultFov = 70
+		pcall(function()
+			local cam = workspace.CurrentCamera
+			if cam then defaultFov = cam.FieldOfView end
+		end)
+
+		GenSec:AddToggle({
+			Name = "Custom FOV",
+			Default = false,
+			Callback = function(state)
+				customFovEnabled = state
+				local cam = workspace.CurrentCamera
+				if cam then
+					cam.FieldOfView = state and customFovValue or defaultFov
+				end
+			end,
+		})
+
+		GenSec:AddSlider({
+			Name = "Field of View",
+			Min = 60,
+			Max = 120,
+			Default = 70,
+			Increment = 1,
+			Callback = function(val)
+				customFovValue = val
+				if customFovEnabled then
+					local cam = workspace.CurrentCamera
+					if cam then cam.FieldOfView = val end
+				end
+			end,
+		})
+
+		RunService.RenderStepped:Connect(function()
+			if customFovEnabled then
+				local cam = workspace.CurrentCamera
+				if cam and cam.FieldOfView ~= customFovValue then
+					cam.FieldOfView = customFovValue
+				end
+			end
+		end)
+
+		local CrossSec = SettingsTab:AddSection({ Name = "Crosshair Settings", Column = 2 })
+
+		local crosshairEnabled = false
+		local crosshairStyle = "1: ⊹"
+		local crosshairSize = 22
+		local crosshairYOffset = 0
+		local crosshairColor = Color3.fromRGB(255, 255, 255)
+
+		local CrosshairGui = Instance.new("ScreenGui")
+		CrosshairGui.Name = "NightSystem_CrosshairGui"
+		CrosshairGui.DisplayOrder = 999999
+		CrosshairGui.ResetOnSpawn = false
+		mountScreenGui(CrosshairGui, "NightSystem_CrosshairGui")
+
+		local CrosshairLabel = Instance.new("TextLabel")
+		CrosshairLabel.Name = "CrosshairLabel"
+		CrosshairLabel.AnchorPoint = Vector2.new(0.5, 0.5)
+		CrosshairLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
+		CrosshairLabel.Size = UDim2.new(0, 60, 0, 60)
+		CrosshairLabel.BackgroundTransparency = 1
+		CrosshairLabel.Text = "⊹"
+		CrosshairLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+		CrosshairLabel.Font = Enum.Font.Arial
+		CrosshairLabel.TextSize = 22
+		CrosshairLabel.Visible = false
+		CrosshairLabel.ZIndex = 100
+		CrosshairLabel.Parent = CrosshairGui
+
+		local function updateCrosshair()
+			if not CrosshairLabel then return end
+			CrosshairLabel.Visible = crosshairEnabled
+			local symbol = "⊹"
+			if string.find(crosshairStyle, "➕") then
+				symbol = "➕"
+			elseif string.find(crosshairStyle, "×") then
+				symbol = "×"
+			elseif string.find(crosshairStyle, "☉") then
+				symbol = "☉"
+			elseif string.find(crosshairStyle, "・") then
+				symbol = "・"
+			elseif string.find(crosshairStyle, "⌖") then
+				symbol = "⌖"
+			else
+				symbol = "⊹"
+			end
+			CrosshairLabel.Text = symbol
+			CrosshairLabel.TextSize = crosshairSize
+			CrosshairLabel.Position = UDim2.new(0.5, 0, 0.5, crosshairYOffset)
+			CrosshairLabel.TextColor3 = crosshairColor
+		end
+
+		CrossSec:AddToggle({
+			Name = "Enable Crosshair",
+			Default = false,
+			Callback = function(state)
+				crosshairEnabled = state
+				updateCrosshair()
+			end,
+		})
+
+		CrossSec:AddDropdown({
+			Name = "Crosshair Style",
+			Options = { "1: ⊹", "2: ➕", "3: ×", "4: ☉", "5: ・", "6: ⌖" },
+			Default = "1: ⊹",
+			Callback = function(opt)
+				crosshairStyle = tostring(opt)
+				updateCrosshair()
+			end,
+		})
+
+		CrossSec:AddSlider({
+			Name = "Crosshair Size",
+			Min = 10,
+			Max = 60,
+			Default = 22,
+			Increment = 1,
+			Callback = function(val)
+				crosshairSize = val
+				updateCrosshair()
+			end,
+		})
+
+		CrossSec:AddSlider({
+			Name = "Crosshair Height (Y-Offset)",
+			Min = -150,
+			Max = 150,
+			Default = 0,
+			Increment = 1,
+			Callback = function(val)
+				crosshairYOffset = val
+				updateCrosshair()
+			end,
+		})
+
+		CrossSec:AddColorpicker({
+			Name = "Crosshair Color",
+			Default = Color3.fromRGB(255, 255, 255),
+			Callback = function(col)
+				crosshairColor = col
+				updateCrosshair()
+			end,
+		})
 	end
 
 	table.insert(Library.Windows, WindowObj)
