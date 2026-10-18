@@ -745,6 +745,7 @@ Library.ResetConfig  = Library.DeleteConfiguration
 Library:LoadConfiguration()
 
 function Library:Destroy()
+	pcall(function() RunService:UnbindFromRenderStep("NightSystem_Aimbot") end)
 	for _, win in ipairs(self.Windows) do
 		if win.ScreenGui and win.ScreenGui.Parent then
 			win.ScreenGui:Destroy()
@@ -1724,6 +1725,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 	end
 
 	function WindowObj:Destroy()
+		pcall(function() RunService:UnbindFromRenderStep("NightSystem_Aimbot") end)
 		if ScreenGui and ScreenGui.Parent then
 			ScreenGui:Destroy()
 		end
@@ -4617,7 +4619,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			end
 		end)
 
-		RunService.RenderStepped:Connect(function(deltaTime)
+		local function aimbotStep(deltaTime)
 			if not aimbotEnabled then return end
 			if not UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then return end
 
@@ -4667,7 +4669,14 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				local alpha = math.clamp((aimbotStrength / 100) * math.clamp((deltaTime or 0.016) * 60, 0.2, 3), 0.04, 1.0)
 				cam.CFrame = currentCF:Lerp(targetCF, alpha)
 			end
+		end
+
+		local boundOk = pcall(function()
+			RunService:BindToRenderStep("NightSystem_Aimbot", Enum.RenderPriority.Camera.Value + 1, aimbotStep)
 		end)
+		if not boundOk then
+			RunService.RenderStepped:Connect(aimbotStep)
+		end
 
 		local function doResetAllSettings()
 			setToggleAntiAfk:Set(false)
