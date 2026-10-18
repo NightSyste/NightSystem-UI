@@ -1026,11 +1026,11 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 					stroke.Color = Color3.fromRGB(255, 120, 140)
 					stroke.Transparency = 0
 				else
-					btn.BackgroundColor3 = Color3.fromRGB(34, 38, 50)
-					btn.BackgroundTransparency = 0.20
-					btn.TextColor3 = Color3.fromRGB(230, 235, 245)
-					stroke.Color = Color3.fromRGB(180, 50, 70)
-					stroke.Transparency = 0.35
+					btn.BackgroundColor3 = Color3.fromRGB(44, 30, 38)
+					btn.BackgroundTransparency = 0.15
+					btn.TextColor3 = Color3.fromRGB(255, 145, 160)
+					stroke.Color = Color3.fromRGB(205, 55, 75)
+					stroke.Transparency = 0.20
 				end
 			else
 				if hovered then
@@ -1093,7 +1093,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 	local function updatePillLabel()
 		if isWindowOpen then
-			MobileOpenPill.Text = "✕ Close " .. tostring(windowTitle)
+			MobileOpenPill.Text = "✙ Close " .. tostring(windowTitle)
 		else
 			MobileOpenPill.Text = "≡ Open " .. tostring(windowTitle)
 		end
@@ -1274,7 +1274,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		tween(WinScale, TweenInfo.new(0.22, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = userScale })
 	end)
 
-	createGlassControlBtn("✕", -34, true, function()
+	createGlassControlBtn("✙", -34, true, function()
 		closeWindowAnimated()
 	end)
 
