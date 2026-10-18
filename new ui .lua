@@ -31,20 +31,31 @@ local Library = {
 	Notifications = {},
 	ToggleKey = Enum.KeyCode.LeftControl,
 	Theme = {
-		NeonBorder   = Color3.fromRGB(140, 185, 225),
-		CardBorder   = Color3.fromRGB(52, 66, 84),
-		SubBorder    = Color3.fromRGB(44, 56, 72),
-		GlassBg      = Color3.fromRGB(15, 18, 24),
-		CardBg       = Color3.fromRGB(14, 18, 24),
-		ControlBg    = Color3.fromRGB(26, 33, 44),
-		TextWhite    = Color3.fromRGB(245, 250, 255),
-		TextBright   = Color3.fromRGB(225, 238, 250),
-		TextMuted    = Color3.fromRGB(155, 172, 192),
-		CheckFill    = Color3.fromRGB(90, 150, 205),
-		SliderFill   = Color3.fromRGB(115, 165, 215),
-		CloseRed     = Color3.fromRGB(235, 70, 92),
+		Accent       = Color3.fromRGB(85, 115, 250),
+		AccentGlow   = Color3.fromRGB(115, 145, 255),
+		MainBg       = Color3.fromRGB(22, 24, 30),
+		SidebarBg    = Color3.fromRGB(18, 20, 26),
+		CardBg       = Color3.fromRGB(26, 28, 36),
+		RowBg        = Color3.fromRGB(30, 34, 46),
+		RowHover     = Color3.fromRGB(38, 44, 60),
+		Border       = Color3.fromRGB(48, 52, 70),
+		BorderLight  = Color3.fromRGB(70, 78, 105),
+		TextWhite    = Color3.fromRGB(255, 255, 255),
+		TextBright   = Color3.fromRGB(240, 245, 255),
+		TextMuted    = Color3.fromRGB(155, 165, 185),
+		CheckFill    = Color3.fromRGB(85, 115, 250),
+		SliderFill   = Color3.fromRGB(85, 115, 250),
+		CloseRed     = Color3.fromRGB(245, 65, 85),
 		CloseBorder  = Color3.fromRGB(255, 120, 140),
-		Transparency = 0.18,
+		KeybindBg    = Color3.fromRGB(44, 52, 75),
+		KeybindText  = Color3.fromRGB(245, 250, 255),
+		KeybindStroke= Color3.fromRGB(85, 120, 245),
+		Transparency = 0.04,
+		NeonBorder   = Color3.fromRGB(85, 115, 250),
+		CardBorder   = Color3.fromRGB(48, 52, 70),
+		SubBorder    = Color3.fromRGB(42, 46, 60),
+		GlassBg      = Color3.fromRGB(22, 24, 30),
+		ControlBg    = Color3.fromRGB(30, 34, 46),
 	}
 }
 Library.__index = Library
@@ -138,18 +149,16 @@ local function styleBrightButtonText(textObj, fontSize)
 	textObj.TextColor3 = Color3.fromRGB(245, 250, 255)
 	textObj.Font = Enum.Font.GothamBold
 	textObj.TextSize = fontSize or 13
-	textObj.TextStrokeColor3 = Color3.fromRGB(10, 14, 20)
-	textObj.TextStrokeTransparency = 0.55
+	textObj.TextStrokeTransparency = 1
 end
 
 local function applyMetallicHeader(frame)
-	frame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	frame.BackgroundTransparency = 0.22
+	frame.BackgroundColor3 = Color3.fromRGB(30, 34, 46)
+	frame.BackgroundTransparency = 0.20
 	local grad = Instance.new("UIGradient")
 	grad.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0.00, Color3.fromRGB(38, 48, 62)),
-		ColorSequenceKeypoint.new(0.50, Color3.fromRGB(26, 34, 44)),
-		ColorSequenceKeypoint.new(1.00, Color3.fromRGB(18, 24, 32)),
+		ColorSequenceKeypoint.new(0.00, Color3.fromRGB(36, 42, 58)),
+		ColorSequenceKeypoint.new(1.00, Color3.fromRGB(24, 27, 36)),
 	})
 	grad.Rotation = 90
 	grad.Parent = frame
@@ -157,8 +166,8 @@ local function applyMetallicHeader(frame)
 end
 
 local function applyButtonGradient(frame, isHovered)
-	frame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	frame.BackgroundTransparency = isHovered and 0.06 or 0.14
+	frame.BackgroundColor3 = isHovered and Color3.fromRGB(46, 54, 76) or Color3.fromRGB(34, 38, 52)
+	frame.BackgroundTransparency = 0
 
 	local grad = frame:FindFirstChildOfClass("UIGradient")
 	if not grad then
@@ -169,15 +178,13 @@ local function applyButtonGradient(frame, isHovered)
 
 	if isHovered then
 		grad.Color = ColorSequence.new({
-			ColorSequenceKeypoint.new(0.00, Color3.fromRGB(56, 70, 88)),
-			ColorSequenceKeypoint.new(0.50, Color3.fromRGB(40, 50, 64)),
-			ColorSequenceKeypoint.new(1.00, Color3.fromRGB(26, 34, 44)),
+			ColorSequenceKeypoint.new(0.00, Color3.fromRGB(52, 60, 84)),
+			ColorSequenceKeypoint.new(1.00, Color3.fromRGB(38, 44, 62)),
 		})
 	else
 		grad.Color = ColorSequence.new({
-			ColorSequenceKeypoint.new(0.00, Color3.fromRGB(42, 52, 66)),
-			ColorSequenceKeypoint.new(0.50, Color3.fromRGB(28, 36, 46)),
-			ColorSequenceKeypoint.new(1.00, Color3.fromRGB(20, 26, 34)),
+			ColorSequenceKeypoint.new(0.00, Color3.fromRGB(38, 42, 58)),
+			ColorSequenceKeypoint.new(1.00, Color3.fromRGB(28, 32, 44)),
 		})
 	end
 
@@ -186,8 +193,8 @@ local function applyButtonGradient(frame, isHovered)
 		shine.Name = "TopShine"
 		shine.Size = UDim2.new(1, -8, 0, 1)
 		shine.Position = UDim2.new(0, 4, 0, 1)
-		shine.BackgroundColor3 = Color3.fromRGB(180, 210, 240)
-		shine.BackgroundTransparency = 0.65
+		shine.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		shine.BackgroundTransparency = 0.85
 		shine.BorderSizePixel = 0
 		shine.ZIndex = frame.ZIndex + 1
 		shine.Parent = frame
@@ -861,14 +868,14 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 	MainWin.AnchorPoint = Vector2.new(0.5, 0.5)
 	MainWin.Size = UDim2.new(0, winWidth, 0, winHeight)
 	MainWin.Position = UDim2.new(0.5, 0, 0.5, 0)
-	MainWin.BackgroundColor3 = Library.Theme.GlassBg
+	MainWin.BackgroundColor3 = Library.Theme.MainBg
 	MainWin.BackgroundTransparency = Library.Theme.Transparency
 	MainWin.BorderSizePixel = 0
 	MainWin.Active = true
 	MainWin.Visible = false
 	MainWin.Parent = ScreenGui
-	addCorner(MainWin, 8)
-	local MainStroke = addStroke(MainWin, Color3.fromRGB(68, 84, 105), 1.2, 0.15)
+	addCorner(MainWin, 10)
+	local MainStroke = addStroke(MainWin, Library.Theme.Border, 1.2, 0.20)
 
 	local userScale = 1.0
 	local WinScale = Instance.new("UIScale")
@@ -877,42 +884,28 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 	local WinGrad = Instance.new("UIGradient")
 	WinGrad.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0.00, Color3.fromRGB(34, 42, 54)),
-		ColorSequenceKeypoint.new(0.12, Color3.fromRGB(22, 28, 36)),
-		ColorSequenceKeypoint.new(0.85, Color3.fromRGB(15, 18, 24)),
-		ColorSequenceKeypoint.new(1.00, Color3.fromRGB(22, 28, 36)),
+		ColorSequenceKeypoint.new(0.00, Color3.fromRGB(26, 29, 38)),
+		ColorSequenceKeypoint.new(1.00, Color3.fromRGB(18, 20, 26)),
 	})
 	WinGrad.Rotation = 90
 	WinGrad.Parent = MainWin
 
-	local CarbonTexture = Instance.new("ImageLabel")
-	CarbonTexture.Name = "CarbonTexture"
-	CarbonTexture.Size = UDim2.new(1, 0, 1, 0)
-	CarbonTexture.BackgroundTransparency = 1
-	CarbonTexture.Image = "rbxassetid://2151741365"
-	CarbonTexture.ImageTransparency = 0.88
-	CarbonTexture.ScaleType = Enum.ScaleType.Tile
-	CarbonTexture.TileSize = UDim2.new(0, 16, 0, 16)
-	CarbonTexture.ZIndex = 1
-	CarbonTexture.Parent = MainWin
-	addCorner(CarbonTexture, 8)
-
 	local OuterGlow = Instance.new("Frame")
 	OuterGlow.Name = "OuterGlow"
-	OuterGlow.Size = UDim2.new(1, 6, 1, 6)
-	OuterGlow.Position = UDim2.new(0, -3, 0, -3)
+	OuterGlow.Size = UDim2.new(1, 8, 1, 8)
+	OuterGlow.Position = UDim2.new(0, -4, 0, -4)
 	OuterGlow.BackgroundTransparency = 1
 	OuterGlow.ZIndex = 0
 	OuterGlow.Parent = MainWin
-	addCorner(OuterGlow, 10)
-	addStroke(OuterGlow, Color3.fromRGB(50, 64, 82), 1.5, 0.65)
+	addCorner(OuterGlow, 12)
+	addStroke(OuterGlow, Color3.fromRGB(35, 40, 56), 2.0, 0.5)
 
 	local BottomAccent = Instance.new("Frame")
 	BottomAccent.Name = "BottomAccent"
-	BottomAccent.Size = UDim2.new(0.70, 0, 0, 2)
-	BottomAccent.Position = UDim2.new(0.15, 0, 1, -1)
-	BottomAccent.BackgroundColor3 = Color3.fromRGB(175, 210, 245)
-	BottomAccent.BackgroundTransparency = 0.25
+	BottomAccent.Size = UDim2.new(0.75, 0, 0, 2)
+	BottomAccent.Position = UDim2.new(0.125, 0, 1, -1)
+	BottomAccent.BackgroundColor3 = Library.Theme.Accent
+	BottomAccent.BackgroundTransparency = 0.2
 	BottomAccent.BorderSizePixel = 0
 	BottomAccent.ZIndex = 2
 	BottomAccent.Parent = MainWin
@@ -930,15 +923,15 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 	local ContentWrap = Instance.new("Frame")
 	ContentWrap.Name = "ContentWrap"
-	ContentWrap.Size = UDim2.new(1, 0, 0, winHeight - 36)
-	ContentWrap.Position = UDim2.new(0, 0, 0, 36)
+	ContentWrap.Size = UDim2.new(1, 0, 0, winHeight - 40)
+	ContentWrap.Position = UDim2.new(0, 0, 0, 40)
 	ContentWrap.BackgroundTransparency = 1
 	ContentWrap.ZIndex = 2
 	ContentWrap.Parent = MainWin
 
 	local TitleBar = Instance.new("Frame")
 	TitleBar.Name = "TitleBar"
-	TitleBar.Size = UDim2.new(1, 0, 0, 36)
+	TitleBar.Size = UDim2.new(1, 0, 0, 40)
 	TitleBar.BackgroundTransparency = 1
 	TitleBar.ZIndex = 3
 	TitleBar.Parent = MainWin
@@ -947,43 +940,31 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 	TitleDivider.Name = "TitleDivider"
 	TitleDivider.Size = UDim2.new(1, 0, 0, 1)
 	TitleDivider.Position = UDim2.new(0, 0, 1, -1)
-	TitleDivider.BackgroundColor3 = Color3.fromRGB(52, 65, 82)
-	TitleDivider.BackgroundTransparency = 0.55
+	TitleDivider.BackgroundColor3 = Color3.fromRGB(38, 42, 55)
+	TitleDivider.BackgroundTransparency = 0.4
 	TitleDivider.BorderSizePixel = 0
 	TitleDivider.Parent = TitleBar
 
-	for i = 1, 3 do
-		local dot = Instance.new("Frame")
-		dot.Size = UDim2.new(0, 10, 0, 10)
-		dot.Position = UDim2.new(0, 16 + (i - 1) * 16, 0, 13)
-		dot.BackgroundColor3 = Color3.fromRGB(42, 50, 62)
-		dot.BackgroundTransparency = 0.25
-		dot.Parent = TitleBar
-		addCorner(dot, 5)
-		addStroke(dot, Color3.fromRGB(58, 70, 86), 1, 0.4)
-	end
-
 	local TitleText = Instance.new("TextLabel")
 	TitleText.Name = "TitleText"
-	TitleText.Size = UDim2.new(1, 0, 1, 0)
-	TitleText.Position = UDim2.new(0, 0, 0, 0)
+	TitleText.Size = UDim2.new(0.65, 0, 1, 0)
+	TitleText.Position = UDim2.new(0, 16, 0, 0)
 	TitleText.BackgroundTransparency = 1
 	TitleText.Text = tostring(windowTitle)
-	TitleText.TextColor3 = Color3.fromRGB(205, 218, 232)
-	TitleText.Font = Enum.Font.GothamMedium
+	TitleText.TextColor3 = Color3.fromRGB(245, 248, 255)
+	TitleText.Font = Enum.Font.GothamBold
 	TitleText.TextSize = 15
-	TitleText.TextXAlignment = Enum.TextXAlignment.Center
-	TitleText.TextStrokeColor3 = Color3.fromRGB(10, 14, 20)
-	TitleText.TextStrokeTransparency = 0.5
+	TitleText.TextXAlignment = Enum.TextXAlignment.Left
+	TitleText.TextStrokeTransparency = 1
 	TitleText.TextTruncate = Enum.TextTruncate.AtEnd
 	TitleText.Parent = TitleBar
 
 	local function createGlassControlBtn(iconText, rightOffset, isCloseBtn, callback)
 		local btn = Instance.new("TextButton")
-		btn.Size = UDim2.new(0, 28, 0, 22)
+		btn.Size = UDim2.new(0, 26, 0, 22)
 		btn.Position = UDim2.new(1, rightOffset, 0.5, -11)
-		btn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-		btn.BackgroundTransparency = isCloseBtn and 0.20 or 0.32
+		btn.BackgroundColor3 = Color3.fromRGB(30, 34, 46)
+		btn.BackgroundTransparency = 0.20
 		btn.BorderSizePixel = 0
 		btn.Text = iconText
 		styleBrightButtonText(btn, isCloseBtn and 13 or 12)
@@ -995,65 +976,37 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		btnScale.Scale = 1
 		btnScale.Parent = btn
 
-		local grad = Instance.new("UIGradient")
-		grad.Rotation = 25
-		grad.Parent = btn
-
 		local stroke = addStroke(
 			btn,
-			isCloseBtn and Library.Theme.CloseBorder or Library.Theme.NeonBorder,
-			1.2,
-			isCloseBtn and 0.10 or 0.20
+			isCloseBtn and Color3.fromRGB(180, 50, 70) or Color3.fromRGB(50, 56, 75),
+			1.0,
+			0.25
 		)
-
-		local shine = Instance.new("Frame")
-		shine.Size = UDim2.new(1, -8, 0, 1)
-		shine.Position = UDim2.new(0, 4, 0, 1)
-		shine.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-		shine.BackgroundTransparency = 0.48
-		shine.BorderSizePixel = 0
-		shine.Parent = btn
 
 		local function setVisual(hovered)
 			if isCloseBtn then
 				if hovered then
-					grad.Color = ColorSequence.new({
-						ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 105, 125)),
-						ColorSequenceKeypoint.new(0.50, Color3.fromRGB(240, 62, 88)),
-						ColorSequenceKeypoint.new(1.00, Color3.fromRGB(185, 32, 56)),
-					})
-					btn.BackgroundTransparency = 0.06
-					stroke.Transparency = 0.0
-					stroke.Color = Color3.fromRGB(255, 175, 190)
+					btn.BackgroundColor3 = Color3.fromRGB(235, 60, 80)
+					btn.BackgroundTransparency = 0
+					stroke.Color = Color3.fromRGB(255, 120, 140)
+					stroke.Transparency = 0
 				else
-					grad.Color = ColorSequence.new({
-						ColorSequenceKeypoint.new(0.00, Color3.fromRGB(210, 64, 86)),
-						ColorSequenceKeypoint.new(0.50, Color3.fromRGB(168, 42, 64)),
-						ColorSequenceKeypoint.new(1.00, Color3.fromRGB(125, 28, 44)),
-					})
+					btn.BackgroundColor3 = Color3.fromRGB(30, 34, 46)
 					btn.BackgroundTransparency = 0.20
-					stroke.Transparency = 0.12
-					stroke.Color = Library.Theme.CloseBorder
+					stroke.Color = Color3.fromRGB(180, 50, 70)
+					stroke.Transparency = 0.35
 				end
 			else
 				if hovered then
-					grad.Color = ColorSequence.new({
-						ColorSequenceKeypoint.new(0.00, Color3.fromRGB(108, 150, 185)),
-						ColorSequenceKeypoint.new(0.50, Color3.fromRGB(165, 215, 248)),
-						ColorSequenceKeypoint.new(1.00, Color3.fromRGB(82, 118, 148)),
-					})
-					btn.BackgroundTransparency = 0.12
-					stroke.Transparency = 0.0
-					stroke.Color = Library.Theme.NeonBorder
+					btn.BackgroundColor3 = Color3.fromRGB(48, 62, 105)
+					btn.BackgroundTransparency = 0
+					stroke.Color = Library.Theme.Accent
+					stroke.Transparency = 0
 				else
-					grad.Color = ColorSequence.new({
-						ColorSequenceKeypoint.new(0.00, Color3.fromRGB(60, 84, 108)),
-						ColorSequenceKeypoint.new(0.50, Color3.fromRGB(94, 130, 160)),
-						ColorSequenceKeypoint.new(1.00, Color3.fromRGB(48, 68, 88)),
-					})
-					btn.BackgroundTransparency = 0.32
-					stroke.Transparency = 0.25
-					stroke.Color = Library.Theme.CardBorder
+					btn.BackgroundColor3 = Color3.fromRGB(30, 34, 46)
+					btn.BackgroundTransparency = 0.20
+					stroke.Color = Color3.fromRGB(50, 56, 75)
+					stroke.Transparency = 0.35
 				end
 			end
 		end
@@ -1391,19 +1344,19 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 	local InnerBorderFrame = Instance.new("Frame")
 	InnerBorderFrame.Name = "InnerBorderFrame"
-	InnerBorderFrame.Size = UDim2.new(1, -156, 1, -16)
-	InnerBorderFrame.Position = UDim2.new(0, 146, 0, 6)
-	InnerBorderFrame.BackgroundColor3 = Color3.fromRGB(14, 18, 24)
-	InnerBorderFrame.BackgroundTransparency = 0.45
+	InnerBorderFrame.Size = UDim2.new(1, -164, 1, -16)
+	InnerBorderFrame.Position = UDim2.new(0, 154, 0, 8)
+	InnerBorderFrame.BackgroundColor3 = Color3.fromRGB(18, 20, 26)
+	InnerBorderFrame.BackgroundTransparency = 0
 	InnerBorderFrame.BorderSizePixel = 0
 	InnerBorderFrame.Parent = ContentWrap
 	addCorner(InnerBorderFrame, 8)
-	addStroke(InnerBorderFrame, Color3.fromRGB(48, 60, 78), 1.1, 0.35)
+	addStroke(InnerBorderFrame, Color3.fromRGB(42, 46, 62), 1.0, 0.35)
 
 	local SideTabScroll = Instance.new("ScrollingFrame")
 	SideTabScroll.Name = "SideTabScroll"
-	SideTabScroll.Size = UDim2.new(0, 124, 1, -16)
-	SideTabScroll.Position = UDim2.new(0, 12, 0, 6)
+	SideTabScroll.Size = UDim2.new(0, 136, 1, -16)
+	SideTabScroll.Position = UDim2.new(0, 10, 0, 8)
 	SideTabScroll.BackgroundTransparency = 1
 	SideTabScroll.BorderSizePixel = 0
 	SideTabScroll.ScrollBarThickness = 0
@@ -1413,7 +1366,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 	local SideTabLayout = Instance.new("UIListLayout")
 	SideTabLayout.SortOrder = Enum.SortOrder.LayoutOrder
-	SideTabLayout.Padding = UDim.new(0, 6)
+	SideTabLayout.Padding = UDim.new(0, 5)
 	SideTabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
 	SideTabLayout.Parent = SideTabScroll
 
@@ -1427,8 +1380,8 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		ContentWrap,
 		SideTabScroll,
 		SideTabLayout,
-		UDim2.new(0, 137, 0, 6),
-		UDim2.new(0, 7, 1, -16),
+		UDim2.new(0, 147, 0, 8),
+		UDim2.new(0, 6, 1, -16),
 		85
 	)
 
@@ -1532,23 +1485,23 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		local TabBtn = Instance.new("TextButton")
 		TabBtn.Name = tabName .. "_TabBtn"
 		TabBtn.LayoutOrder = tabIndex
-		TabBtn.Size = UDim2.new(1, 0, 0, 32)
+		TabBtn.Size = UDim2.new(1, 0, 0, 36)
 		TabBtn.BorderSizePixel = 0
 		TabBtn.Text = ""
 		TabBtn.AutoButtonColor = false
 		TabBtn.ZIndex = 4
 		TabBtn.Parent = SideTabScroll
-		addCorner(TabBtn, 6)
+		addCorner(TabBtn, 7)
 
-		local TabStroke = addStroke(TabBtn, Library.Theme.SubBorder, 1.0, 0.45)
+		local TabStroke = addStroke(TabBtn, Color3.fromRGB(36, 40, 52), 1.0, 0.6)
 		local TabGrad = Instance.new("UIGradient")
 		TabGrad.Parent = TabBtn
 
 		local TabIndicator = Instance.new("Frame")
 		TabIndicator.Name = "Indicator"
-		TabIndicator.Size = UDim2.new(0, 3, 1, -6)
-		TabIndicator.Position = UDim2.new(0, 2, 0, 3)
-		TabIndicator.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		TabIndicator.Size = UDim2.new(0, 3, 1, -10)
+		TabIndicator.Position = UDim2.new(0, 4, 0, 5)
+		TabIndicator.BackgroundColor3 = Library.Theme.Accent
 		TabIndicator.BorderSizePixel = 0
 		TabIndicator.Visible = false
 		TabIndicator.ZIndex = 5
@@ -1557,12 +1510,12 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 		local TabLabel = Instance.new("TextLabel")
 		TabLabel.Name = "TabLabel"
-		TabLabel.Size = UDim2.new(1, -12, 1, 0)
-		TabLabel.Position = UDim2.new(0, 6, 0, 0)
+		TabLabel.Size = UDim2.new(1, -22, 1, 0)
+		TabLabel.Position = UDim2.new(0, 16, 0, 0)
 		TabLabel.BackgroundTransparency = 1
 		TabLabel.Text = tabName
 		styleBrightButtonText(TabLabel, 13)
-		TabLabel.TextXAlignment = Enum.TextXAlignment.Center
+		TabLabel.TextXAlignment = Enum.TextXAlignment.Left
 		TabLabel.TextTruncate = Enum.TextTruncate.AtEnd
 		TabLabel.ZIndex = 5
 		TabLabel.Parent = TabBtn
@@ -1580,7 +1533,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		PageLayout.SortOrder = Enum.SortOrder.LayoutOrder
 		PageLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
 		PageLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-		PageLayout.Padding = UDim.new(0, 10)
+		PageLayout.Padding = UDim.new(0, 8)
 		PageLayout.Parent = TabPage
 
 		local Columns = {}
@@ -1595,14 +1548,14 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			Card.Name = "Column_" .. colIdx
 			Card.LayoutOrder = colIdx
 			Card.Size = UDim2.new(0.3333, -8, 1, 0)
-			Card.BackgroundColor3 = Color3.fromRGB(15, 19, 25)
-			Card.BackgroundTransparency = 0.45
+			Card.BackgroundColor3 = Color3.fromRGB(24, 27, 36)
+			Card.BackgroundTransparency = 0
 			Card.BorderSizePixel = 0
 			Card.ClipsDescendants = true
 			Card.Visible = (colIdx == 1)
 			Card.Parent = TabPage
-			addCorner(Card, 6)
-			addStroke(Card, Color3.fromRGB(48, 60, 78), 1.1, 0.35)
+			addCorner(Card, 8)
+			addStroke(Card, Color3.fromRGB(44, 48, 64), 1.0, 0.35)
 
 			local Header = Instance.new("Frame")
 			Header.Name = "Header"
@@ -1610,13 +1563,13 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			Header.BorderSizePixel = 0
 			Header.Visible = false
 			Header.Parent = Card
-			addCorner(Header, 6)
+			addCorner(Header, 7)
 			applyMetallicHeader(Header)
 
 			local HeaderLine = Instance.new("Frame")
 			HeaderLine.Size = UDim2.new(1, 0, 0, 1)
 			HeaderLine.Position = UDim2.new(0, 0, 1, -1)
-			HeaderLine.BackgroundColor3 = Color3.fromRGB(48, 60, 78)
+			HeaderLine.BackgroundColor3 = Color3.fromRGB(48, 52, 70)
 			HeaderLine.BackgroundTransparency = 0.4
 			HeaderLine.BorderSizePixel = 0
 			HeaderLine.Parent = Header
@@ -1624,7 +1577,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			local HeaderTitle = Instance.new("TextLabel")
 			HeaderTitle.Name = "HeaderTitle"
 			HeaderTitle.Size = UDim2.new(1, -20, 1, 0)
-			HeaderTitle.Position = UDim2.new(0, 10, 0, 0)
+			HeaderTitle.Position = UDim2.new(0, 12, 0, 0)
 			HeaderTitle.BackgroundTransparency = 1
 			HeaderTitle.Text = defaultSubTitles[colIdx]
 			styleBrightButtonText(HeaderTitle, 14)
@@ -1634,7 +1587,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 			local ColScroll = Instance.new("ScrollingFrame")
 			ColScroll.Name = "ColScroll"
-			ColScroll.Size = UDim2.new(1, -14, 1, -12)
+			ColScroll.Size = UDim2.new(1, -12, 1, -12)
 			ColScroll.Position = UDim2.new(0, 2, 0, 6)
 			ColScroll.BackgroundTransparency = 1
 			ColScroll.BorderSizePixel = 0
@@ -1644,10 +1597,10 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 			local ColLayout = Instance.new("UIListLayout")
 			ColLayout.SortOrder = Enum.SortOrder.LayoutOrder
-			ColLayout.Padding = UDim.new(0, 8)
+			ColLayout.Padding = UDim.new(0, 6)
 			ColLayout.Parent = ColScroll
 
-			addPadding(ColScroll, 6, 8, 8, 4)
+			addPadding(ColScroll, 6, 6, 6, 6)
 
 			ColLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
 				ColScroll.CanvasSize = UDim2.new(0, 0, 0, ColLayout.AbsoluteContentSize.Y + 16)
@@ -1657,8 +1610,8 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				Card,
 				ColScroll,
 				ColLayout,
-				UDim2.new(1, -12, 0, 6),
-				UDim2.new(0, 8, 1, -12),
+				UDim2.new(1, -10, 0, 6),
+				UDim2.new(0, 6, 1, -12),
 				95
 			)
 
@@ -1696,40 +1649,31 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				if count == 1 then
 					card.Size = UDim2.new(1, 0, 1, 0)
 				elseif count == 2 then
-					card.Size = UDim2.new(0.5, -5, 1, 0)
+					card.Size = UDim2.new(0.5, -4, 1, 0)
 				else
-					card.Size = UDim2.new(0.3333, -8, 1, 0)
+					card.Size = UDim2.new(0.3333, -6, 1, 0)
 				end
 			end
 		end
 
 		local function setTabVisual(isActive)
 			if isActive then
-				TabBtn.BackgroundColor3 = Color3.fromRGB(44, 54, 70)
-				TabBtn.BackgroundTransparency = 0.15
-				TabGrad.Color = ColorSequence.new({
-					ColorSequenceKeypoint.new(0.0, Color3.fromRGB(56, 70, 88)),
-					ColorSequenceKeypoint.new(0.5, Color3.fromRGB(38, 48, 62)),
-					ColorSequenceKeypoint.new(1.0, Color3.fromRGB(24, 30, 40)),
-				})
-				TabStroke.Color = Color3.fromRGB(75, 95, 120)
+				TabBtn.BackgroundColor3 = Color3.fromRGB(36, 44, 75)
+				TabBtn.BackgroundTransparency = 0
+				TabStroke.Color = Library.Theme.Accent
 				TabStroke.Thickness = 1.2
-				TabStroke.Transparency = 0.20
+				TabStroke.Transparency = 0.1
 				TabIndicator.Visible = true
 				TabLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 				TabPage.Visible = true
 			else
-				TabBtn.BackgroundColor3 = Color3.fromRGB(16, 20, 26)
-				TabBtn.BackgroundTransparency = 0.60
-				TabGrad.Color = ColorSequence.new({
-					ColorSequenceKeypoint.new(0.0, Color3.fromRGB(32, 40, 52)),
-					ColorSequenceKeypoint.new(1.0, Color3.fromRGB(18, 24, 32)),
-				})
-				TabStroke.Color = Color3.fromRGB(38, 48, 62)
+				TabBtn.BackgroundColor3 = Color3.fromRGB(22, 24, 32)
+				TabBtn.BackgroundTransparency = 0.85
+				TabStroke.Color = Color3.fromRGB(36, 40, 52)
 				TabStroke.Thickness = 1.0
-				TabStroke.Transparency = 0.45
+				TabStroke.Transparency = 0.6
 				TabIndicator.Visible = false
-				TabLabel.TextColor3 = Color3.fromRGB(170, 185, 202)
+				TabLabel.TextColor3 = Color3.fromRGB(160, 170, 190)
 				TabPage.Visible = false
 			end
 		end
@@ -1796,11 +1740,14 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				local RowBtn = Instance.new("TextButton")
 				RowBtn.Name = name .. "_Toggle"
 				RowBtn.LayoutOrder = order
-				RowBtn.Size = UDim2.new(1, 0, 0, 26)
-				RowBtn.BackgroundTransparency = 1
+				RowBtn.Size = UDim2.new(1, 0, 0, 38)
+				RowBtn.BackgroundColor3 = Color3.fromRGB(30, 34, 46)
+				RowBtn.BackgroundTransparency = 0.35
 				RowBtn.Text = ""
 				RowBtn.AutoButtonColor = false
 				RowBtn.Parent = scroll
+				addCorner(RowBtn, 7)
+				local rowStroke = addStroke(RowBtn, Color3.fromRGB(46, 52, 70), 1.0, 0.40)
 
 				local state = default
 				local changedListeners = {}
@@ -1821,11 +1768,11 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 				if usePill then
 					local Lbl = Instance.new("TextLabel")
-					Lbl.Size = UDim2.new(1, -44, 1, 0)
-					Lbl.Position = UDim2.new(0, 4, 0, 0)
+					Lbl.Size = UDim2.new(1, -58, 1, 0)
+					Lbl.Position = UDim2.new(0, 12, 0, 0)
 					Lbl.BackgroundTransparency = 1
 					Lbl.Text = name
-					Lbl.TextColor3 = Library.Theme.TextBright
+					Lbl.TextColor3 = Color3.fromRGB(240, 245, 255)
 					Lbl.Font = Enum.Font.GothamMedium
 					Lbl.TextSize = 13
 					Lbl.TextXAlignment = Enum.TextXAlignment.Left
@@ -1833,12 +1780,12 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 					Lbl.Parent = RowBtn
 
 					local Pill = Instance.new("Frame")
-					Pill.Size = UDim2.new(0, 36, 0, 18)
-					Pill.Position = UDim2.new(1, -38, 0.5, -9)
+					Pill.Size = UDim2.new(0, 38, 0, 20)
+					Pill.Position = UDim2.new(1, -48, 0.5, -10)
 					Pill.BorderSizePixel = 0
 					Pill.Parent = RowBtn
-					addCorner(Pill, 9)
-					local pillStroke = addStroke(Pill, Library.Theme.NeonBorder, 1.1, 0.2)
+					addCorner(Pill, 10)
+					local pillStroke = addStroke(Pill, Color3.fromRGB(56, 62, 80), 1.0, 0.3)
 
 					local Knob = Instance.new("Frame")
 					Knob.Size = UDim2.new(0, 14, 0, 14)
@@ -1848,13 +1795,13 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 					local function updatePill()
 						if state then
-							tween(Pill, nil, { BackgroundColor3 = Library.Theme.CheckFill, BackgroundTransparency = 0.12 })
-							tween(Knob, nil, { Position = UDim2.new(1, -16, 0.5, -7), BackgroundColor3 = Color3.fromRGB(255, 255, 255) })
-							pillStroke.Color = Library.Theme.NeonBorder
+							tween(Pill, nil, { BackgroundColor3 = Library.Theme.Accent, BackgroundTransparency = 0.1 })
+							tween(Knob, nil, { Position = UDim2.new(1, -17, 0.5, -7), BackgroundColor3 = Color3.fromRGB(255, 255, 255) })
+							pillStroke.Color = Library.Theme.AccentGlow
 						else
-							tween(Pill, nil, { BackgroundColor3 = Color3.fromRGB(36, 46, 58), BackgroundTransparency = 0.45 })
-							tween(Knob, nil, { Position = UDim2.new(0, 2, 0.5, -7), BackgroundColor3 = Library.Theme.TextMuted })
-							pillStroke.Color = Library.Theme.SubBorder
+							tween(Pill, nil, { BackgroundColor3 = Color3.fromRGB(42, 46, 60), BackgroundTransparency = 0.45 })
+							tween(Knob, nil, { Position = UDim2.new(0, 3, 0.5, -7), BackgroundColor3 = Color3.fromRGB(160, 170, 190) })
+							pillStroke.Color = Color3.fromRGB(56, 62, 80)
 						end
 					end
 
@@ -1867,11 +1814,11 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 					updatePill()
 				else
 					local Lbl = Instance.new("TextLabel")
-					Lbl.Size = UDim2.new(1, -34, 1, 0)
-					Lbl.Position = UDim2.new(0, 4, 0, 0)
+					Lbl.Size = UDim2.new(1, -44, 1, 0)
+					Lbl.Position = UDim2.new(0, 12, 0, 0)
 					Lbl.BackgroundTransparency = 1
 					Lbl.Text = name
-					Lbl.TextColor3 = Color3.fromRGB(205, 220, 235)
+					Lbl.TextColor3 = Color3.fromRGB(240, 245, 255)
 					Lbl.Font = Enum.Font.GothamMedium
 					Lbl.TextSize = 13
 					Lbl.TextXAlignment = Enum.TextXAlignment.Left
@@ -1879,12 +1826,12 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 					Lbl.Parent = RowBtn
 
 					local Box = Instance.new("Frame")
-					Box.Size = UDim2.new(0, 18, 0, 18)
-					Box.Position = UDim2.new(1, -22, 0.5, -9)
+					Box.Size = UDim2.new(0, 20, 0, 20)
+					Box.Position = UDim2.new(1, -30, 0.5, -10)
 					Box.BorderSizePixel = 0
 					Box.Parent = RowBtn
-					addCorner(Box, 4)
-					local boxStroke = addStroke(Box, Color3.fromRGB(50, 64, 80), 1.1, 0.35)
+					addCorner(Box, 5)
+					local boxStroke = addStroke(Box, Color3.fromRGB(58, 66, 88), 1.1, 0.35)
 
 					local CheckMark = Instance.new("TextLabel")
 					CheckMark.Size = UDim2.new(1, 0, 1, 0)
@@ -1893,19 +1840,18 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 					CheckMark.TextColor3 = Color3.fromRGB(255, 255, 255)
 					CheckMark.Font = Enum.Font.GothamBold
 					CheckMark.TextSize = 12
-					CheckMark.TextStrokeTransparency = 0.5
-					CheckMark.TextStrokeColor3 = Color3.fromRGB(10, 14, 20)
+					CheckMark.TextStrokeTransparency = 1
 					CheckMark.Parent = Box
 
 					local function updateBox()
 						if state then
-							tween(Box, nil, { BackgroundColor3 = Library.Theme.CheckFill, BackgroundTransparency = 0.10 })
-							boxStroke.Color = Color3.fromRGB(145, 205, 248)
-							boxStroke.Transparency = 0.05
+							tween(Box, nil, { BackgroundColor3 = Library.Theme.Accent, BackgroundTransparency = 0.05 })
+							boxStroke.Color = Color3.fromRGB(130, 170, 255)
+							boxStroke.Transparency = 0.0
 							CheckMark.Visible = true
 						else
-							tween(Box, nil, { BackgroundColor3 = Color3.fromRGB(18, 23, 30), BackgroundTransparency = 0.40 })
-							boxStroke.Color = Color3.fromRGB(50, 64, 80)
+							tween(Box, nil, { BackgroundColor3 = Color3.fromRGB(36, 40, 54), BackgroundTransparency = 0.40 })
+							boxStroke.Color = Color3.fromRGB(58, 66, 88)
 							boxStroke.Transparency = 0.35
 							CheckMark.Visible = false
 						end
@@ -1918,16 +1864,16 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 						fireCallbacks(state)
 					end
 					updateBox()
-
-					RowBtn.MouseEnter:Connect(function()
-						Lbl.TextColor3 = Color3.fromRGB(245, 250, 255)
-						boxStroke.Transparency = state and 0.0 or 0.15
-					end)
-					RowBtn.MouseLeave:Connect(function()
-						Lbl.TextColor3 = Color3.fromRGB(205, 220, 235)
-						boxStroke.Transparency = state and 0.05 or 0.35
-					end)
 				end
+
+				RowBtn.MouseEnter:Connect(function()
+					tween(RowBtn, nil, { BackgroundColor3 = Color3.fromRGB(36, 42, 58), BackgroundTransparency = 0.20 })
+					rowStroke.Color = Color3.fromRGB(65, 75, 105)
+				end)
+				RowBtn.MouseLeave:Connect(function()
+					tween(RowBtn, nil, { BackgroundColor3 = Color3.fromRGB(30, 34, 46), BackgroundTransparency = 0.35 })
+					rowStroke.Color = Color3.fromRGB(46, 52, 70)
+				end)
 
 				ToggleObj.SetValue     = ToggleObj.Set
 				ToggleObj.UpdateToggle = ToggleObj.Set
@@ -1962,86 +1908,74 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				local suffix    = cfg.ValueName or cfg.Suffix or ""
 				local callback  = cfg.Callback or function() end
 				local flag      = cfg.Flag
-				local showTicks = (cfg.Ticks ~= false)
 
 				local scroll, order = resolveScroll(cfg.Column, 1.35)
 
 				local Container = Instance.new("Frame")
 				Container.Name = name .. "_Slider"
 				Container.LayoutOrder = order
-				Container.Size = UDim2.new(1, 0, 0, showTicks and 50 or 40)
-				Container.BackgroundTransparency = 1
+				Container.Size = UDim2.new(1, 0, 0, 52)
+				Container.BackgroundColor3 = Color3.fromRGB(30, 34, 46)
+				Container.BackgroundTransparency = 0.35
 				Container.Parent = scroll
+				addCorner(Container, 7)
+				local contStroke = addStroke(Container, Color3.fromRGB(46, 52, 70), 1.0, 0.40)
 
 				local TitleLbl = Instance.new("TextLabel")
-				TitleLbl.Size = UDim2.new(0.65, 0, 0, 18)
-				TitleLbl.Position = UDim2.new(0, 0, 0, 0)
+				TitleLbl.Size = UDim2.new(0.65, 0, 0, 20)
+				TitleLbl.Position = UDim2.new(0, 12, 0, 6)
 				TitleLbl.BackgroundTransparency = 1
 				TitleLbl.Text = name
-				TitleLbl.TextColor3 = Color3.fromRGB(205, 220, 235)
+				TitleLbl.TextColor3 = Color3.fromRGB(240, 245, 255)
 				TitleLbl.Font = Enum.Font.GothamMedium
 				TitleLbl.TextSize = 13
 				TitleLbl.TextXAlignment = Enum.TextXAlignment.Left
 				TitleLbl.TextTruncate = Enum.TextTruncate.AtEnd
 				TitleLbl.Parent = Container
 
+				local ValueBadge = Instance.new("Frame")
+				ValueBadge.Size = UDim2.new(0, 52, 0, 18)
+				ValueBadge.Position = UDim2.new(1, -64, 0, 6)
+				ValueBadge.BackgroundColor3 = Color3.fromRGB(40, 46, 64)
+				ValueBadge.BorderSizePixel = 0
+				ValueBadge.Parent = Container
+				addCorner(ValueBadge, 4)
+				addStroke(ValueBadge, Color3.fromRGB(60, 70, 100), 1, 0.4)
+
 				local ValueLbl = Instance.new("TextLabel")
-				ValueLbl.Size = UDim2.new(0.35, 0, 0, 18)
-				ValueLbl.Position = UDim2.new(0.65, 0, 0, 0)
+				ValueLbl.Size = UDim2.new(1, 0, 1, 0)
 				ValueLbl.BackgroundTransparency = 1
-				ValueLbl.TextColor3 = Color3.fromRGB(210, 230, 248)
-				ValueLbl.Font = Enum.Font.GothamMedium
-				ValueLbl.TextSize = 12
-				ValueLbl.TextXAlignment = Enum.TextXAlignment.Right
-				ValueLbl.Parent = Container
+				ValueLbl.TextColor3 = Color3.fromRGB(130, 175, 255)
+				ValueLbl.Font = Enum.Font.GothamBold
+				ValueLbl.TextSize = 11
+				ValueLbl.TextXAlignment = Enum.TextXAlignment.Center
+				ValueLbl.Parent = ValueBadge
 
 				local Track = Instance.new("TextButton")
-				Track.Size = UDim2.new(1, 0, 0, 4)
-				Track.Position = UDim2.new(0, 0, 0, 24)
-				Track.BackgroundColor3 = Color3.fromRGB(24, 30, 40)
-				Track.BackgroundTransparency = 0.20
+				Track.Size = UDim2.new(1, -24, 0, 5)
+				Track.Position = UDim2.new(0, 12, 0, 34)
+				Track.BackgroundColor3 = Color3.fromRGB(40, 45, 60)
 				Track.BorderSizePixel = 0
 				Track.Text = ""
 				Track.AutoButtonColor = false
 				Track.Parent = Container
-				addCorner(Track, 2)
-				addStroke(Track, Color3.fromRGB(45, 56, 72), 1, 0.40)
+				addCorner(Track, 3)
 
 				local Fill = Instance.new("Frame")
 				Fill.Size = UDim2.new(0, 0, 1, 0)
 				Fill.BackgroundColor3 = Library.Theme.SliderFill
 				Fill.BorderSizePixel = 0
 				Fill.Parent = Track
-				addCorner(Fill, 2)
+				addCorner(Fill, 3)
 
 				local Knob = Instance.new("Frame")
-				Knob.Size = UDim2.new(0, 10, 0, 16)
-				Knob.Position = UDim2.new(0, -5, 0.5, -8)
-				Knob.BackgroundColor3 = Color3.fromRGB(145, 165, 188)
+				Knob.Size = UDim2.new(0, 13, 0, 13)
+				Knob.Position = UDim2.new(0, -6, 0.5, -6)
+				Knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 				Knob.BorderSizePixel = 0
 				Knob.Parent = Track
-				addCorner(Knob, 3)
-				addStroke(Knob, Color3.fromRGB(205, 222, 240), 1, 0.20)
-
-				if showTicks then
-					local TicksHolder = Instance.new("Frame")
-					TicksHolder.Size = UDim2.new(1, 0, 0, 8)
-					TicksHolder.Position = UDim2.new(0, 0, 0, 32)
-					TicksHolder.BackgroundTransparency = 1
-					TicksHolder.Parent = Container
-
-					local numTicks = 24
-					for t = 0, numTicks do
-						local isMajor = (t % 6 == 0)
-						local tick = Instance.new("Frame")
-						tick.Size = UDim2.new(0, 1, 0, isMajor and 6 or 4)
-						tick.Position = UDim2.new(t / numTicks, 0, 0, 0)
-						tick.BackgroundColor3 = Color3.fromRGB(52, 65, 82)
-						tick.BackgroundTransparency = isMajor and 0.20 or 0.45
-						tick.BorderSizePixel = 0
-						tick.Parent = TicksHolder
-					end
-				end
+				addCorner(Knob, 7)
+				addStroke(Knob, Library.Theme.Accent, 1.2, 0.1)
 
 				local changedListeners = {}
 				local SliderObj = { Value = default, Type = "Slider" }
@@ -2069,7 +2003,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 					SliderObj.Value = finalVal
 					local pct = (maxVal > minVal) and ((finalVal - minVal) / (maxVal - minVal)) or 0
 					Fill.Size = UDim2.new(pct, 0, 1, 0)
-					Knob.Position = UDim2.new(pct, -5, 0.5, -8)
+					Knob.Position = UDim2.new(pct, -6, 0.5, -6)
 					ValueLbl.Text = tostring(finalVal) .. (suffix ~= "" and (" " .. suffix) or "")
 					task.spawn(callback, finalVal)
 					for _, fn in ipairs(changedListeners) do
@@ -2101,6 +2035,15 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 					if sliding and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
 						updateFromInput(input)
 					end
+				end)
+
+				Container.MouseEnter:Connect(function()
+					tween(Container, nil, { BackgroundColor3 = Color3.fromRGB(36, 42, 58), BackgroundTransparency = 0.20 })
+					contStroke.Color = Color3.fromRGB(65, 75, 105)
+				end)
+				Container.MouseLeave:Connect(function()
+					tween(Container, nil, { BackgroundColor3 = Color3.fromRGB(30, 34, 46), BackgroundTransparency = 0.35 })
+					contStroke.Color = Color3.fromRGB(46, 52, 70)
 				end)
 
 				SliderObj:Set(default)
@@ -2136,11 +2079,14 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 					CircleBtn.Size = UDim2.new(0, 90, 0, 90)
 					CircleBtn.Position = UDim2.new(0, 14, 0.5, -45)
 					CircleBtn.Text = name
-					styleBrightButtonText(CircleBtn, 13)
+					CircleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+					CircleBtn.Font = Enum.Font.GothamBold
+					CircleBtn.TextSize = 13
+					CircleBtn.TextStrokeTransparency = 1
 					CircleBtn.AutoButtonColor = false
 					CircleBtn.Parent = Holder
 					addCorner(CircleBtn, 45)
-					local cStroke = addStroke(CircleBtn, Library.Theme.NeonBorder, 1.5, 0.10)
+					local cStroke = addStroke(CircleBtn, Library.Theme.Accent, 1.5, 0.10)
 					applyButtonGradient(CircleBtn, false)
 					attachButtonFX(CircleBtn, cStroke)
 
@@ -2153,11 +2099,14 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 						ResetBtn.Size = UDim2.new(0, 76, 0, 30)
 						ResetBtn.Position = UDim2.new(0, 124, 0.5, -15)
 						ResetBtn.Text = cfg.ResetName or "Reset"
-						styleBrightButtonText(ResetBtn, 13)
+						ResetBtn.TextColor3 = Color3.fromRGB(240, 245, 255)
+						ResetBtn.Font = Enum.Font.GothamMedium
+						ResetBtn.TextSize = 13
+						ResetBtn.TextStrokeTransparency = 1
 						ResetBtn.AutoButtonColor = false
 						ResetBtn.Parent = Holder
 						addCorner(ResetBtn, 6)
-						local rStroke = addStroke(ResetBtn, Library.Theme.CardBorder, 1.2, 0.16)
+						local rStroke = addStroke(ResetBtn, Color3.fromRGB(50, 56, 76), 1.2, 0.3)
 						applyButtonGradient(ResetBtn, false)
 						attachButtonFX(ResetBtn, rStroke)
 						ResetBtn.MouseButton1Click:Connect(function()
@@ -2170,24 +2119,73 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				local Btn = Instance.new("TextButton")
 				Btn.Name = name .. "_Button"
 				Btn.LayoutOrder = order
-				Btn.Size = UDim2.new(1, 0, 0, 32)
-				Btn.Text = name
-				styleBrightButtonText(Btn, 13)
-				Btn.TextTruncate = Enum.TextTruncate.AtEnd
+				Btn.Size = UDim2.new(1, 0, 0, 38)
+				Btn.BackgroundColor3 = Color3.fromRGB(30, 34, 46)
+				Btn.BackgroundTransparency = 0.35
+				Btn.Text = ""
 				Btn.AutoButtonColor = false
 				Btn.Parent = scroll
 				addCorner(Btn, 7)
-				local btnStroke = addStroke(Btn, Library.Theme.NeonBorder, 1.3, 0.15)
-				applyButtonGradient(Btn, false)
-				attachButtonFX(Btn, btnStroke)
+				local btnStroke = addStroke(Btn, Color3.fromRGB(46, 52, 70), 1.0, 0.40)
+
+				local TitleLbl = Instance.new("TextLabel")
+				TitleLbl.Size = UDim2.new(1, -44, 1, 0)
+				TitleLbl.Position = UDim2.new(0, 12, 0, 0)
+				TitleLbl.BackgroundTransparency = 1
+				TitleLbl.Text = name
+				TitleLbl.TextColor3 = Color3.fromRGB(240, 245, 255)
+				TitleLbl.Font = Enum.Font.GothamMedium
+				TitleLbl.TextSize = 13
+				TitleLbl.TextXAlignment = Enum.TextXAlignment.Left
+				TitleLbl.TextTruncate = Enum.TextTruncate.AtEnd
+				TitleLbl.Parent = Btn
+
+				local IconPill = Instance.new("Frame")
+				IconPill.Size = UDim2.new(0, 26, 0, 24)
+				IconPill.Position = UDim2.new(1, -34, 0.5, -12)
+				IconPill.BackgroundColor3 = Color3.fromRGB(38, 44, 64)
+				IconPill.BackgroundTransparency = 0.2
+				IconPill.BorderSizePixel = 0
+				IconPill.Parent = Btn
+				addCorner(IconPill, 5)
+				local iconStroke = addStroke(IconPill, Library.Theme.Accent, 1, 0.4)
+
+				local Arrow = Instance.new("TextLabel")
+				Arrow.Size = UDim2.new(1, 0, 1, 0)
+				Arrow.BackgroundTransparency = 1
+				Arrow.Text = ">"
+				Arrow.TextColor3 = Library.Theme.Accent
+				Arrow.Font = Enum.Font.GothamBold
+				Arrow.TextSize = 13
+				Arrow.TextStrokeTransparency = 1
+				Arrow.Parent = IconPill
+
+				Btn.MouseEnter:Connect(function()
+					tween(Btn, TweenInfo.new(0.12), { BackgroundColor3 = Color3.fromRGB(36, 42, 58), BackgroundTransparency = 0.15 })
+					btnStroke.Color = Library.Theme.Accent
+					btnStroke.Transparency = 0.15
+					tween(IconPill, TweenInfo.new(0.12), { BackgroundColor3 = Library.Theme.Accent, BackgroundTransparency = 0 })
+					Arrow.TextColor3 = Color3.fromRGB(255, 255, 255)
+				end)
+				Btn.MouseLeave:Connect(function()
+					tween(Btn, TweenInfo.new(0.12), { BackgroundColor3 = Color3.fromRGB(30, 34, 46), BackgroundTransparency = 0.35 })
+					btnStroke.Color = Color3.fromRGB(46, 52, 70)
+					btnStroke.Transparency = 0.40
+					tween(IconPill, TweenInfo.new(0.12), { BackgroundColor3 = Color3.fromRGB(38, 44, 64), BackgroundTransparency = 0.2 })
+					Arrow.TextColor3 = Library.Theme.Accent
+				end)
 
 				Btn.MouseButton1Click:Connect(function()
+					tween(Btn, TweenInfo.new(0.06), { BackgroundColor3 = Color3.fromRGB(48, 58, 86) })
+					task.delay(0.08, function()
+						tween(Btn, TweenInfo.new(0.12), { BackgroundColor3 = Color3.fromRGB(36, 42, 58) })
+					end)
 					task.spawn(callback)
 				end)
 
 				local BtnObj = {}
 				function BtnObj:Set(newText)
-					Btn.Text = tostring(newText)
+					TitleLbl.Text = tostring(newText)
 				end
 				BtnObj.UpdateButton = BtnObj.Set
 				return BtnObj
@@ -2204,23 +2202,37 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 				local Row = Instance.new("Frame")
 				Row.LayoutOrder = order
-				Row.Size = UDim2.new(1, 0, 0, 32)
+				Row.Size = UDim2.new(1, 0, 0, 38)
 				Row.BackgroundTransparency = 1
 				Row.Parent = scroll
 
 				local function makeHalfBtn(txt, xScale, cb)
 					local b = Instance.new("TextButton")
-					b.Size = UDim2.new(0.48, 0, 1, 0)
+					b.Size = UDim2.new(0.485, 0, 1, 0)
 					b.Position = UDim2.new(xScale, 0, 0, 0)
+					b.BackgroundColor3 = Color3.fromRGB(30, 34, 46)
+					b.BackgroundTransparency = 0.35
 					b.Text = txt
-					styleBrightButtonText(b, 13)
+					b.TextColor3 = Color3.fromRGB(240, 245, 255)
+					b.Font = Enum.Font.GothamMedium
+					b.TextSize = 13
+					b.TextStrokeTransparency = 1
 					b.TextTruncate = Enum.TextTruncate.AtEnd
 					b.AutoButtonColor = false
 					b.Parent = Row
 					addCorner(b, 7)
-					local st = addStroke(b, Library.Theme.NeonBorder, 1.3, 0.15)
-					applyButtonGradient(b, false)
-					attachButtonFX(b, st)
+					local st = addStroke(b, Color3.fromRGB(46, 52, 70), 1.0, 0.40)
+
+					b.MouseEnter:Connect(function()
+						tween(b, TweenInfo.new(0.12), { BackgroundColor3 = Color3.fromRGB(36, 42, 58), BackgroundTransparency = 0.15 })
+						st.Color = Library.Theme.Accent
+						st.Transparency = 0.15
+					end)
+					b.MouseLeave:Connect(function()
+						tween(b, TweenInfo.new(0.12), { BackgroundColor3 = Color3.fromRGB(30, 34, 46), BackgroundTransparency = 0.35 })
+						st.Color = Color3.fromRGB(46, 52, 70)
+						st.Transparency = 0.40
+					end)
 					b.MouseButton1Click:Connect(function()
 						if cb then task.spawn(cb) end
 					end)
@@ -2228,7 +2240,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				end
 
 				local b1 = makeHalfBtn(cfg.Name1 or "Button 1", 0, cfg.Callback1)
-				local b2 = makeHalfBtn(cfg.Name2 or "Button 2", 0.52, cfg.Callback2)
+				local b2 = makeHalfBtn(cfg.Name2 or "Button 2", 0.515, cfg.Callback2)
 				return b1, b2
 			end
 			Methods.CreateDualButton = Methods.AddDualButton
@@ -2254,74 +2266,82 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				local callback = cfg.Callback or function() end
 				local flag     = cfg.Flag
 
-				local scroll, order = resolveScroll(cfg.Column, 1.5)
+				local scroll, order = resolveScroll(cfg.Column, 1.4)
 
 				local Container = Instance.new("Frame")
 				Container.Name = name .. "_Dropdown"
 				Container.LayoutOrder = order
-				Container.Size = UDim2.new(1, 0, 0, 56)
-				Container.BackgroundTransparency = 1
+				Container.Size = UDim2.new(1, 0, 0, 38)
+				Container.BackgroundColor3 = Color3.fromRGB(30, 34, 46)
+				Container.BackgroundTransparency = 0.35
 				Container.ClipsDescendants = true
 				Container.Parent = scroll
+				addCorner(Container, 7)
+				local contStroke = addStroke(Container, Color3.fromRGB(46, 52, 70), 1.0, 0.40)
 
 				local TitleLbl = Instance.new("TextLabel")
-				TitleLbl.Size = UDim2.new(1, 0, 0, 20)
+				TitleLbl.Size = UDim2.new(0.48, -8, 0, 38)
+				TitleLbl.Position = UDim2.new(0, 12, 0, 0)
 				TitleLbl.BackgroundTransparency = 1
 				TitleLbl.Text = name
-				TitleLbl.TextColor3 = Library.Theme.TextWhite
+				TitleLbl.TextColor3 = Color3.fromRGB(240, 245, 255)
 				TitleLbl.Font = Enum.Font.GothamMedium
-				TitleLbl.TextSize = 14
+				TitleLbl.TextSize = 13
 				TitleLbl.TextXAlignment = Enum.TextXAlignment.Left
 				TitleLbl.TextTruncate = Enum.TextTruncate.AtEnd
 				TitleLbl.Parent = Container
 
 				local MainBox = Instance.new("TextButton")
-				MainBox.Size = UDim2.new(1, 0, 0, 32)
-				MainBox.Position = UDim2.new(0, 0, 0, 24)
+				MainBox.Size = UDim2.new(0.48, 0, 0, 26)
+				MainBox.Position = UDim2.new(0.52, -6, 0, 6)
+				MainBox.BackgroundColor3 = Color3.fromRGB(22, 25, 34)
+				MainBox.BackgroundTransparency = 0.25
 				MainBox.Text = ""
 				MainBox.AutoButtonColor = false
 				MainBox.Parent = Container
-				addCorner(MainBox, 7)
-				local ddStroke = addStroke(MainBox, Library.Theme.NeonBorder, 1.3, 0.15)
-				applyButtonGradient(MainBox, false)
-				attachButtonFX(MainBox, ddStroke)
+				addCorner(MainBox, 5)
+				local boxStroke = addStroke(MainBox, Color3.fromRGB(46, 52, 70), 1.0, 0.35)
 
 				local SelectedLbl = Instance.new("TextLabel")
-				SelectedLbl.Size = UDim2.new(1, -34, 1, 0)
-				SelectedLbl.Position = UDim2.new(0, 12, 0, 0)
+				SelectedLbl.Size = UDim2.new(1, -22, 1, 0)
+				SelectedLbl.Position = UDim2.new(0, 8, 0, 0)
 				SelectedLbl.BackgroundTransparency = 1
 				SelectedLbl.Text = tostring(default)
-				styleBrightButtonText(SelectedLbl, 13)
+				SelectedLbl.TextColor3 = Color3.fromRGB(225, 235, 255)
+				SelectedLbl.Font = Enum.Font.GothamMedium
+				SelectedLbl.TextSize = 12
 				SelectedLbl.TextXAlignment = Enum.TextXAlignment.Left
 				SelectedLbl.TextTruncate = Enum.TextTruncate.AtEnd
 				SelectedLbl.Parent = MainBox
 
 				local ArrowLbl = Instance.new("TextLabel")
-				ArrowLbl.Size = UDim2.new(0, 24, 1, 0)
-				ArrowLbl.Position = UDim2.new(1, -26, 0, 0)
+				ArrowLbl.Size = UDim2.new(0, 18, 1, 0)
+				ArrowLbl.Position = UDim2.new(1, -20, 0, 0)
 				ArrowLbl.BackgroundTransparency = 1
-				ArrowLbl.Text = "⌄"
-				styleBrightButtonText(ArrowLbl, 14)
+				ArrowLbl.Text = "v"
+				ArrowLbl.TextColor3 = Library.Theme.Accent
+				ArrowLbl.Font = Enum.Font.GothamBold
+				ArrowLbl.TextSize = 11
 				ArrowLbl.Parent = MainBox
 
 				local OptionHolder = Instance.new("ScrollingFrame")
-				OptionHolder.Size = UDim2.new(1, 0, 0, 100)
-				OptionHolder.Position = UDim2.new(0, 0, 0, 60)
-				OptionHolder.BackgroundColor3 = Color3.fromRGB(18, 26, 36)
-				OptionHolder.BackgroundTransparency = 0.28
+				OptionHolder.Size = UDim2.new(1, -16, 0, 96)
+				OptionHolder.Position = UDim2.new(0, 8, 0, 40)
+				OptionHolder.BackgroundColor3 = Color3.fromRGB(22, 25, 34)
+				OptionHolder.BackgroundTransparency = 0.15
 				OptionHolder.BorderSizePixel = 0
-				OptionHolder.ScrollBarThickness = 5
-				OptionHolder.ScrollBarImageColor3 = Library.Theme.NeonBorder
+				OptionHolder.ScrollBarThickness = 4
+				OptionHolder.ScrollBarImageColor3 = Library.Theme.Accent
 				OptionHolder.CanvasSize = UDim2.new(0, 0, 0, 0)
 				OptionHolder.Parent = Container
 				addCorner(OptionHolder, 6)
-				addStroke(OptionHolder, Library.Theme.SubBorder, 1, 0.25)
+				addStroke(OptionHolder, Color3.fromRGB(46, 52, 70), 1, 0.35)
 
 				local OptLayout = Instance.new("UIListLayout")
 				OptLayout.SortOrder = Enum.SortOrder.LayoutOrder
 				OptLayout.Padding = UDim.new(0, 3)
 				OptLayout.Parent = OptionHolder
-				addPadding(OptionHolder, 4, 4, 4, 8)
+				addPadding(OptionHolder, 4, 4, 4, 6)
 
 				local isOpen = false
 				local changedListeners = {}
@@ -2336,11 +2356,18 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				local function toggleOpen(state)
 					isOpen = state
 					local listH = math.min(#DropdownObj.Options * 27 + 8, 114)
-					OptionHolder.Size = UDim2.new(1, 0, 0, listH)
+					OptionHolder.Size = UDim2.new(1, -16, 0, listH)
 					OptionHolder.CanvasSize = UDim2.new(0, 0, 0, #DropdownObj.Options * 27 + 8)
-					ArrowLbl.Text = isOpen and "⌃" or "⌄"
+					ArrowLbl.Text = isOpen and "^" or "v"
+					if isOpen then
+						boxStroke.Color = Library.Theme.Accent
+						boxStroke.Transparency = 0.1
+					else
+						boxStroke.Color = Color3.fromRGB(46, 52, 70)
+						boxStroke.Transparency = 0.35
+					end
 					tween(Container, TweenInfo.new(0.18), {
-						Size = UDim2.new(1, 0, 0, isOpen and (62 + listH) or 56)
+						Size = UDim2.new(1, 0, 0, isOpen and (48 + listH) or 38)
 					})
 				end
 
@@ -2364,20 +2391,22 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 						local OptBtn = Instance.new("TextButton")
 						OptBtn.LayoutOrder = i
 						OptBtn.Size = UDim2.new(1, 0, 0, 24)
-						OptBtn.BackgroundColor3 = Color3.fromRGB(48, 66, 84)
-						OptBtn.BackgroundTransparency = 0.28
+						OptBtn.BackgroundColor3 = Color3.fromRGB(28, 32, 44)
+						OptBtn.BackgroundTransparency = 0.3
 						OptBtn.Text = tostring(opt)
-						styleBrightButtonText(OptBtn, 12)
+						OptBtn.TextColor3 = Color3.fromRGB(220, 230, 250)
+						OptBtn.Font = Enum.Font.GothamMedium
+						OptBtn.TextSize = 12
 						OptBtn.TextTruncate = Enum.TextTruncate.AtEnd
 						OptBtn.AutoButtonColor = false
 						OptBtn.Parent = OptionHolder
 						addCorner(OptBtn, 4)
 
 						OptBtn.MouseEnter:Connect(function()
-							tween(OptBtn, TweenInfo.new(0.12), { BackgroundTransparency = 0.08, BackgroundColor3 = Color3.fromRGB(72, 102, 128) })
+							tween(OptBtn, TweenInfo.new(0.12), { BackgroundTransparency = 0, BackgroundColor3 = Library.Theme.Accent, TextColor3 = Color3.fromRGB(255, 255, 255) })
 						end)
 						OptBtn.MouseLeave:Connect(function()
-							tween(OptBtn, TweenInfo.new(0.12), { BackgroundTransparency = 0.28, BackgroundColor3 = Color3.fromRGB(48, 66, 84) })
+							tween(OptBtn, TweenInfo.new(0.12), { BackgroundTransparency = 0.3, BackgroundColor3 = Color3.fromRGB(28, 32, 44), TextColor3 = Color3.fromRGB(220, 230, 250) })
 						end)
 
 						OptBtn.MouseButton1Click:Connect(function()
@@ -2415,7 +2444,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 					or normalizeArgs("Colorpicker", selfOrA, a, b, c)
 
 				local name     = cfg.Name or cfg.Title or "Color Picker"
-				local default  = cfg.Default or cfg.Color or Color3.fromRGB(130, 215, 250)
+				local default  = cfg.Default or cfg.Color or Color3.fromRGB(85, 115, 250)
 				local callback = cfg.Callback or function() end
 				local flag     = cfg.Flag
 
@@ -2424,48 +2453,45 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				local Container = Instance.new("Frame")
 				Container.Name = name .. "_Colorpicker"
 				Container.LayoutOrder = order
-				Container.Size = UDim2.new(1, 0, 0, 32)
-				Container.BackgroundTransparency = 1
+				Container.Size = UDim2.new(1, 0, 0, 38)
+				Container.BackgroundColor3 = Color3.fromRGB(30, 34, 46)
+				Container.BackgroundTransparency = 0.35
 				Container.ClipsDescendants = true
 				Container.Parent = scroll
+				addCorner(Container, 7)
+				addStroke(Container, Color3.fromRGB(46, 52, 70), 1.0, 0.40)
 
-				local TopRow = Instance.new("Frame")
-				TopRow.Size = UDim2.new(1, 0, 0, 32)
-				TopRow.BackgroundTransparency = 1
-				TopRow.Parent = Container
-
-				local PickerBtn = Instance.new("TextButton")
-				PickerBtn.Size = UDim2.new(0.48, 0, 1, 0)
-				PickerBtn.Text = name
-				styleBrightButtonText(PickerBtn, 13)
-				PickerBtn.TextTruncate = Enum.TextTruncate.AtEnd
-				PickerBtn.AutoButtonColor = false
-				PickerBtn.Parent = TopRow
-				addCorner(PickerBtn, 7)
-				local pStroke = addStroke(PickerBtn, Library.Theme.NeonBorder, 1.3, 0.15)
-				applyButtonGradient(PickerBtn, false)
-				attachButtonFX(PickerBtn, pStroke)
+				local TitleLbl = Instance.new("TextLabel")
+				TitleLbl.Size = UDim2.new(1, -66, 0, 38)
+				TitleLbl.Position = UDim2.new(0, 12, 0, 0)
+				TitleLbl.BackgroundTransparency = 1
+				TitleLbl.Text = name
+				TitleLbl.TextColor3 = Color3.fromRGB(240, 245, 255)
+				TitleLbl.Font = Enum.Font.GothamMedium
+				TitleLbl.TextSize = 13
+				TitleLbl.TextXAlignment = Enum.TextXAlignment.Left
+				TitleLbl.TextTruncate = Enum.TextTruncate.AtEnd
+				TitleLbl.Parent = Container
 
 				local PreviewBtn = Instance.new("TextButton")
-				PreviewBtn.Size = UDim2.new(0.48, 0, 1, 0)
-				PreviewBtn.Position = UDim2.new(0.52, 0, 0, 0)
+				PreviewBtn.Size = UDim2.new(0, 46, 0, 22)
+				PreviewBtn.Position = UDim2.new(1, -56, 0, 8)
 				PreviewBtn.BackgroundColor3 = default
-				PreviewBtn.BackgroundTransparency = 0.12
-				PreviewBtn.Text = "Preview"
-				styleBrightButtonText(PreviewBtn, 13)
+				PreviewBtn.BackgroundTransparency = 0.05
+				PreviewBtn.Text = ""
 				PreviewBtn.AutoButtonColor = false
-				PreviewBtn.Parent = TopRow
-				addCorner(PreviewBtn, 7)
-				addStroke(PreviewBtn, Library.Theme.NeonBorder, 1.3, 0.15)
+				PreviewBtn.Parent = Container
+				addCorner(PreviewBtn, 5)
+				local prevStroke = addStroke(PreviewBtn, Color3.fromRGB(255, 255, 255), 1.2, 0.25)
 
 				local Drawer = Instance.new("Frame")
-				Drawer.Size = UDim2.new(1, 0, 0, 74)
-				Drawer.Position = UDim2.new(0, 0, 0, 36)
-				Drawer.BackgroundColor3 = Color3.fromRGB(22, 31, 40)
-				Drawer.BackgroundTransparency = 0.25
+				Drawer.Size = UDim2.new(1, -20, 0, 74)
+				Drawer.Position = UDim2.new(0, 10, 0, 42)
+				Drawer.BackgroundColor3 = Color3.fromRGB(22, 25, 34)
+				Drawer.BackgroundTransparency = 0.2
 				Drawer.Parent = Container
 				addCorner(Drawer, 6)
-				addStroke(Drawer, Library.Theme.SubBorder, 1, 0.35)
+				addStroke(Drawer, Color3.fromRGB(46, 52, 70), 1, 0.35)
 
 				local h, s, v = Color3.toHSV(default)
 				local changedListeners = {}
@@ -2495,13 +2521,15 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 					lbl.Position = UDim2.new(0, 8, 0, yOffset)
 					lbl.BackgroundTransparency = 1
 					lbl.Text = label
-					styleBrightButtonText(lbl, 11)
+					lbl.TextColor3 = Color3.fromRGB(240, 245, 255)
+					lbl.Font = Enum.Font.GothamBold
+					lbl.TextSize = 11
 					lbl.Parent = Drawer
 
 					local trk = Instance.new("TextButton")
 					trk.Size = UDim2.new(1, -38, 0, 6)
 					trk.Position = UDim2.new(0, 28, 0, yOffset + 6)
-					trk.BackgroundColor3 = Color3.fromRGB(38, 50, 62)
+					trk.BackgroundColor3 = Color3.fromRGB(36, 42, 58)
 					trk.Text = ""
 					trk.AutoButtonColor = false
 					trk.Parent = Drawer
@@ -2509,7 +2537,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 					local fl = Instance.new("Frame")
 					fl.Size = UDim2.new(initPct, 0, 1, 0)
-					fl.BackgroundColor3 = Library.Theme.SliderFill
+					fl.BackgroundColor3 = Library.Theme.Accent
 					fl.BorderSizePixel = 0
 					fl.Parent = trk
 					addCorner(fl, 3)
@@ -2547,11 +2575,10 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				local function toggleDrawer()
 					open = not open
 					tween(Container, TweenInfo.new(0.18), {
-						Size = UDim2.new(1, 0, 0, open and 114 or 32)
+						Size = UDim2.new(1, 0, 0, open and 124 or 38)
 					})
 				end
 
-				PickerBtn.MouseButton1Click:Connect(toggleDrawer)
 				PreviewBtn.MouseButton1Click:Connect(toggleDrawer)
 
 				registerFlag(flag, name, ColorObj)
@@ -2580,32 +2607,39 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				local Row = Instance.new("Frame")
 				Row.Name = name .. "_Bind"
 				Row.LayoutOrder = order
-				Row.Size = UDim2.new(1, 0, 0, 30)
-				Row.BackgroundTransparency = 1
+				Row.Size = UDim2.new(1, 0, 0, 38)
+				Row.BackgroundColor3 = Color3.fromRGB(30, 34, 46)
+				Row.BackgroundTransparency = 0.35
 				Row.Parent = scroll
+				addCorner(Row, 7)
+				local rowStroke = addStroke(Row, Color3.fromRGB(46, 52, 70), 1.0, 0.40)
 
 				local Lbl = Instance.new("TextLabel")
-				Lbl.Size = UDim2.new(1, -86, 1, 0)
+				Lbl.Size = UDim2.new(1, -96, 1, 0)
+				Lbl.Position = UDim2.new(0, 12, 0, 0)
 				Lbl.BackgroundTransparency = 1
 				Lbl.Text = name
-				Lbl.TextColor3 = Library.Theme.TextWhite
+				Lbl.TextColor3 = Color3.fromRGB(240, 245, 255)
 				Lbl.Font = Enum.Font.GothamMedium
-				Lbl.TextSize = 14
+				Lbl.TextSize = 13
 				Lbl.TextXAlignment = Enum.TextXAlignment.Left
 				Lbl.TextTruncate = Enum.TextTruncate.AtEnd
 				Lbl.Parent = Row
 
 				local BindBtn = Instance.new("TextButton")
-				BindBtn.Size = UDim2.new(0, 78, 0, 26)
-				BindBtn.Position = UDim2.new(1, -78, 0.5, -13)
+				BindBtn.Size = UDim2.new(0, 80, 0, 26)
+				BindBtn.Position = UDim2.new(1, -88, 0.5, -13)
+				BindBtn.BackgroundColor3 = Color3.fromRGB(44, 52, 76)
+				BindBtn.BackgroundTransparency = 0.05
 				BindBtn.Text = "[ " .. formatKeyName(default) .. " ]"
-				styleBrightButtonText(BindBtn, 12)
+				BindBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+				BindBtn.Font = Enum.Font.GothamBold
+				BindBtn.TextSize = 12
+				BindBtn.TextStrokeTransparency = 1
 				BindBtn.AutoButtonColor = false
 				BindBtn.Parent = Row
 				addCorner(BindBtn, 6)
-				local bindStroke = addStroke(BindBtn, Library.Theme.NeonBorder, 1.3, 0.15)
-				applyButtonGradient(BindBtn, false)
-				attachButtonFX(BindBtn, bindStroke)
+				local bindStroke = addStroke(BindBtn, Color3.fromRGB(85, 120, 245), 1.2, 0.10)
 
 				local currentKey = default
 				local binding = false
@@ -2632,18 +2666,36 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				end
 				BindObj.SetValue = BindObj.Set
 
+				BindBtn.MouseEnter:Connect(function()
+					if not binding then
+						tween(BindBtn, TweenInfo.new(0.12), { BackgroundColor3 = Color3.fromRGB(56, 68, 98), BackgroundTransparency = 0 })
+						bindStroke.Color = Color3.fromRGB(120, 160, 255)
+						bindStroke.Transparency = 0.0
+					end
+				end)
+				BindBtn.MouseLeave:Connect(function()
+					if not binding then
+						tween(BindBtn, TweenInfo.new(0.12), { BackgroundColor3 = Color3.fromRGB(44, 52, 76), BackgroundTransparency = 0.05 })
+						bindStroke.Color = Color3.fromRGB(85, 120, 245)
+						bindStroke.Transparency = 0.10
+					end
+				end)
+
 				BindBtn.MouseButton1Click:Connect(function()
 					binding = true
 					BindBtn.Text = "[ ... ]"
+					BindBtn.BackgroundColor3 = Color3.fromRGB(65, 80, 120)
 					bindStroke.Transparency = 0.0
-					bindStroke.Color = Color3.fromRGB(185, 240, 255)
+					bindStroke.Color = Color3.fromRGB(160, 205, 255)
 				end)
 
 				UserInputService.InputBegan:Connect(function(input, gp)
 					if binding then
 						if input.UserInputType == Enum.UserInputType.Keyboard then
 							binding = false
-							bindStroke.Transparency = 0.15
+							tween(BindBtn, TweenInfo.new(0.15), { BackgroundColor3 = Color3.fromRGB(44, 52, 76), BackgroundTransparency = 0.05 })
+							bindStroke.Color = Color3.fromRGB(85, 120, 245)
+							bindStroke.Transparency = 0.10
 							if input.KeyCode == Enum.KeyCode.Escape or input.KeyCode == Enum.KeyCode.Backspace then
 								BindObj:Set(nil)
 							else
@@ -2651,7 +2703,9 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 							end
 						elseif input.UserInputType == Enum.UserInputType.MouseButton2 or input.UserInputType == Enum.UserInputType.MouseButton3 then
 							binding = false
-							bindStroke.Transparency = 0.15
+							tween(BindBtn, TweenInfo.new(0.15), { BackgroundColor3 = Color3.fromRGB(44, 52, 76), BackgroundTransparency = 0.05 })
+							bindStroke.Color = Color3.fromRGB(85, 120, 245)
+							bindStroke.Transparency = 0.10
 							BindObj:Set(input.UserInputType)
 						end
 						return
@@ -2689,7 +2743,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 				local name        = cfg.Name or cfg.Title or "Input"
 				local default     = cfg.Default or ""
-				local placeholder = cfg.Placeholder or cfg.PlaceholderText or "Text eingeben..."
+				local placeholder = cfg.Placeholder or cfg.PlaceholderText or "Text..."
 				local disappear   = cfg.TextDisappear or cfg.RemoveTextAfterFocusLost or false
 				local callback    = cfg.Callback or function() end
 				local flag        = cfg.Flag
@@ -2699,15 +2753,19 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				local Container = Instance.new("Frame")
 				Container.Name = name .. "_Textbox"
 				Container.LayoutOrder = order
-				Container.Size = UDim2.new(1, 0, 0, 52)
-				Container.BackgroundTransparency = 1
+				Container.Size = UDim2.new(1, 0, 0, 38)
+				Container.BackgroundColor3 = Color3.fromRGB(30, 34, 46)
+				Container.BackgroundTransparency = 0.35
 				Container.Parent = scroll
+				addCorner(Container, 7)
+				local contStroke = addStroke(Container, Color3.fromRGB(46, 52, 70), 1.0, 0.40)
 
 				local Lbl = Instance.new("TextLabel")
-				Lbl.Size = UDim2.new(1, 0, 0, 18)
+				Lbl.Size = UDim2.new(0.48, -8, 1, 0)
+				Lbl.Position = UDim2.new(0, 12, 0, 0)
 				Lbl.BackgroundTransparency = 1
 				Lbl.Text = name
-				Lbl.TextColor3 = Library.Theme.TextWhite
+				Lbl.TextColor3 = Color3.fromRGB(240, 245, 255)
 				Lbl.Font = Enum.Font.GothamMedium
 				Lbl.TextSize = 13
 				Lbl.TextXAlignment = Enum.TextXAlignment.Left
@@ -2715,22 +2773,22 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				Lbl.Parent = Container
 
 				local Box = Instance.new("TextBox")
-				Box.Size = UDim2.new(1, 0, 0, 28)
-				Box.Position = UDim2.new(0, 0, 0, 22)
-				Box.BackgroundColor3 = Color3.fromRGB(24, 34, 46)
-				Box.BackgroundTransparency = 0.42
+				Box.Size = UDim2.new(0.48, 0, 0, 26)
+				Box.Position = UDim2.new(0.52, -6, 0.5, -13)
+				Box.BackgroundColor3 = Color3.fromRGB(20, 23, 31)
+				Box.BackgroundTransparency = 0.25
 				Box.Text = tostring(default)
 				Box.PlaceholderText = placeholder
-				Box.PlaceholderColor3 = Library.Theme.TextMuted
-				Box.TextColor3 = Library.Theme.TextWhite
+				Box.PlaceholderColor3 = Color3.fromRGB(120, 130, 150)
+				Box.TextColor3 = Color3.fromRGB(255, 255, 255)
 				Box.Font = Enum.Font.GothamMedium
 				Box.TextSize = 12
 				Box.TextXAlignment = Enum.TextXAlignment.Left
 				Box.ClearTextOnFocus = false
 				Box.Parent = Container
-				addCorner(Box, 6)
-				local boxStroke = addStroke(Box, Library.Theme.SubBorder, 1.1, 0.25)
-				addPadding(Box, 0, 0, 10, 10)
+				addCorner(Box, 5)
+				local boxStroke = addStroke(Box, Color3.fromRGB(46, 52, 70), 1.0, 0.35)
+				addPadding(Box, 0, 0, 8, 8)
 
 				local TextboxObj = { Value = default, Type = "Textbox" }
 
@@ -2742,12 +2800,12 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				TextboxObj.SetValue = TextboxObj.Set
 
 				Box.Focused:Connect(function()
-					boxStroke.Color = Library.Theme.NeonBorder
+					boxStroke.Color = Library.Theme.Accent
 					boxStroke.Transparency = 0.0
 				end)
 				Box.FocusLost:Connect(function()
-					boxStroke.Color = Library.Theme.SubBorder
-					boxStroke.Transparency = 0.25
+					boxStroke.Color = Color3.fromRGB(46, 52, 70)
+					boxStroke.Transparency = 0.35
 					TextboxObj.Value = Box.Text
 					task.spawn(callback, Box.Text)
 					if disappear then
@@ -2773,15 +2831,16 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 				local Lbl = Instance.new("TextLabel")
 				Lbl.LayoutOrder = order
-				Lbl.Size = UDim2.new(1, 0, 0, 20)
+				Lbl.Size = UDim2.new(1, 0, 0, 22)
 				Lbl.BackgroundTransparency = 1
 				Lbl.Text = tostring(text or "")
-				Lbl.TextColor3 = Library.Theme.TextWhite
+				Lbl.TextColor3 = Color3.fromRGB(190, 200, 220)
 				Lbl.Font = Enum.Font.GothamMedium
 				Lbl.TextSize = 13
 				Lbl.TextXAlignment = Enum.TextXAlignment.Left
 				Lbl.TextTruncate = Enum.TextTruncate.AtEnd
 				Lbl.Parent = scroll
+				addPadding(Lbl, 0, 0, 4, 4)
 
 				local LabelObj = {}
 				function LabelObj:Set(newText)
@@ -2811,29 +2870,31 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 				local Box = Instance.new("Frame")
 				Box.LayoutOrder = order
-				Box.Size = UDim2.new(1, 0, 0, 54)
-				Box.BackgroundColor3 = Color3.fromRGB(20, 30, 42)
-				Box.BackgroundTransparency = 0.52
+				Box.Size = UDim2.new(1, 0, 0, 56)
+				Box.BackgroundColor3 = Color3.fromRGB(30, 34, 46)
+				Box.BackgroundTransparency = 0.35
 				Box.Parent = scroll
-				addCorner(Box, 6)
-				addStroke(Box, Library.Theme.SubBorder, 1, 0.35)
+				addCorner(Box, 7)
+				addStroke(Box, Color3.fromRGB(46, 52, 70), 1.0, 0.40)
 
 				local T = Instance.new("TextLabel")
-				T.Size = UDim2.new(1, -16, 0, 18)
-				T.Position = UDim2.new(0, 8, 0, 4)
+				T.Size = UDim2.new(1, -20, 0, 18)
+				T.Position = UDim2.new(0, 10, 0, 6)
 				T.BackgroundTransparency = 1
 				T.Text = tostring(title or "Info")
-				styleBrightButtonText(T, 13)
+				T.TextColor3 = Color3.fromRGB(240, 245, 255)
+				T.Font = Enum.Font.GothamBold
+				T.TextSize = 13
 				T.TextXAlignment = Enum.TextXAlignment.Left
 				T.TextTruncate = Enum.TextTruncate.AtEnd
 				T.Parent = Box
 
 				local C = Instance.new("TextLabel")
-				C.Size = UDim2.new(1, -16, 1, -24)
-				C.Position = UDim2.new(0, 8, 0, 22)
+				C.Size = UDim2.new(1, -20, 1, -28)
+				C.Position = UDim2.new(0, 10, 0, 26)
 				C.BackgroundTransparency = 1
 				C.Text = tostring(content or "")
-				C.TextColor3 = Library.Theme.TextMuted
+				C.TextColor3 = Color3.fromRGB(160, 170, 195)
 				C.Font = Enum.Font.Gotham
 				C.TextSize = 11
 				C.TextWrapped = true
@@ -2860,7 +2921,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				local Div = Instance.new("Frame")
 				Div.LayoutOrder = order
 				Div.Size = UDim2.new(1, 0, 0, 1)
-				Div.BackgroundColor3 = Library.Theme.SubBorder
+				Div.BackgroundColor3 = Color3.fromRGB(46, 52, 70)
 				Div.BackgroundTransparency = 0.5
 				Div.BorderSizePixel = 0
 				Div.Parent = scroll
@@ -2915,19 +2976,27 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				col.Weight = col.Weight + 0.9
 				local SubHdr = Instance.new("Frame")
 				SubHdr.LayoutOrder = col.ItemCount
-				SubHdr.Size = UDim2.new(1, 0, 0, 26)
+				SubHdr.Size = UDim2.new(1, 0, 0, 24)
+				SubHdr.BackgroundTransparency = 1
 				SubHdr.BorderSizePixel = 0
 				SubHdr.Parent = col.Scroll
-				addCorner(SubHdr, 5)
-				applyMetallicHeader(SubHdr)
-				addStroke(SubHdr, Library.Theme.SubBorder, 1, 0.35)
+
+				local AccentBar = Instance.new("Frame")
+				AccentBar.Size = UDim2.new(0, 3, 0, 14)
+				AccentBar.Position = UDim2.new(0, 4, 0.5, -7)
+				AccentBar.BackgroundColor3 = Library.Theme.Accent
+				AccentBar.BorderSizePixel = 0
+				AccentBar.Parent = SubHdr
+				addCorner(AccentBar, 2)
 
 				local SubTxt = Instance.new("TextLabel")
-				SubTxt.Size = UDim2.new(1, -16, 1, 0)
-				SubTxt.Position = UDim2.new(0, 10, 0, 0)
+				SubTxt.Size = UDim2.new(1, -18, 1, 0)
+				SubTxt.Position = UDim2.new(0, 14, 0, 0)
 				SubTxt.BackgroundTransparency = 1
-				SubTxt.Text = secName
-				styleBrightButtonText(SubTxt, 13)
+				SubTxt.Text = string.upper(secName)
+				SubTxt.TextColor3 = Color3.fromRGB(160, 175, 205)
+				SubTxt.Font = Enum.Font.GothamBold
+				SubTxt.TextSize = 11
 				SubTxt.TextXAlignment = Enum.TextXAlignment.Left
 				SubTxt.TextTruncate = Enum.TextTruncate.AtEnd
 				SubTxt.Parent = SubHdr
@@ -2966,14 +3035,16 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 		TabBtn.MouseEnter:Connect(function()
 			if WindowObj.ActiveTab ~= TabObj then
-				tween(TabBtn, TweenInfo.new(0.12), { BackgroundTransparency = 0.42 })
-				tween(TabStroke, TweenInfo.new(0.12), { Transparency = 0.22, Color = Library.Theme.NeonBorder })
+				tween(TabBtn, TweenInfo.new(0.12), { BackgroundTransparency = 0.35, BackgroundColor3 = Color3.fromRGB(30, 34, 48) })
+				tween(TabStroke, TweenInfo.new(0.12), { Transparency = 0.25, Color = Library.Theme.Accent })
+				tween(TabLabel, TweenInfo.new(0.12), { TextColor3 = Color3.fromRGB(240, 245, 255) })
 			end
 		end)
 		TabBtn.MouseLeave:Connect(function()
 			if WindowObj.ActiveTab ~= TabObj then
-				tween(TabBtn, TweenInfo.new(0.12), { BackgroundTransparency = 0.58 })
-				tween(TabStroke, TweenInfo.new(0.12), { Transparency = 0.42, Color = Library.Theme.SubBorder })
+				tween(TabBtn, TweenInfo.new(0.12), { BackgroundTransparency = 0.85, BackgroundColor3 = Color3.fromRGB(22, 24, 32) })
+				tween(TabStroke, TweenInfo.new(0.12), { Transparency = 0.6, Color = Color3.fromRGB(36, 40, 52) })
+				tween(TabLabel, TweenInfo.new(0.12), { TextColor3 = Color3.fromRGB(160, 170, 190) })
 			end
 		end)
 
