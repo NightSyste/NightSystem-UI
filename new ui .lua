@@ -3764,10 +3764,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			scroll.BorderSizePixel = 0
 			scroll.ScrollBarThickness = 4
 			scroll.ScrollBarImageColor3 = Library.Theme.Accent
-			pcall(function()
-				scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-			end)
-			scroll.CanvasSize = UDim2.new(0, 0, 0, 420)
+			scroll.CanvasSize = UDim2.new(0, 0, 0, 450)
 			scroll.ZIndex = 62
 			scroll.Visible = false
 			scroll.Parent = SetContent
@@ -3779,9 +3776,11 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 			addPadding(scroll, 4, 4, 4, 4)
 
-			layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-				scroll.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 20)
-			end)
+			local function updateScrollCanvas()
+				scroll.CanvasSize = UDim2.new(0, 0, 0, math.max(layout.AbsoluteContentSize.Y + 24, 450))
+			end
+
+			layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateScrollCanvas)
 
 			setScrolls[name] = scroll
 			return scroll
