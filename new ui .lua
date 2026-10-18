@@ -3559,33 +3559,33 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		local SetResetBtn = Instance.new("TextButton")
 		SetResetBtn.Size = UDim2.new(0, 58, 0, 24)
 		SetResetBtn.Position = UDim2.new(1, -98, 0.5, -12)
-		SetResetBtn.BackgroundColor3 = Color3.fromRGB(44, 38, 56)
-		SetResetBtn.BackgroundTransparency = 0.15
+		SetResetBtn.BackgroundColor3 = Color3.fromRGB(54, 40, 78)
+		SetResetBtn.BackgroundTransparency = 0.12
 		SetResetBtn.BorderSizePixel = 0
-		SetResetBtn.Text = "↺ Reset"
-		SetResetBtn.TextColor3 = Color3.fromRGB(225, 235, 255)
+		SetResetBtn.Text = "Reset"
+		SetResetBtn.TextColor3 = Color3.fromRGB(235, 225, 255)
 		SetResetBtn.Font = Enum.Font.GothamBold
 		SetResetBtn.TextSize = 11
 		SetResetBtn.AutoButtonColor = false
 		SetResetBtn.ZIndex = 64
 		SetResetBtn.Parent = SetTitleBar
 		addCorner(SetResetBtn, 6)
-		local setResetStroke = addStroke(SetResetBtn, Color3.fromRGB(130, 95, 195), 1.0, 0.25)
+		local setResetStroke = addStroke(SetResetBtn, Color3.fromRGB(155, 110, 235), 1.0, 0.20)
 
 		local setResetScale = Instance.new("UIScale")
 		setResetScale.Scale = 1
 		setResetScale.Parent = SetResetBtn
 
 		SetResetBtn.MouseEnter:Connect(function()
-			tween(SetResetBtn, TweenInfo.new(0.12), { BackgroundColor3 = Color3.fromRGB(75, 55, 115), BackgroundTransparency = 0 })
-			setResetStroke.Color = Color3.fromRGB(180, 140, 255)
+			tween(SetResetBtn, TweenInfo.new(0.12), { BackgroundColor3 = Color3.fromRGB(88, 62, 135), BackgroundTransparency = 0 })
+			setResetStroke.Color = Color3.fromRGB(200, 160, 255)
 			setResetStroke.Transparency = 0
 			tween(setResetScale, TweenInfo.new(0.14, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1.06 })
 		end)
 		SetResetBtn.MouseLeave:Connect(function()
-			tween(SetResetBtn, TweenInfo.new(0.12), { BackgroundColor3 = Color3.fromRGB(44, 38, 56), BackgroundTransparency = 0.15 })
-			setResetStroke.Color = Color3.fromRGB(130, 95, 195)
-			setResetStroke.Transparency = 0.25
+			tween(SetResetBtn, TweenInfo.new(0.12), { BackgroundColor3 = Color3.fromRGB(54, 40, 78), BackgroundTransparency = 0.12 })
+			setResetStroke.Color = Color3.fromRGB(155, 110, 235)
+			setResetStroke.Transparency = 0.20
 			tween(setResetScale, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = 1.0 })
 		end)
 
@@ -4245,45 +4245,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			return ColorObj
 		end
 
-		local function addSetButton(name, callback)
-			local Btn = Instance.new("TextButton")
-			Btn.LayoutOrder = nextOrder()
-			Btn.Size = UDim2.new(1, 0, 0, 36)
-			Btn.BackgroundColor3 = Color3.fromRGB(38, 42, 58)
-			Btn.BackgroundTransparency = 0.25
-			Btn.BorderSizePixel = 0
-			Btn.Text = name
-			Btn.TextColor3 = Color3.fromRGB(225, 235, 255)
-			Btn.Font = Enum.Font.GothamBold
-			Btn.TextSize = 12
-			Btn.AutoButtonColor = false
-			Btn.ZIndex = 63
-			Btn.Parent = SetScroll
-			addCorner(Btn, 7)
-			local btnStroke = addStroke(Btn, Color3.fromRGB(60, 68, 95), 1.0, 0.3)
-
-			local btnScale = Instance.new("UIScale")
-			btnScale.Scale = 1
-			btnScale.Parent = Btn
-
-			Btn.MouseEnter:Connect(function()
-				tween(Btn, TweenInfo.new(0.12), { BackgroundColor3 = Library.Theme.Accent, BackgroundTransparency = 0.05, TextColor3 = Color3.fromRGB(255, 255, 255) })
-				btnStroke.Color = Color3.fromRGB(120, 160, 255)
-				tween(btnScale, TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = 1.02 })
-			end)
-			Btn.MouseLeave:Connect(function()
-				tween(Btn, TweenInfo.new(0.12), { BackgroundColor3 = Color3.fromRGB(38, 42, 58), BackgroundTransparency = 0.25, TextColor3 = Color3.fromRGB(225, 235, 255) })
-				btnStroke.Color = Color3.fromRGB(60, 68, 95)
-				tween(btnScale, TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Scale = 1.0 })
-			end)
-
-			Btn.MouseButton1Click:Connect(function()
-				if callback then task.spawn(callback) end
-			end)
-
-			return Btn
-		end
-
 		local savedAntiAfk = Library.ConfigStore["_NS_AntiAFK"]
 		local antiAfkEnabled = (savedAntiAfk ~= nil) and (not not savedAntiAfk) or true
 
@@ -4603,16 +4564,13 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			Library.ConfigStore["_NS_AimFovColor"] = nil
 			Library:SaveConfiguration()
 
-			SetResetBtn.Text = "✓ Done!"
+			SetResetBtn.Text = "Done!"
 			task.delay(1.2, function()
-				if SetResetBtn then SetResetBtn.Text = "↺ Reset" end
+				if SetResetBtn then SetResetBtn.Text = "Reset" end
 			end)
 		end
 
 		SetResetBtn.MouseButton1Click:Connect(doResetAllSettings)
-
-		addSetSection("Configuration")
-		addSetButton("↺ Reset All Settings to Default", doResetAllSettings)
 	end
 
 	table.insert(Library.Windows, WindowObj)
