@@ -1267,6 +1267,8 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 	local isWindowOpen = false
 	local isAnimatingWindow = false
 	local currentScalePreset = 1
+	local preMinimizePos = UDim2.new(0.5, 0, 0.5, 0)
+	local pillPreMinimizePos = UDim2.new(0.5, 0, 0, 10)
 
 	local pillWidth = math.clamp(#tostring(windowTitle) * 8 + 68, 140, 260)
 	local MobileOpenPill = Instance.new("TextButton")
@@ -1341,6 +1343,16 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		isAnimatingWindow = true
 		isWindowOpen = false
 		updatePillLabel()
+		if isMinimized then
+			isMinimized = false
+			MainWin.Size = UDim2.new(0, winWidth, 0, winHeight)
+			MainWin.Position = preMinimizePos or UDim2.new(0.5, 0, 0.5, 0)
+			MainWin.ClipsDescendants = false
+			BottomAccent.Visible = true
+		end
+		tween(MobileOpenPill, TweenInfo.new(0.24, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+			Position = pillPreMinimizePos or UDim2.new(0.5, 0, 0, 10)
+		})
 
 		local expandScale = userScale * 1.085
 		local step1 = tween(WinScale, TweenInfo.new(0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
@@ -1424,24 +1436,31 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		end
 	end)
 
-	local preMinimizePos = UDim2.new(0.5, 0, 0.5, 0)
 	createGlassControlBtn("−", -102, false, function()
 		if isAnimatingWindow then return end
 		isMinimized = not isMinimized
 		if isMinimized then
 			preMinimizePos = MainWin.Position
+			pillPreMinimizePos = MobileOpenPill.Position
 			ContentWrap.Size = UDim2.new(1, 0, 0, winHeight - 36)
 			MainWin.ClipsDescendants = true
 			BottomAccent.Visible = false
 			tween(MainWin, TweenInfo.new(0.28, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
 				Size = UDim2.new(0, winWidth, 0, 36),
-				Position = UDim2.new(0.5, 0, 0, 24)
+				Position = UDim2.new(0.5, 0, 0, 18)
+			})
+			tween(MobileOpenPill, TweenInfo.new(0.28, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+				Position = UDim2.new(0.5, 0, 0, 40)
 			})
 		else
 			local restorePos = preMinimizePos or UDim2.new(0.5, 0, 0.5, 0)
+			local pillRestorePos = pillPreMinimizePos or UDim2.new(0.5, 0, 0, 10)
 			local t = tween(MainWin, TweenInfo.new(0.28, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
 				Size = UDim2.new(0, winWidth, 0, winHeight),
 				Position = restorePos
+			})
+			tween(MobileOpenPill, TweenInfo.new(0.28, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+				Position = pillRestorePos
 			})
 			t.Completed:Connect(function()
 				if not isMinimized then
@@ -1510,6 +1529,14 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 					startPos.Y.Scale,
 					startPos.Y.Offset + delta.Y
 				)
+				if isMinimized then
+					MobileOpenPill.Position = UDim2.new(
+						MainWin.Position.X.Scale,
+						MainWin.Position.X.Offset,
+						0,
+						MainWin.Position.Y.Offset + 22
+					)
+				end
 			end
 		end)
 	end
@@ -4526,6 +4553,122 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			scheduleAutoSave()
 		end)
 
+		local savedAimbotEnabled = Library.ConfigStore["_NS_AimbotEnabled"]
+		local aimbotEnabled = (savedAimbotEnabled ~= nil) and (not not savedAimbotEnabled) or false
+
+		local savedAimbotStrength = tonumber(Library.ConfigStore["_NS_AimbotStrength"])
+		local aimbotStrength = savedAimbotStrength or 70
+
+		local savedAimbotPart = Library.ConfigStore["_NS_AimbotTargetPart"]
+		local aimbotTargetPart = savedAimbotPart and tostring(savedAimbotPart) or "Head"
+
+		local savedAimbotTeam = Library.ConfigStore["_NS_AimbotTeamCheck"]
+		local aimbotTeamCheck = (savedAimbotTeam ~= nil) and (not not savedAimbotTeam) or true
+
+		local savedAimbotFov = Library.ConfigStore["_NS_AimbotUseAimFov"]
+		local aimbotUseAimFov = (savedAimbotFov ~= nil) and (not not savedAimbotFov) or true
+
+		addSetSection("Aimbot Settings")
+
+		local setToggleAimbot = addSetToggle("Enable Aimbot (Key: P)", aimbotEnabled, function(state)
+			aimbotEnabled = state
+			Library.ConfigStore["_NS_AimbotEnabled"] = state
+			scheduleAutoSave()
+		end)
+
+		local setSliderAimbotStrength = addSetSlider("Aimbot Strength", 5, 100, aimbotStrength, function(val)
+			aimbotStrength = val
+			Library.ConfigStore["_NS_AimbotStrength"] = aimbotStrength
+			scheduleAutoSave()
+		end)
+
+		local setDropAimbotPart = addSetDropdown("Aimbot Target Part", { "Head", "HumanoidRootPart" }, aimbotTargetPart, function(opt)
+			aimbotTargetPart = tostring(opt)
+			Library.ConfigStore["_NS_AimbotTargetPart"] = aimbotTargetPart
+			scheduleAutoSave()
+		end)
+
+		local setToggleAimbotTeam = addSetToggle("Aimbot Team Check", aimbotTeamCheck, function(state)
+			aimbotTeamCheck = state
+			Library.ConfigStore["_NS_AimbotTeamCheck"] = state
+			scheduleAutoSave()
+		end)
+
+		local setToggleAimbotFov = addSetToggle("Aimbot Use Aim FOV", aimbotUseAimFov, function(state)
+			aimbotUseAimFov = state
+			Library.ConfigStore["_NS_AimbotUseAimFov"] = state
+			scheduleAutoSave()
+		end)
+
+		UserInputService.InputBegan:Connect(function(input, gp)
+			if gp then return end
+			if input.KeyCode == Enum.KeyCode.P then
+				aimbotEnabled = not aimbotEnabled
+				Library.ConfigStore["_NS_AimbotEnabled"] = aimbotEnabled
+				scheduleAutoSave()
+				if setToggleAimbot then
+					setToggleAimbot:Set(aimbotEnabled)
+				end
+				Library.MakeNotification({
+					Title = "Aimbot",
+					Content = "Aimbot: " .. (aimbotEnabled and "Enabled" or "Disabled"),
+					Time = 2
+				})
+			end
+		end)
+
+		RunService.RenderStepped:Connect(function(deltaTime)
+			if not aimbotEnabled then return end
+			if not UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then return end
+
+			local cam = workspace.CurrentCamera
+			if not cam then return end
+
+			local screenCenter
+			if aimFovPosMode == "Mouse Cursor" then
+				local m = UserInputService:GetMouseLocation()
+				screenCenter = Vector2.new(m.X, m.Y)
+			else
+				local vp = cam.ViewportSize
+				screenCenter = Vector2.new(vp.X * 0.5, vp.Y * 0.5)
+			end
+
+			local bestTargetPart = nil
+			local shortestDist = math.huge
+			local maxAllowedDist = (aimbotUseAimFov and aimFovEnabled) and aimFovRadius or 500
+
+			for _, p in ipairs(Players:GetPlayers()) do
+				if p ~= LocalPlayer and p.Character then
+					if not (aimbotTeamCheck and p.Team and LocalPlayer.Team and p.Team == LocalPlayer.Team) then
+						local char = p.Character
+						local hum = char:FindFirstChildOfClass("Humanoid")
+						if hum and hum.Health > 0 then
+							local part = char:FindFirstChild(aimbotTargetPart) or char:FindFirstChild("Head") or char:FindFirstChild("HumanoidRootPart")
+							if part then
+								local pos3d = part.Position
+								local screenPoint, onScreen = cam:WorldToViewportPoint(pos3d)
+								if onScreen and screenPoint.Z > 0 then
+									local dist = (Vector2.new(screenPoint.X, screenPoint.Y) - screenCenter).Magnitude
+									if dist <= maxAllowedDist and dist < shortestDist then
+										shortestDist = dist
+										bestTargetPart = part
+									end
+								end
+							end
+						end
+					end
+				end
+			end
+
+			if bestTargetPart then
+				local targetPos = bestTargetPart.Position
+				local currentCF = cam.CFrame
+				local targetCF = CFrame.new(currentCF.Position, targetPos)
+				local alpha = math.clamp((aimbotStrength / 100) * math.clamp((deltaTime or 0.016) * 60, 0.2, 3), 0.04, 1.0)
+				cam.CFrame = currentCF:Lerp(targetCF, alpha)
+			end
+		end)
+
 		local function doResetAllSettings()
 			setToggleAntiAfk:Set(false)
 			setToggleCustomFov:Set(false)
@@ -4543,6 +4686,12 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			setToggleAimFovFilled:Set(false)
 			setColorAimFov:Set(Color3.fromRGB(85, 115, 250))
 			if FovCircle then FovCircle.Visible = false end
+
+			setToggleAimbot:Set(false)
+			setSliderAimbotStrength:Set(70)
+			setDropAimbotPart:Set("Head")
+			setToggleAimbotTeam:Set(true)
+			setToggleAimbotFov:Set(true)
 
 			local cam = workspace.CurrentCamera
 			if cam then cam.FieldOfView = 70 end
@@ -4562,6 +4711,11 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			Library.ConfigStore["_NS_AimFovThickness"] = nil
 			Library.ConfigStore["_NS_AimFovFilled"] = nil
 			Library.ConfigStore["_NS_AimFovColor"] = nil
+			Library.ConfigStore["_NS_AimbotEnabled"] = nil
+			Library.ConfigStore["_NS_AimbotStrength"] = nil
+			Library.ConfigStore["_NS_AimbotTargetPart"] = nil
+			Library.ConfigStore["_NS_AimbotTeamCheck"] = nil
+			Library.ConfigStore["_NS_AimbotUseAimFov"] = nil
 			Library:SaveConfiguration()
 
 			SetResetBtn.Text = "Done!"
