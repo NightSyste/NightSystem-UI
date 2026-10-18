@@ -31,20 +31,20 @@ local Library = {
 	Notifications = {},
 	ToggleKey = Enum.KeyCode.RightShift,
 	Theme = {
-		NeonBorder   = Color3.fromRGB(145, 228, 255),
-		CardBorder   = Color3.fromRGB(132, 188, 220),
-		SubBorder    = Color3.fromRGB(118, 160, 190),
-		GlassBg      = Color3.fromRGB(18, 25, 33),
-		CardBg       = Color3.fromRGB(16, 22, 30),
-		ControlBg    = Color3.fromRGB(45, 62, 78),
+		NeonBorder   = Color3.fromRGB(145, 212, 248),
+		CardBorder   = Color3.fromRGB(130, 192, 228),
+		SubBorder    = Color3.fromRGB(112, 168, 202),
+		GlassBg      = Color3.fromRGB(18, 26, 35),
+		CardBg       = Color3.fromRGB(16, 24, 33),
+		ControlBg    = Color3.fromRGB(38, 54, 70),
 		TextWhite    = Color3.fromRGB(255, 255, 255),
 		TextBright   = Color3.fromRGB(255, 255, 255),
-		TextMuted    = Color3.fromRGB(185, 205, 222),
-		CheckFill    = Color3.fromRGB(122, 184, 220),
-		SliderFill   = Color3.fromRGB(140, 202, 238),
+		TextMuted    = Color3.fromRGB(190, 214, 232),
+		CheckFill    = Color3.fromRGB(126, 192, 232),
+		SliderFill   = Color3.fromRGB(142, 208, 246),
 		CloseRed     = Color3.fromRGB(235, 70, 92),
-		CloseBorder  = Color3.fromRGB(255, 115, 135),
-		Transparency = 0.20,
+		CloseBorder  = Color3.fromRGB(255, 120, 140),
+		Transparency = 0.36,
 	}
 }
 Library.__index = Library
@@ -144,44 +144,60 @@ end
 
 local function applyMetallicHeader(frame)
 	frame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	frame.BackgroundTransparency = 0.10
+	frame.BackgroundTransparency = 0.38
 	local grad = Instance.new("UIGradient")
 	grad.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0.00, Color3.fromRGB(84, 104, 124)),
-		ColorSequenceKeypoint.new(0.42, Color3.fromRGB(125, 152, 175)),
-		ColorSequenceKeypoint.new(0.68, Color3.fromRGB(235, 246, 255)),
-		ColorSequenceKeypoint.new(0.84, Color3.fromRGB(135, 165, 190)),
-		ColorSequenceKeypoint.new(1.00, Color3.fromRGB(82, 104, 125)),
+		ColorSequenceKeypoint.new(0.00, Color3.fromRGB(48, 66, 84)),
+		ColorSequenceKeypoint.new(0.48, Color3.fromRGB(78, 104, 128)),
+		ColorSequenceKeypoint.new(0.56, Color3.fromRGB(150, 184, 210)),
+		ColorSequenceKeypoint.new(0.78, Color3.fromRGB(88, 116, 142)),
+		ColorSequenceKeypoint.new(1.00, Color3.fromRGB(44, 62, 80)),
 	})
-	grad.Rotation = 6
+	grad.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0.00, 0.32),
+		NumberSequenceKeypoint.new(0.52, 0.22),
+		NumberSequenceKeypoint.new(0.56, 0.08),
+		NumberSequenceKeypoint.new(1.00, 0.35),
+	})
+	grad.Rotation = 18
 	grad.Parent = frame
 	return grad
 end
 
 local function applyButtonGradient(frame, isHovered)
 	frame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	frame.BackgroundTransparency = isHovered and 0.04 or 0.12
+	frame.BackgroundTransparency = isHovered and 0.12 or 0.26
 
 	local grad = frame:FindFirstChildOfClass("UIGradient")
 	if not grad then
 		grad = Instance.new("UIGradient")
-		grad.Rotation = 18
+		grad.Rotation = 22
 		grad.Parent = frame
 	end
 
 	if isHovered then
 		grad.Color = ColorSequence.new({
-			ColorSequenceKeypoint.new(0.00, Color3.fromRGB(98, 136, 168)),
-			ColorSequenceKeypoint.new(0.48, Color3.fromRGB(162, 212, 245)),
-			ColorSequenceKeypoint.new(0.75, Color3.fromRGB(118, 165, 202)),
-			ColorSequenceKeypoint.new(1.00, Color3.fromRGB(82, 116, 146)),
+			ColorSequenceKeypoint.new(0.00, Color3.fromRGB(84, 122, 154)),
+			ColorSequenceKeypoint.new(0.50, Color3.fromRGB(152, 206, 242)),
+			ColorSequenceKeypoint.new(0.56, Color3.fromRGB(190, 232, 255)),
+			ColorSequenceKeypoint.new(1.00, Color3.fromRGB(74, 108, 138)),
+		})
+		grad.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0.00, 0.15),
+			NumberSequenceKeypoint.new(0.54, 0.05),
+			NumberSequenceKeypoint.new(1.00, 0.18),
 		})
 	else
 		grad.Color = ColorSequence.new({
-			ColorSequenceKeypoint.new(0.00, Color3.fromRGB(72, 100, 126)),
-			ColorSequenceKeypoint.new(0.48, Color3.fromRGB(124, 166, 198)),
-			ColorSequenceKeypoint.new(0.75, Color3.fromRGB(92, 126, 156)),
-			ColorSequenceKeypoint.new(1.00, Color3.fromRGB(60, 84, 108)),
+			ColorSequenceKeypoint.new(0.00, Color3.fromRGB(52, 76, 98)),
+			ColorSequenceKeypoint.new(0.50, Color3.fromRGB(96, 136, 168)),
+			ColorSequenceKeypoint.new(0.56, Color3.fromRGB(128, 174, 208)),
+			ColorSequenceKeypoint.new(1.00, Color3.fromRGB(44, 64, 84)),
+		})
+		grad.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0.00, 0.28),
+			NumberSequenceKeypoint.new(0.54, 0.14),
+			NumberSequenceKeypoint.new(1.00, 0.32),
 		})
 	end
 
@@ -190,8 +206,8 @@ local function applyButtonGradient(frame, isHovered)
 		shine.Name = "TopShine"
 		shine.Size = UDim2.new(1, -8, 0, 1)
 		shine.Position = UDim2.new(0, 4, 0, 1)
-		shine.BackgroundColor3 = Color3.fromRGB(240, 252, 255)
-		shine.BackgroundTransparency = 0.45
+		shine.BackgroundColor3 = Color3.fromRGB(225, 246, 255)
+		shine.BackgroundTransparency = 0.42
 		shine.BorderSizePixel = 0
 		shine.ZIndex = frame.ZIndex + 1
 		shine.Parent = frame
@@ -284,8 +300,8 @@ local function attachTouchScrollBarAndArrows(parentFrame, scrollFrame, layoutObj
 	TrackBtn.Name = "ThickScrollTrack"
 	TrackBtn.Size = UDim2.new(0, 8, 1, -(btnHeight * 2 + 8))
 	TrackBtn.Position = UDim2.new(0.5, -4, 0, btnHeight + 4)
-	TrackBtn.BackgroundColor3 = Color3.fromRGB(24, 34, 46)
-	TrackBtn.BackgroundTransparency = 0.25
+	TrackBtn.BackgroundColor3 = Color3.fromRGB(20, 30, 42)
+	TrackBtn.BackgroundTransparency = 0.52
 	TrackBtn.BorderSizePixel = 0
 	TrackBtn.Text = ""
 	TrackBtn.AutoButtonColor = false
@@ -299,7 +315,7 @@ local function attachTouchScrollBarAndArrows(parentFrame, scrollFrame, layoutObj
 	Thumb.Size = UDim2.new(1, 0, 0.35, 0)
 	Thumb.Position = UDim2.new(0, 0, 0, 0)
 	Thumb.BackgroundColor3 = Library.Theme.NeonBorder
-	Thumb.BackgroundTransparency = 0.08
+	Thumb.BackgroundTransparency = 0.14
 	Thumb.BorderSizePixel = 0
 	Thumb.ZIndex = 8
 	Thumb.Parent = TrackBtn
@@ -659,13 +675,13 @@ local function playPrettyLoader(screenGui, titleText, onFinished)
 	LoaderCard.AnchorPoint = Vector2.new(0.5, 0.5)
 	LoaderCard.Size = UDim2.new(0, 340, 0, 148)
 	LoaderCard.Position = UDim2.new(0.5, 0, 0.5, 0)
-	LoaderCard.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	LoaderCard.BackgroundTransparency = 0.14
+	LoaderCard.BackgroundColor3 = Color3.fromRGB(18, 26, 36)
+	LoaderCard.BackgroundTransparency = 0.28
 	LoaderCard.BorderSizePixel = 0
 	LoaderCard.ZIndex = 50
 	LoaderCard.Parent = screenGui
 	addCorner(LoaderCard, 10)
-	local loaderStroke = addStroke(LoaderCard, Library.Theme.NeonBorder, 1.8, 0.05)
+	local loaderStroke = addStroke(LoaderCard, Library.Theme.NeonBorder, 1.5, 0.08)
 
 	local loaderScale = Instance.new("UIScale")
 	loaderScale.Scale = 0.05
@@ -673,12 +689,20 @@ local function playPrettyLoader(screenGui, titleText, onFinished)
 
 	local lGrad = Instance.new("UIGradient")
 	lGrad.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0.00, Color3.fromRGB(36, 50, 64)),
-		ColorSequenceKeypoint.new(0.48, Color3.fromRGB(20, 28, 38)),
-		ColorSequenceKeypoint.new(0.55, Color3.fromRGB(52, 70, 86)),
-		ColorSequenceKeypoint.new(1.00, Color3.fromRGB(16, 22, 30)),
+		ColorSequenceKeypoint.new(0.00, Color3.fromRGB(24, 34, 46)),
+		ColorSequenceKeypoint.new(0.53, Color3.fromRGB(36, 48, 62)),
+		ColorSequenceKeypoint.new(0.55, Color3.fromRGB(118, 145, 172)),
+		ColorSequenceKeypoint.new(0.74, Color3.fromRGB(46, 62, 80)),
+		ColorSequenceKeypoint.new(1.00, Color3.fromRGB(18, 25, 34)),
 	})
-	lGrad.Rotation = 65
+	lGrad.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0.00, 0.32),
+		NumberSequenceKeypoint.new(0.53, 0.28),
+		NumberSequenceKeypoint.new(0.55, 0.10),
+		NumberSequenceKeypoint.new(0.76, 0.24),
+		NumberSequenceKeypoint.new(1.00, 0.36),
+	})
+	lGrad.Rotation = 68
 	lGrad.Parent = LoaderCard
 
 	local lGlow = Instance.new("Frame")
@@ -688,29 +712,29 @@ local function playPrettyLoader(screenGui, titleText, onFinished)
 	lGlow.ZIndex = 49
 	lGlow.Parent = LoaderCard
 	addCorner(lGlow, 13)
-	addStroke(lGlow, Library.Theme.NeonBorder, 2.2, 0.62)
+	addStroke(lGlow, Library.Theme.NeonBorder, 2.0, 0.65)
 
 	for i = 1, 3 do
 		local dot = Instance.new("Frame")
 		dot.Size = UDim2.new(0, 9, 0, 9)
 		dot.Position = UDim2.new(0, 14 + (i - 1) * 15, 0, 12)
-		dot.BackgroundColor3 = Color3.fromRGB(52, 68, 84)
-		dot.BackgroundTransparency = 0.35
+		dot.BackgroundColor3 = Color3.fromRGB(24, 34, 46)
+		dot.BackgroundTransparency = 0.72
 		dot.ZIndex = 52
 		dot.Parent = LoaderCard
 		addCorner(dot, 5)
-		addStroke(dot, Library.Theme.NeonBorder, 1, 0.3)
+		addStroke(dot, Library.Theme.NeonBorder, 1, 0.25)
 	end
 
 	local SpinnerOuter = Instance.new("Frame")
 	SpinnerOuter.Size = UDim2.new(0, 42, 0, 42)
 	SpinnerOuter.Position = UDim2.new(0, 22, 0, 44)
-	SpinnerOuter.BackgroundColor3 = Color3.fromRGB(30, 44, 58)
-	SpinnerOuter.BackgroundTransparency = 0.3
+	SpinnerOuter.BackgroundColor3 = Color3.fromRGB(24, 34, 46)
+	SpinnerOuter.BackgroundTransparency = 0.35
 	SpinnerOuter.ZIndex = 52
 	SpinnerOuter.Parent = LoaderCard
 	addCorner(SpinnerOuter, 21)
-	local spinStroke = addStroke(SpinnerOuter, Library.Theme.NeonBorder, 2.2, 0.05)
+	local spinStroke = addStroke(SpinnerOuter, Library.Theme.NeonBorder, 2.0, 0.08)
 
 	local spinGrad = Instance.new("UIGradient")
 	spinGrad.Transparency = NumberSequence.new({
@@ -766,8 +790,8 @@ local function playPrettyLoader(screenGui, titleText, onFinished)
 	local BarTrack = Instance.new("Frame")
 	BarTrack.Size = UDim2.new(1, -36, 0, 8)
 	BarTrack.Position = UDim2.new(0, 18, 0, 118)
-	BarTrack.BackgroundColor3 = Color3.fromRGB(26, 36, 48)
-	BarTrack.BackgroundTransparency = 0.25
+	BarTrack.BackgroundColor3 = Color3.fromRGB(20, 30, 42)
+	BarTrack.BackgroundTransparency = 0.45
 	BarTrack.BorderSizePixel = 0
 	BarTrack.ZIndex = 52
 	BarTrack.Parent = LoaderCard
@@ -856,14 +880,14 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 	MainWin.AnchorPoint = Vector2.new(0.5, 0.5)
 	MainWin.Size = UDim2.new(0, winWidth, 0, winHeight)
 	MainWin.Position = UDim2.new(0.5, 0, 0.5, 0)
-	MainWin.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	MainWin.BackgroundColor3 = Color3.fromRGB(16, 24, 34)
 	MainWin.BackgroundTransparency = Library.Theme.Transparency
 	MainWin.BorderSizePixel = 0
 	MainWin.Active = true
 	MainWin.Visible = false
 	MainWin.Parent = ScreenGui
 	addCorner(MainWin, 10)
-	local MainStroke = addStroke(MainWin, Library.Theme.NeonBorder, 1.8, 0.08)
+	local MainStroke = addStroke(MainWin, Library.Theme.NeonBorder, 1.4, 0.12)
 
 	local userScale = 1.0
 	local WinScale = Instance.new("UIScale")
@@ -872,12 +896,20 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 	local WinGrad = Instance.new("UIGradient")
 	WinGrad.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0.00, Color3.fromRGB(36, 48, 60)),
-		ColorSequenceKeypoint.new(0.45, Color3.fromRGB(22, 30, 38)),
-		ColorSequenceKeypoint.new(0.52, Color3.fromRGB(48, 64, 78)),
-		ColorSequenceKeypoint.new(1.00, Color3.fromRGB(18, 25, 32)),
+		ColorSequenceKeypoint.new(0.00, Color3.fromRGB(20, 30, 42)),
+		ColorSequenceKeypoint.new(0.53, Color3.fromRGB(34, 46, 60)),
+		ColorSequenceKeypoint.new(0.55, Color3.fromRGB(118, 145, 172)),
+		ColorSequenceKeypoint.new(0.74, Color3.fromRGB(46, 62, 80)),
+		ColorSequenceKeypoint.new(1.00, Color3.fromRGB(16, 24, 34)),
 	})
-	WinGrad.Rotation = 65
+	WinGrad.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0.00, 0.38),
+		NumberSequenceKeypoint.new(0.53, 0.35),
+		NumberSequenceKeypoint.new(0.55, 0.10),
+		NumberSequenceKeypoint.new(0.76, 0.28),
+		NumberSequenceKeypoint.new(1.00, 0.40),
+	})
+	WinGrad.Rotation = 68
 	WinGrad.Parent = MainWin
 
 	local OuterGlow = Instance.new("Frame")
@@ -892,18 +924,18 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 	local BottomAccent = Instance.new("Frame")
 	BottomAccent.Name = "BottomAccent"
-	BottomAccent.Size = UDim2.new(0, 220, 0, 2)
-	BottomAccent.Position = UDim2.new(0, 14, 1, 2)
+	BottomAccent.Size = UDim2.new(0, 185, 0, 2)
+	BottomAccent.Position = UDim2.new(0, 8, 1, 1)
 	BottomAccent.BackgroundColor3 = Library.Theme.NeonBorder
-	BottomAccent.BackgroundTransparency = 0.25
+	BottomAccent.BackgroundTransparency = 0.35
 	BottomAccent.BorderSizePixel = 0
 	BottomAccent.Parent = MainWin
 	addCorner(BottomAccent, 1)
 
 	local ContentWrap = Instance.new("Frame")
 	ContentWrap.Name = "ContentWrap"
-	ContentWrap.Size = UDim2.new(1, 0, 0, winHeight - 38)
-	ContentWrap.Position = UDim2.new(0, 0, 0, 38)
+	ContentWrap.Size = UDim2.new(1, 0, 0, winHeight - 36)
+	ContentWrap.Position = UDim2.new(0, 0, 0, 36)
 	ContentWrap.BackgroundTransparency = 1
 	ContentWrap.Parent = MainWin
 
@@ -913,15 +945,24 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 	TitleBar.BackgroundTransparency = 1
 	TitleBar.Parent = MainWin
 
+	local TitleDivider = Instance.new("Frame")
+	TitleDivider.Name = "TitleDivider"
+	TitleDivider.Size = UDim2.new(1, 0, 0, 1)
+	TitleDivider.Position = UDim2.new(0, 0, 1, -1)
+	TitleDivider.BackgroundColor3 = Library.Theme.NeonBorder
+	TitleDivider.BackgroundTransparency = 0.65
+	TitleDivider.BorderSizePixel = 0
+	TitleDivider.Parent = TitleBar
+
 	for i = 1, 3 do
 		local dot = Instance.new("Frame")
-		dot.Size = UDim2.new(0, 11, 0, 11)
-		dot.Position = UDim2.new(0, 16 + (i - 1) * 18, 0, 13)
-		dot.BackgroundColor3 = Color3.fromRGB(45, 58, 70)
-		dot.BackgroundTransparency = 0.45
+		dot.Size = UDim2.new(0, 10, 0, 10)
+		dot.Position = UDim2.new(0, 16 + (i - 1) * 16, 0, 13)
+		dot.BackgroundColor3 = Color3.fromRGB(24, 34, 46)
+		dot.BackgroundTransparency = 0.75
 		dot.Parent = TitleBar
-		addCorner(dot, 6)
-		addStroke(dot, Library.Theme.SubBorder, 1, 0.25)
+		addCorner(dot, 5)
+		addStroke(dot, Library.Theme.NeonBorder, 1.1, 0.25)
 	end
 
 	local TitleText = Instance.new("TextLabel")
@@ -930,7 +971,11 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 	TitleText.Position = UDim2.new(0, 120, 0, 0)
 	TitleText.BackgroundTransparency = 1
 	TitleText.Text = tostring(windowTitle)
-	styleBrightButtonText(TitleText, 14)
+	TitleText.TextColor3 = Color3.fromRGB(224, 240, 252)
+	TitleText.Font = Enum.Font.GothamMedium
+	TitleText.TextSize = 13
+	TitleText.TextStrokeColor3 = Color3.fromRGB(10, 18, 28)
+	TitleText.TextStrokeTransparency = 0.52
 	TitleText.TextTruncate = Enum.TextTruncate.AtEnd
 	TitleText.Parent = TitleBar
 
@@ -939,7 +984,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		btn.Size = UDim2.new(0, 28, 0, 22)
 		btn.Position = UDim2.new(1, rightOffset, 0.5, -11)
 		btn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-		btn.BackgroundTransparency = isCloseBtn and 0.14 or 0.18
+		btn.BackgroundTransparency = isCloseBtn and 0.20 or 0.32
 		btn.BorderSizePixel = 0
 		btn.Text = iconText
 		styleBrightButtonText(btn, isCloseBtn and 13 or 12)
@@ -978,7 +1023,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 						ColorSequenceKeypoint.new(0.50, Color3.fromRGB(240, 62, 88)),
 						ColorSequenceKeypoint.new(1.00, Color3.fromRGB(185, 32, 56)),
 					})
-					btn.BackgroundTransparency = 0.02
+					btn.BackgroundTransparency = 0.06
 					stroke.Transparency = 0.0
 					stroke.Color = Color3.fromRGB(255, 175, 190)
 				else
@@ -987,7 +1032,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 						ColorSequenceKeypoint.new(0.50, Color3.fromRGB(168, 42, 64)),
 						ColorSequenceKeypoint.new(1.00, Color3.fromRGB(125, 28, 44)),
 					})
-					btn.BackgroundTransparency = 0.14
+					btn.BackgroundTransparency = 0.20
 					stroke.Transparency = 0.12
 					stroke.Color = Library.Theme.CloseBorder
 				end
@@ -998,17 +1043,17 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 						ColorSequenceKeypoint.new(0.50, Color3.fromRGB(165, 215, 248)),
 						ColorSequenceKeypoint.new(1.00, Color3.fromRGB(82, 118, 148)),
 					})
-					btn.BackgroundTransparency = 0.04
+					btn.BackgroundTransparency = 0.12
 					stroke.Transparency = 0.0
 					stroke.Color = Library.Theme.NeonBorder
 				else
 					grad.Color = ColorSequence.new({
-						ColorSequenceKeypoint.new(0.00, Color3.fromRGB(70, 96, 120)),
-						ColorSequenceKeypoint.new(0.50, Color3.fromRGB(108, 145, 175)),
-						ColorSequenceKeypoint.new(1.00, Color3.fromRGB(54, 76, 96)),
+						ColorSequenceKeypoint.new(0.00, Color3.fromRGB(60, 84, 108)),
+						ColorSequenceKeypoint.new(0.50, Color3.fromRGB(94, 130, 160)),
+						ColorSequenceKeypoint.new(1.00, Color3.fromRGB(48, 68, 88)),
 					})
-					btn.BackgroundTransparency = 0.18
-					stroke.Transparency = 0.22
+					btn.BackgroundTransparency = 0.32
+					stroke.Transparency = 0.25
 					stroke.Color = Library.Theme.CardBorder
 				end
 			end
@@ -1130,7 +1175,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		isMinimized = not isMinimized
 		local halfDelta = math.floor((winHeight - 36) / 2 * userScale)
 		if isMinimized then
-			ContentWrap.Size = UDim2.new(1, 0, 0, winHeight - 38)
+			ContentWrap.Size = UDim2.new(1, 0, 0, winHeight - 36)
 			MainWin.ClipsDescendants = true
 			BottomAccent.Visible = false
 			tween(MainWin, TweenInfo.new(0.24, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
@@ -1276,7 +1321,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				end
 
 				MainWin.Size = UDim2.new(0, winWidth, 0, winHeight)
-				ContentWrap.Size = UDim2.new(1, 0, 0, winHeight - 38)
+				ContentWrap.Size = UDim2.new(1, 0, 0, winHeight - 36)
 			end
 		end)
 	end
@@ -1286,11 +1331,50 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 	InnerBorderFrame.Size = UDim2.new(1, -66, 1, -12)
 	InnerBorderFrame.Position = UDim2.new(0, 54, 0, 0)
 	InnerBorderFrame.BackgroundColor3 = Library.Theme.GlassBg
-	InnerBorderFrame.BackgroundTransparency = 0.35
+	InnerBorderFrame.BackgroundTransparency = 0.82
 	InnerBorderFrame.BorderSizePixel = 0
 	InnerBorderFrame.Parent = ContentWrap
 	addCorner(InnerBorderFrame, 8)
-	addStroke(InnerBorderFrame, Library.Theme.NeonBorder, 1.5, 0.08)
+	addStroke(InnerBorderFrame, Library.Theme.NeonBorder, 1.4, 0.12)
+
+	local InsetBorder = Instance.new("Frame")
+	InsetBorder.Name = "InsetBorder"
+	InsetBorder.Size = UDim2.new(1, -14, 1, -14)
+	InsetBorder.Position = UDim2.new(0, 7, 0, 7)
+	InsetBorder.BackgroundTransparency = 1
+	InsetBorder.BorderSizePixel = 0
+	InsetBorder.Parent = InnerBorderFrame
+	addCorner(InsetBorder, 6)
+	addStroke(InsetBorder, Library.Theme.NeonBorder, 1, 0.45)
+
+	local function createCornerBracket(xScale, xOffset, yScale, yOffset, isTop, isLeft)
+		local bracket = Instance.new("Frame")
+		bracket.Name = "CornerBracket"
+		bracket.Size = UDim2.new(0, 12, 0, 12)
+		bracket.Position = UDim2.new(xScale, xOffset, yScale, yOffset)
+		bracket.BackgroundTransparency = 1
+		bracket.Parent = InnerBorderFrame
+
+		local hLine = Instance.new("Frame")
+		hLine.Size = UDim2.new(1, 0, 0, 1)
+		hLine.Position = UDim2.new(0, 0, isTop and 0 or 1, isTop and 0 or -1)
+		hLine.BackgroundColor3 = Library.Theme.NeonBorder
+		hLine.BackgroundTransparency = 0.35
+		hLine.BorderSizePixel = 0
+		hLine.Parent = bracket
+
+		local vLine = Instance.new("Frame")
+		vLine.Size = UDim2.new(0, 1, 1, 0)
+		vLine.Position = UDim2.new(isLeft and 0 or 1, isLeft and 0 or -1, 0, 0)
+		vLine.BackgroundColor3 = Library.Theme.NeonBorder
+		vLine.BackgroundTransparency = 0.35
+		vLine.BorderSizePixel = 0
+		vLine.Parent = bracket
+	end
+	createCornerBracket(0, 16, 0, 16, true, true)
+	createCornerBracket(1, -28, 0, 16, true, false)
+	createCornerBracket(0, 16, 1, -28, false, true)
+	createCornerBracket(1, -28, 1, -28, false, false)
 
 	local SideTabScroll = Instance.new("ScrollingFrame")
 	SideTabScroll.Name = "SideTabScroll"
@@ -1474,13 +1558,13 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			Card.LayoutOrder = colIdx
 			Card.Size = UDim2.new(0.3333, -8, 1, 0)
 			Card.BackgroundColor3 = Library.Theme.CardBg
-			Card.BackgroundTransparency = 0.32
+			Card.BackgroundTransparency = 0.68
 			Card.BorderSizePixel = 0
 			Card.ClipsDescendants = true
 			Card.Visible = (colIdx == 1)
 			Card.Parent = TabPage
 			addCorner(Card, 7)
-			addStroke(Card, Library.Theme.CardBorder, 1.2, 0.22)
+			addStroke(Card, Library.Theme.CardBorder, 1.2, 0.28)
 
 			local Header = Instance.new("Frame")
 			Header.Name = "Header"
@@ -1580,29 +1664,29 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 
 		local function setTabVisual(isActive)
 			if isActive then
-				TabBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-				TabBtn.BackgroundTransparency = 0.06
+				TabBtn.BackgroundColor3 = Color3.fromRGB(36, 52, 70)
+				TabBtn.BackgroundTransparency = 0.26
 				TabGrad.Color = ColorSequence.new({
-					ColorSequenceKeypoint.new(0.0, Color3.fromRGB(175, 222, 248)),
-					ColorSequenceKeypoint.new(0.5, Color3.fromRGB(225, 244, 255)),
-					ColorSequenceKeypoint.new(1.0, Color3.fromRGB(102, 142, 170)),
+					ColorSequenceKeypoint.new(0.0, Color3.fromRGB(92, 136, 172)),
+					ColorSequenceKeypoint.new(0.5, Color3.fromRGB(155, 208, 246)),
+					ColorSequenceKeypoint.new(1.0, Color3.fromRGB(68, 104, 138)),
 				})
 				TabStroke.Color = Library.Theme.NeonBorder
-				TabStroke.Thickness = 1.6
-				TabStroke.Transparency = 0.02
+				TabStroke.Thickness = 1.5
+				TabStroke.Transparency = 0.05
 				RotatedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 				TabPage.Visible = true
 			else
-				TabBtn.BackgroundColor3 = Color3.fromRGB(40, 54, 68)
-				TabBtn.BackgroundTransparency = 0.22
+				TabBtn.BackgroundColor3 = Color3.fromRGB(20, 28, 38)
+				TabBtn.BackgroundTransparency = 0.62
 				TabGrad.Color = ColorSequence.new({
-					ColorSequenceKeypoint.new(0.0, Color3.fromRGB(68, 90, 112)),
-					ColorSequenceKeypoint.new(1.0, Color3.fromRGB(38, 52, 68)),
+					ColorSequenceKeypoint.new(0.0, Color3.fromRGB(56, 76, 96)),
+					ColorSequenceKeypoint.new(1.0, Color3.fromRGB(28, 40, 52)),
 				})
 				TabStroke.Color = Library.Theme.SubBorder
-				TabStroke.Thickness = 1.1
-				TabStroke.Transparency = 0.35
-				RotatedLabel.TextColor3 = Color3.fromRGB(215, 232, 245)
+				TabStroke.Thickness = 1.0
+				TabStroke.Transparency = 0.45
+				RotatedLabel.TextColor3 = Color3.fromRGB(190, 214, 232)
 				TabPage.Visible = false
 			end
 		end
@@ -2165,8 +2249,8 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				local OptionHolder = Instance.new("ScrollingFrame")
 				OptionHolder.Size = UDim2.new(1, 0, 0, 100)
 				OptionHolder.Position = UDim2.new(0, 0, 0, 60)
-				OptionHolder.BackgroundColor3 = Color3.fromRGB(22, 31, 40)
-				OptionHolder.BackgroundTransparency = 0.12
+				OptionHolder.BackgroundColor3 = Color3.fromRGB(18, 26, 36)
+				OptionHolder.BackgroundTransparency = 0.28
 				OptionHolder.BorderSizePixel = 0
 				OptionHolder.ScrollBarThickness = 5
 				OptionHolder.ScrollBarImageColor3 = Library.Theme.NeonBorder
@@ -2575,8 +2659,8 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				local Box = Instance.new("TextBox")
 				Box.Size = UDim2.new(1, 0, 0, 28)
 				Box.Position = UDim2.new(0, 0, 0, 22)
-				Box.BackgroundColor3 = Color3.fromRGB(36, 50, 64)
-				Box.BackgroundTransparency = 0.18
+				Box.BackgroundColor3 = Color3.fromRGB(24, 34, 46)
+				Box.BackgroundTransparency = 0.42
 				Box.Text = tostring(default)
 				Box.PlaceholderText = placeholder
 				Box.PlaceholderColor3 = Library.Theme.TextMuted
@@ -2670,8 +2754,8 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				local Box = Instance.new("Frame")
 				Box.LayoutOrder = order
 				Box.Size = UDim2.new(1, 0, 0, 54)
-				Box.BackgroundColor3 = Color3.fromRGB(28, 38, 48)
-				Box.BackgroundTransparency = 0.35
+				Box.BackgroundColor3 = Color3.fromRGB(20, 30, 42)
+				Box.BackgroundTransparency = 0.52
 				Box.Parent = scroll
 				addCorner(Box, 6)
 				addStroke(Box, Library.Theme.SubBorder, 1, 0.35)
