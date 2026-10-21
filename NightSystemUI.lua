@@ -69,7 +69,7 @@ local Library = {
 		TextBright   = Color3.fromRGB(240, 245, 255),
 		TextMuted    = Color3.fromRGB(155, 165, 185),
 		CheckFill    = Color3.fromRGB(85, 115, 250),
-		SliderFill   = Color3.fromRGB(85, 115, 250),
+		SliderFill   = Color3.fromRGB(72, 75, 86),
 		CloseRed     = Color3.fromRGB(245, 65, 85),
 		CloseBorder  = Color3.fromRGB(255, 120, 140),
 		KeybindBg    = Color3.fromRGB(44, 52, 75),
@@ -2206,7 +2206,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				local Container = Instance.new("Frame")
 				Container.Name = name .. "_Slider"
 				Container.LayoutOrder = order
-				Container.Size = UDim2.new(1, 0, 0, 52)
+				Container.Size = UDim2.new(1, 0, 0, 54)
 				Container.BackgroundColor3 = Color3.fromRGB(30, 34, 46)
 				Container.BackgroundTransparency = 0.35
 				Container.Parent = scroll
@@ -2214,8 +2214,8 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				local contStroke = addStroke(Container, Color3.fromRGB(46, 52, 70), 1.0, 0.40)
 
 				local TitleLbl = Instance.new("TextLabel")
-				TitleLbl.Size = UDim2.new(0.65, 0, 0, 20)
-				TitleLbl.Position = UDim2.new(0, 12, 0, 6)
+				TitleLbl.Size = UDim2.new(0.65, -12, 0, 18)
+				TitleLbl.Position = UDim2.new(0, 12, 0, 7)
 				TitleLbl.BackgroundTransparency = 1
 				TitleLbl.Text = name
 				TitleLbl.TextColor3 = Color3.fromRGB(240, 245, 255)
@@ -2225,49 +2225,82 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				TitleLbl.TextTruncate = Enum.TextTruncate.AtEnd
 				TitleLbl.Parent = Container
 
-				local ValueBadge = Instance.new("Frame")
-				ValueBadge.Size = UDim2.new(0, 52, 0, 18)
-				ValueBadge.Position = UDim2.new(1, -64, 0, 6)
-				ValueBadge.BackgroundColor3 = Color3.fromRGB(40, 46, 64)
-				ValueBadge.BorderSizePixel = 0
-				ValueBadge.Parent = Container
-				addCorner(ValueBadge, 4)
-				addStroke(ValueBadge, Color3.fromRGB(60, 70, 100), 1, 0.4)
-
 				local ValueLbl = Instance.new("TextLabel")
-				ValueLbl.Size = UDim2.new(1, 0, 1, 0)
+				ValueLbl.Size = UDim2.new(0.35, -12, 0, 18)
+				ValueLbl.Position = UDim2.new(0.65, 0, 0, 7)
 				ValueLbl.BackgroundTransparency = 1
-				ValueLbl.TextColor3 = Color3.fromRGB(130, 175, 255)
-				ValueLbl.Font = Enum.Font.GothamBold
-				ValueLbl.TextSize = 11
-				ValueLbl.TextXAlignment = Enum.TextXAlignment.Center
-				ValueLbl.Parent = ValueBadge
+				ValueLbl.TextColor3 = Color3.fromRGB(210, 215, 230)
+				ValueLbl.Font = Enum.Font.GothamMedium
+				ValueLbl.TextSize = 12
+				ValueLbl.TextXAlignment = Enum.TextXAlignment.Right
+				ValueLbl.TextTruncate = Enum.TextTruncate.AtEnd
+				ValueLbl.Parent = Container
 
-				local Track = Instance.new("TextButton")
-				Track.Size = UDim2.new(1, -24, 0, 5)
-				Track.Position = UDim2.new(0, 12, 0, 34)
-				Track.BackgroundColor3 = Color3.fromRGB(40, 45, 60)
+				local Track = Instance.new("Frame")
+				Track.Name = "Track"
+				Track.Size = UDim2.new(1, -24, 0, 16)
+				Track.Position = UDim2.new(0, 12, 0, 29)
+				Track.BackgroundColor3 = Color3.fromRGB(32, 33, 38)
 				Track.BorderSizePixel = 0
-				Track.Text = ""
-				Track.AutoButtonColor = false
+				Track.ClipsDescendants = true
 				Track.Parent = Container
-				addCorner(Track, 3)
+				addCorner(Track, 8)
+				addStroke(Track, Color3.fromRGB(48, 50, 60), 1.0, 0.45)
 
+				local fillColor = cfg.Color or cfg.SliderColor or cfg.Accent or Library.Theme.SliderFill or Color3.fromRGB(72, 75, 86)
 				local Fill = Instance.new("Frame")
+				Fill.Name = "Fill"
 				Fill.Size = UDim2.new(0, 0, 1, 0)
-				Fill.BackgroundColor3 = Library.Theme.SliderFill
+				Fill.BackgroundColor3 = fillColor
 				Fill.BorderSizePixel = 0
+				Fill.ZIndex = 1
 				Fill.Parent = Track
-				addCorner(Fill, 3)
+				addCorner(Fill, 8)
 
-				local Knob = Instance.new("Frame")
-				Knob.Size = UDim2.new(0, 13, 0, 13)
-				Knob.Position = UDim2.new(0, -6, 0.5, -6)
-				Knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-				Knob.BorderSizePixel = 0
-				Knob.Parent = Track
-				addCorner(Knob, 7)
-				addStroke(Knob, Library.Theme.Accent, 1.2, 0.1)
+				if cfg.Ticks ~= false then
+					local Ticks = Instance.new("Frame")
+					Ticks.Name = "Ticks"
+					Ticks.Size = UDim2.new(1, 0, 1, 0)
+					Ticks.BackgroundTransparency = 1
+					Ticks.BorderSizePixel = 0
+					Ticks.ZIndex = 2
+					Ticks.Parent = Track
+
+					for i = 1, 9 do
+						local dot = Instance.new("Frame")
+						dot.Name = "Dot_" .. i
+						dot.Size = UDim2.new(0, 3, 0, 3)
+						dot.AnchorPoint = Vector2.new(0.5, 0.5)
+						dot.Position = UDim2.new(i * 0.1, 0, 0.5, 0)
+						dot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						dot.BackgroundTransparency = 0.70
+						dot.BorderSizePixel = 0
+						dot.ZIndex = 2
+						dot.Parent = Ticks
+						addCorner(dot, 2)
+					end
+				end
+
+				local Thumb = Instance.new("Frame")
+				Thumb.Name = "Thumb"
+				Thumb.Size = UDim2.new(0, 3, 0, 10)
+				Thumb.AnchorPoint = Vector2.new(0.5, 0.5)
+				Thumb.Position = UDim2.new(0, 0, 0.5, 0)
+				Thumb.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+				Thumb.BorderSizePixel = 0
+				Thumb.ZIndex = 3
+				Thumb.Parent = Track
+				addCorner(Thumb, 2)
+
+				local HitArea = Instance.new("TextButton")
+				HitArea.Name = "HitArea"
+				HitArea.Size = UDim2.new(1, 0, 0, 34)
+				HitArea.Position = UDim2.new(0, 0, 0, 20)
+				HitArea.BackgroundTransparency = 1
+				HitArea.Text = ""
+				HitArea.AutoButtonColor = false
+				HitArea.ZIndex = 4
+				HitArea.Parent = Container
 
 				local changedListeners = {}
 				local SliderObj = { Value = default, Type = "Slider" }
@@ -2290,46 +2323,86 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 					return math.clamp(snapped, minVal, maxVal)
 				end
 
+				local lastReportedVal = nil
 				function SliderObj:Set(val)
 					local finalVal = roundToIncrement(tonumber(val) or minVal)
 					SliderObj.Value = finalVal
-					if savedKey then
-						Library.ConfigStore[savedKey] = finalVal
-						scheduleAutoSave()
-					end
 					local pct = (maxVal > minVal) and ((finalVal - minVal) / (maxVal - minVal)) or 0
 					Fill.Size = UDim2.new(pct, 0, 1, 0)
-					Knob.Position = UDim2.new(pct, -6, 0.5, -6)
+					Thumb.Position = UDim2.new(pct, math.clamp(math.floor((0.5 - pct) * 8), -3, 3), 0.5, 0)
 					ValueLbl.Text = tostring(finalVal) .. (suffix ~= "" and (" " .. suffix) or "")
-					task.spawn(callback, finalVal)
-					for _, fn in ipairs(changedListeners) do
-						task.spawn(fn, finalVal)
+
+					if finalVal ~= lastReportedVal then
+						lastReportedVal = finalVal
+						if savedKey then
+							Library.ConfigStore[savedKey] = finalVal
+							scheduleAutoSave()
+						end
+						task.spawn(callback, finalVal)
+						for _, fn in ipairs(changedListeners) do
+							task.spawn(fn, finalVal)
+						end
 					end
 				end
 				SliderObj.SetValue     = SliderObj.Set
 				SliderObj.UpdateSlider = SliderObj.Set
 
-				local sliding = false
-				local function updateFromInput(input)
-					local pct = math.clamp((input.Position.X - Track.AbsolutePosition.X) / math.max(1, Track.AbsoluteSize.X), 0, 1)
-					local raw = minVal + (maxVal - minVal) * pct
-					SliderObj:Set(raw)
+				local isSliding = false
+				local dragConn = nil
+
+				local function stopSliding()
+					if isSliding then
+						isSliding = false
+						if dragConn then
+							dragConn:Disconnect()
+							dragConn = nil
+						end
+					end
 				end
 
-				Track.InputBegan:Connect(function(input)
+				local function updateFromPos(xPos)
+					local trackX = Track.AbsolutePosition.X
+					local trackW = Track.AbsoluteSize.X
+					if trackW > 0 then
+						local pct = math.clamp((xPos - trackX) / trackW, 0, 1)
+						local raw = minVal + (maxVal - minVal) * pct
+						SliderObj:Set(raw)
+					end
+				end
+
+				local function startSliding(input)
+					isSliding = true
+					updateFromPos(input.Position.X)
+
+					if dragConn then
+						dragConn:Disconnect()
+					end
+
+					dragConn = RunService.RenderStepped:Connect(function()
+						if not isSliding or not Track or not Track.Parent then
+							stopSliding()
+							return
+						end
+						local mousePos = UserInputService:GetMouseLocation()
+						updateFromPos(mousePos.X)
+					end)
+				end
+
+				HitArea.InputBegan:Connect(function(input)
 					if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-						sliding = true
-						updateFromInput(input)
+						startSliding(input)
 					end
 				end)
+
 				UserInputService.InputEnded:Connect(function(input)
 					if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-						sliding = false
+						stopSliding()
 					end
 				end)
+
 				UserInputService.InputChanged:Connect(function(input)
-					if sliding and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-						updateFromInput(input)
+					if isSliding and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
+						updateFromPos(input.Position.X)
 					end
 				end)
 
@@ -2340,6 +2413,10 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				Container.MouseLeave:Connect(function()
 					tween(Container, nil, { BackgroundColor3 = Color3.fromRGB(30, 34, 46), BackgroundTransparency = 0.35 })
 					contStroke.Color = Color3.fromRGB(46, 52, 70)
+				end)
+
+				Container.Destroying:Connect(function()
+					stopSliding()
 				end)
 
 				SliderObj:Set(default)
@@ -4022,7 +4099,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 		local function addSetSlider(name, minVal, maxVal, defaultVal, callback, parent)
 			local Container = Instance.new("Frame")
 			Container.LayoutOrder = nextOrder()
-			Container.Size = UDim2.new(1, 0, 0, 52)
+			Container.Size = UDim2.new(1, 0, 0, 54)
 			Container.BackgroundColor3 = Color3.fromRGB(30, 34, 46)
 			Container.BackgroundTransparency = 0.35
 			Container.ZIndex = 63
@@ -4031,8 +4108,8 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			local contStroke = addStroke(Container, Color3.fromRGB(46, 52, 70), 1.0, 0.40)
 
 			local TitleLbl = Instance.new("TextLabel")
-			TitleLbl.Size = UDim2.new(1, -76, 0, 22)
-			TitleLbl.Position = UDim2.new(0, 12, 0, 6)
+			TitleLbl.Size = UDim2.new(1, -76, 0, 18)
+			TitleLbl.Position = UDim2.new(0, 12, 0, 7)
 			TitleLbl.BackgroundTransparency = 1
 			TitleLbl.Text = name
 			TitleLbl.TextColor3 = Color3.fromRGB(240, 245, 255)
@@ -4044,50 +4121,78 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			TitleLbl.Parent = Container
 
 			local ValBadge = Instance.new("TextLabel")
-			ValBadge.Size = UDim2.new(0, 56, 0, 20)
-			ValBadge.Position = UDim2.new(1, -66, 0, 7)
-			ValBadge.BackgroundColor3 = Color3.fromRGB(20, 24, 34)
-			ValBadge.BackgroundTransparency = 0.3
+			ValBadge.Size = UDim2.new(0, 60, 0, 18)
+			ValBadge.Position = UDim2.new(1, -72, 0, 7)
+			ValBadge.BackgroundTransparency = 1
 			ValBadge.Text = tostring(defaultVal)
-			ValBadge.TextColor3 = Color3.fromRGB(200, 220, 255)
-			ValBadge.Font = Enum.Font.GothamBold
-			ValBadge.TextSize = 11
+			ValBadge.TextColor3 = Color3.fromRGB(210, 215, 230)
+			ValBadge.Font = Enum.Font.GothamMedium
+			ValBadge.TextSize = 12
+			ValBadge.TextXAlignment = Enum.TextXAlignment.Right
 			ValBadge.ZIndex = 64
 			ValBadge.Parent = Container
-			addCorner(ValBadge, 4)
-			addStroke(ValBadge, Color3.fromRGB(48, 54, 74), 1, 0.3)
 
-			local Track = Instance.new("TextButton")
-			Track.Size = UDim2.new(1, -24, 0, 5)
-			Track.Position = UDim2.new(0, 12, 0, 36)
-			Track.BackgroundColor3 = Color3.fromRGB(22, 26, 36)
-			Track.BackgroundTransparency = 0.1
-			Track.Text = ""
-			Track.AutoButtonColor = false
+			local Track = Instance.new("Frame")
+			Track.Size = UDim2.new(1, -24, 0, 16)
+			Track.Position = UDim2.new(0, 12, 0, 29)
+			Track.BackgroundColor3 = Color3.fromRGB(32, 33, 38)
+			Track.BorderSizePixel = 0
+			Track.ClipsDescendants = true
 			Track.ZIndex = 64
 			Track.Parent = Container
-			addCorner(Track, 3)
+			addCorner(Track, 8)
+			addStroke(Track, Color3.fromRGB(48, 50, 60), 1.0, 0.45)
 
 			local Fill = Instance.new("Frame")
 			Fill.Size = UDim2.new(math.clamp((defaultVal - minVal) / math.max(1, maxVal - minVal), 0, 1), 0, 1, 0)
-			Fill.BackgroundColor3 = Library.Theme.Accent
+			Fill.BackgroundColor3 = Color3.fromRGB(72, 75, 86)
 			Fill.BorderSizePixel = 0
 			Fill.ZIndex = 65
 			Fill.Parent = Track
-			addCorner(Fill, 3)
+			addCorner(Fill, 8)
 
-			local Knob = Instance.new("Frame")
-			Knob.Size = UDim2.new(0, 11, 0, 11)
-			Knob.AnchorPoint = Vector2.new(0.5, 0.5)
-			Knob.Position = UDim2.new(math.clamp((defaultVal - minVal) / math.max(1, maxVal - minVal), 0, 1), 0, 0.5, 0)
-			Knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-			Knob.BorderSizePixel = 0
-			Knob.ZIndex = 66
-			Knob.Parent = Track
-			addCorner(Knob, 6)
+			local Ticks = Instance.new("Frame")
+			Ticks.Size = UDim2.new(1, 0, 1, 0)
+			Ticks.BackgroundTransparency = 1
+			Ticks.BorderSizePixel = 0
+			Ticks.ZIndex = 66
+			Ticks.Parent = Track
+
+			for i = 1, 9 do
+				local dot = Instance.new("Frame")
+				dot.Size = UDim2.new(0, 3, 0, 3)
+				dot.AnchorPoint = Vector2.new(0.5, 0.5)
+				dot.Position = UDim2.new(i * 0.1, 0, 0.5, 0)
+				dot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+				dot.BackgroundTransparency = 0.70
+				dot.BorderSizePixel = 0
+				dot.ZIndex = 66
+				dot.Parent = Ticks
+				addCorner(dot, 2)
+			end
+
+			local Thumb = Instance.new("Frame")
+			Thumb.Size = UDim2.new(0, 3, 0, 10)
+			Thumb.AnchorPoint = Vector2.new(0.5, 0.5)
+			Thumb.Position = UDim2.new(0, 0, 0.5, 0)
+			Thumb.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			Thumb.BorderSizePixel = 0
+			Thumb.ZIndex = 67
+			Thumb.Parent = Track
+			addCorner(Thumb, 2)
+
+			local HitArea = Instance.new("TextButton")
+			HitArea.Size = UDim2.new(1, 0, 0, 34)
+			HitArea.Position = UDim2.new(0, 0, 0, 20)
+			HitArea.BackgroundTransparency = 1
+			HitArea.Text = ""
+			HitArea.AutoButtonColor = false
+			HitArea.ZIndex = 68
+			HitArea.Parent = Container
 
 			local currentVal = defaultVal
 			local SliderObj = { Value = currentVal }
+			local lastVal = nil
 
 			function SliderObj:Set(val)
 				local clamped = math.clamp(math.floor((tonumber(val) or minVal) + 0.5), minVal, maxVal)
@@ -4095,35 +4200,74 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				SliderObj.Value = clamped
 				local p = (maxVal > minVal) and ((clamped - minVal) / (maxVal - minVal)) or 0
 				Fill.Size = UDim2.new(p, 0, 1, 0)
-				Knob.Position = UDim2.new(p, 0, 0.5, 0)
+				Thumb.Position = UDim2.new(p, math.clamp(math.floor((0.5 - p) * 8), -3, 3), 0.5, 0)
 				ValBadge.Text = tostring(clamped)
-				if callback then task.spawn(callback, clamped) end
+				if clamped ~= lastVal then
+					lastVal = clamped
+					if callback then task.spawn(callback, clamped) end
+				end
 			end
 
-			local dragging = false
-			local function updateSlider(inp)
-				local p = math.clamp((inp.Position.X - Track.AbsolutePosition.X) / math.max(1, Track.AbsoluteSize.X), 0, 1)
-				local val = math.floor(minVal + (maxVal - minVal) * p + 0.5)
-				SliderObj:Set(val)
+			local isSliding = false
+			local dragConn = nil
+
+			local function stopSliding()
+				if isSliding then
+					isSliding = false
+					if dragConn then
+						dragConn:Disconnect()
+						dragConn = nil
+					end
+				end
 			end
 
-			Track.InputBegan:Connect(function(input)
+			local function updateFromPos(xPos)
+				local trackX = Track.AbsolutePosition.X
+				local trackW = Track.AbsoluteSize.X
+				if trackW > 0 then
+					local p = math.clamp((xPos - trackX) / trackW, 0, 1)
+					local val = math.floor(minVal + (maxVal - minVal) * p + 0.5)
+					SliderObj:Set(val)
+				end
+			end
+
+			local function startSliding(input)
+				isSliding = true
+				updateFromPos(input.Position.X)
+				if dragConn then dragConn:Disconnect() end
+				dragConn = RunService.RenderStepped:Connect(function()
+					if not isSliding or not Track or not Track.Parent then
+						stopSliding()
+						return
+					end
+					local mousePos = UserInputService:GetMouseLocation()
+					updateFromPos(mousePos.X)
+				end)
+			end
+
+			HitArea.InputBegan:Connect(function(input)
 				if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-					dragging = true
-					updateSlider(input)
+					startSliding(input)
 				end
 			end)
+
 			UserInputService.InputEnded:Connect(function(input)
 				if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-					dragging = false
-				end
-			end)
-			UserInputService.InputChanged:Connect(function(input)
-				if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-					updateSlider(input)
+					stopSliding()
 				end
 			end)
 
+			UserInputService.InputChanged:Connect(function(input)
+				if isSliding and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
+					updateFromPos(input.Position.X)
+				end
+			end)
+
+			Container.Destroying:Connect(function()
+				stopSliding()
+			end)
+
+			SliderObj:Set(defaultVal)
 			return SliderObj
 		end
 
