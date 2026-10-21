@@ -2182,7 +2182,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			Methods.Toggle       = Methods.AddToggle
 			Methods.addToggle    = Methods.AddToggle
 
-						function Methods.AddSlider(selfOrA, a, b, c, d, e)
+									function Methods.AddSlider(selfOrA, a, b, c, d, e)
 				local cfg = (selfOrA == Methods or type(selfOrA) == "table" and selfOrA.AddSlider)
 					and normalizeArgs("Slider", a, b, c, d, e)
 					or normalizeArgs("Slider", selfOrA, a, b, c, d)
@@ -2252,7 +2252,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				addCorner(Track, 4)
 				addStroke(Track, Color3.fromRGB(46, 48, 56), 1.0, 0.40)
 
-				local fillColor = cfg.Color or cfg.SliderColor or cfg.Accent or Library.Theme.SliderFill or Color3.fromRGB(64, 66, 75)
+				local fillColor = cfg.SliderColor or Library.Theme.SliderFill or Color3.fromRGB(64, 66, 75)
 				local Fill = Instance.new("Frame")
 				Fill.Name = "Fill"
 				Fill.Size = UDim2.new(0, 0, 1, 0)
@@ -2263,7 +2263,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				Fill.Parent = Track
 				addCorner(Fill, 4)
 
-				-- Vertikale Striche / Ticks (9 Ticks bei 10% bis 90%)
+				-- Punkte (9 Punkte bei 10% bis 90%)
 				if cfg.Ticks ~= false then
 					local Ticks = Instance.new("Frame")
 					Ticks.Name = "Ticks"
@@ -2275,18 +2275,18 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 					Ticks.Parent = Track
 
 					for i = 1, 9 do
-						local tickLine = Instance.new("Frame")
-						tickLine.Name = "Tick_" .. i
-						tickLine.Size = UDim2.new(0, 2, 0, 5)
-						tickLine.AnchorPoint = Vector2.new(0.5, 0.5)
-						tickLine.Position = UDim2.new(i * 0.1, 0, 0.5, 0)
-						tickLine.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-						tickLine.BackgroundTransparency = 0.65
-						tickLine.BorderSizePixel = 0
-						tickLine.ZIndex = 2
-						tickLine.Active = false
-						tickLine.Parent = Ticks
-						addCorner(tickLine, 1)
+						local dot = Instance.new("Frame")
+						dot.Name = "Dot_" .. i
+						dot.Size = UDim2.new(0, 3, 0, 3)
+						dot.AnchorPoint = Vector2.new(0.5, 0.5)
+						dot.Position = UDim2.new(i * 0.1, 0, 0.5, 0)
+						dot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+						dot.BackgroundTransparency = 0.65
+						dot.BorderSizePixel = 0
+						dot.ZIndex = 2
+						dot.Active = false
+						dot.Parent = Ticks
+						addCorner(dot, 2)
 					end
 				end
 
@@ -2348,7 +2348,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 				SliderObj.SetValue     = SliderObj.Set
 				SliderObj.UpdateSlider = SliderObj.Set
 
-				-- Leichtes & direktes Verschieben
+				-- Klicksystem & direktes, leichtes Verschieben
 				local isSliding = false
 				local lastTouchPos = nil
 				local dragConn = nil
@@ -2391,7 +2391,6 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 							return
 						end
 
-						-- Sicherheitsprüfung: Wurde Maus losgelassen?
 						local isDown = UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1)
 						if not isDown and not lastTouchPos then
 							stopSliding()
@@ -4178,7 +4177,7 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			Fill.Parent = Track
 			addCorner(Fill, 4)
 
-			-- Vertikale Striche / Ticks
+			-- Punkte (9 Punkte)
 			local Ticks = Instance.new("Frame")
 			Ticks.Size = UDim2.new(1, 0, 1, 0)
 			Ticks.BackgroundTransparency = 1
@@ -4188,18 +4187,18 @@ function Library.MakeWindow(selfOrConfig, maybeConfig)
 			Ticks.Parent = Track
 
 			for i = 1, 9 do
-				local tickLine = Instance.new("Frame")
-				tickLine.Name = "Tick_" .. i
-				tickLine.Size = UDim2.new(0, 2, 0, 5)
-				tickLine.AnchorPoint = Vector2.new(0.5, 0.5)
-				tickLine.Position = UDim2.new(i * 0.1, 0, 0.5, 0)
-				tickLine.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-				tickLine.BackgroundTransparency = 0.65
-				tickLine.BorderSizePixel = 0
-				tickLine.ZIndex = 66
-				tickLine.Active = false
-				tickLine.Parent = Ticks
-				addCorner(tickLine, 1)
+				local dot = Instance.new("Frame")
+				dot.Name = "Dot_" .. i
+				dot.Size = UDim2.new(0, 3, 0, 3)
+				dot.AnchorPoint = Vector2.new(0.5, 0.5)
+				dot.Position = UDim2.new(i * 0.1, 0, 0.5, 0)
+				dot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+				dot.BackgroundTransparency = 0.65
+				dot.BorderSizePixel = 0
+				dot.ZIndex = 66
+				dot.Active = false
+				dot.Parent = Ticks
+				addCorner(dot, 2)
 			end
 
 			-- Vertikaler weißer Strich als Thumb
